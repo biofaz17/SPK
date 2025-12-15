@@ -1,6 +1,7 @@
+
 import React, { useEffect } from 'react';
 import { Button } from '../components/Button';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowRight, Mail } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface PaymentSuccessScreenProps {
@@ -52,10 +53,21 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ onCo
 
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8 text-left">
            <div className="text-xs text-slate-400 font-bold uppercase mb-1">Status do Pedido</div>
-           <div className="font-bold text-slate-800 flex items-center gap-2">
+           <div className="font-bold text-slate-800 flex items-center gap-2 mb-4">
              <span className="w-2 h-2 rounded-full bg-green-500"></span> Aprovado
            </div>
-           <div className="text-xs text-slate-400 mt-2">Um recibo foi enviado para o email do responsável.</div>
+           
+           <div className="bg-white border border-slate-200 p-3 rounded-lg flex items-start gap-3">
+               <div className="bg-blue-100 p-2 rounded-full text-blue-600 shrink-0">
+                  <Mail size={16} />
+               </div>
+               <div>
+                  <div className="text-sm font-bold text-slate-700">Recibo Enviado</div>
+                  <div className="text-xs text-slate-500 leading-tight">
+                      Enviamos a Nota Fiscal e os detalhes da transação para o email do responsável cadastrado.
+                  </div>
+               </div>
+           </div>
         </div>
 
         <Button onClick={onContinue} variant="primary" size="lg" className="w-full">

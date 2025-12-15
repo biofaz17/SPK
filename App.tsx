@@ -62,6 +62,30 @@ export default function App() {
     }
   }, [user]);
 
+  // PAYMENT RETURN HANDLER (Mercado Pago Redirects)
+  useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('collection_status') || params.get('status');
+      
+      // Se voltamos do MP com sucesso
+      if (status === 'approved' && user) {
+          // Limpa URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Atualiza usuário
+          const updatedUser = { 
+              ...user, 
+              subscription: pendingSubscriptionTier || SubscriptionTier.PRO, // Default fallback if state lost
+              isGuest: false,
+          };
+          setUser(updatedUser);
+          setScreen(Screen.PAYMENT_SUCCESS);
+      } else if (status === 'failure' || status === 'null') {
+           window.history.replaceState({}, document.title, window.location.pathname);
+           alert("O pagamento não foi concluído ou foi cancelado.");
+      }
+  }, [user]); // Depende do user estar carregado (poderia precisar de logica melhor de re-hydrate se fosse reload real da pagina)
+
   const handleLogin = (profile: UserProfile) => {
     setUser(profile);
     setScreen(Screen.DASHBOARD);
@@ -168,6 +192,7 @@ export default function App() {
      setScreen(Screen.CHECKOUT);
   };
 
+  // Callback manual (usado pelo modo demo fallback no checkout screen)
   const handlePaymentComplete = () => {
      if (user && pendingSubscriptionTier) {
         // Update user: remove guest status if successful (assuming data collection in checkout handles implicit registration logic for this demo)

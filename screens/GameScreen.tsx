@@ -14,6 +14,7 @@ interface GameScreenProps {
   onNextLevel: (blocksUsed: number) => void;
 }
 
+// ... (Manter os componentes de tutorial MotionTutorialDemo, ActionTutorialDemo, TutorialDemo inalterados, pois são apenas visuais)
 // --- Componente de Animação do Tutorial de Movimento ---
 const MotionTutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
@@ -205,7 +206,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     ? CREATIVE_LEVEL 
     : (LEVELS.find(l => l.id === levelId) || LEVELS[0]);
 
-  const isHackerMode = level.id === 320; // Special theme for Level 320
+  const isHackerMode = level.id === 45 || level.id === 'creative'; // 45 is the new Master level
 
   const [program, setProgram] = useState<BlockType[]>([]);
   const [robotState, setRobotState] = useState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' as 'left' | 'right' | 'up' | 'down' });
@@ -218,15 +219,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   // Timer State
   const [timeLeft, setTimeLeft] = useState<number | null>(level.timeLimit || null);
 
-  // Control Block Tutorial State
+  // Tutorials State
   const [showControlGuide, setShowControlGuide] = useState(false);
   const [hasSeenControlGuide, setHasSeenControlGuide] = useState(false);
-
-  // Motion Block Tutorial State
   const [showMotionGuide, setShowMotionGuide] = useState(false);
   const [hasSeenMotionGuide, setHasSeenMotionGuide] = useState(false);
-
-  // Action Block Tutorial State
   const [showActionGuide, setShowActionGuide] = useState(false);
   const [hasSeenActionGuide, setHasSeenActionGuide] = useState(false);
 
@@ -239,13 +236,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   // Timer Logic
   useEffect(() => {
     if (!level.timeLimit) return;
-    
-    // Timer runs if game is not won or lost. 
-    // It runs during 'idle' (planning) and 'running' (execution) to create suspense.
     if (gameStatus === 'won' || gameStatus === 'lost') return;
 
     if (timeLeft !== null && timeLeft <= 0) {
-       // Time's up!
        setGameStatus('lost');
        setIsPlaying(false);
        if (abortController.current) abortController.current.abort();
@@ -295,21 +288,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   const runProgram = async (skipGuideCheck = false) => {
     if (program.length === 0) return;
     
-    // 1. Check for Motion Blocks Tutorial (Basic)
+    // Tutorial Checks (Skip if hacker mode to flow better)
     const hasMotionBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.MOTION);
     if (hasMotionBlock && !hasSeenMotionGuide && !skipGuideCheck && !isHackerMode) {
         setShowMotionGuide(true);
         return;
     }
-
-    // 2. Check for Action Blocks Tutorial (Paint)
     const hasActionBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.ACTION);
     if (hasActionBlock && !hasSeenActionGuide && !skipGuideCheck && !isHackerMode) {
         setShowActionGuide(true);
         return;
     }
-
-    // 3. Check for Control Blocks Tutorial (Advanced)
     const hasControlBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.CONTROL);
     if (hasControlBlock && !hasSeenControlGuide && !skipGuideCheck && !isHackerMode) {
         setShowControlGuide(true);
@@ -317,19 +306,63 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     }
 
     resetGame();
-    // Maintain timer state during run, do not reset it here, otherwise it defeats the purpose
     setIsPlaying(true);
     setGameStatus('running');
     abortController.current = new AbortController();
     const signal = abortController.current.signal;
 
-    // Configuração de Velocidade OTIMIZADA para Spring Physics
-    const ANIMATION_DURATION = isHackerMode ? 150 : 250;
+    // Configurações de Tempo
+    const DELAY_MOVE = isHackerMode ? 120 : 300; // Faster in hacker mode
+    const DELAY_PAINT = isHackerMode ? 80 : 250;
 
+    const wait = (ms: number) => new Promise(resolve => {
+        if (signal.aborted) return;
+        setTimeout(resolve, ms);
+    });
+
+    // Variáveis de Estado Local
     let currentX = level.startPos.x;
     let currentY = level.startPos.y;
-    let currentDir = 'right'; 
+    let currentDir = 'right' as 'left' | 'right' | 'up' | 'down'; 
     let localPainted = [] as GridPosition[];
+
+    // --- HELPER FUNCTIONS ---
+    
+    // Calcula quantos blocos uma instrução ocupa na lista (para pular corretamente)
+    const getBlockSize = (idx: number): number => {
+      if (idx >= program.length) return 0;
+      const type = program[idx];
+
+      if (type === BlockType.REPEAT_2 || type === BlockType.REPEAT_3) {
+        return 1 + getBlockSize(idx + 1);
+      }
+
+      if (type === BlockType.IF_OBSTACLE || type === BlockType.IF_PATH) {
+        let size = 1 + getBlockSize(idx + 1); // IF + Bloco True
+        
+        // Verifica cadeias de ELSE / ELSE IF
+        let checkIdx = idx + size;
+        while (checkIdx < program.length) {
+            const nextType = program[checkIdx];
+            if (nextType === BlockType.ELSE || nextType === BlockType.ELSE_IF) {
+                const branchSize = 1 + getBlockSize(checkIdx + 1);
+                size += branchSize;
+                checkIdx += branchSize;
+            } else {
+                break;
+            }
+        }
+        return size;
+      }
+      
+      // Blocos de controle isolados (não deveriam acontecer sozinhos, mas por segurança)
+      if (type === BlockType.ELSE || type === BlockType.ELSE_IF) {
+         return 1 + getBlockSize(idx + 1);
+      }
+
+      // Blocos atômicos (Movimento, Ação)
+      return 1;
+    }
 
     const getFrontPosition = (x: number, y: number, dir: string) => {
         if (dir === 'right') return { x: x + 1, y };
@@ -338,209 +371,143 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
         if (dir === 'down') return { x, y: y + 1 };
         return { x: x + 1, y }; 
     };
-    
-    const executeAction = async (action: BlockType) => {
-        let nextX = currentX;
-        let nextY = currentY;
-        let didMove = false;
+
+    const processAtomicCommand = async (action: BlockType) => {
+        if (signal.aborted) return;
+
+        let deltaX = 0;
+        let deltaY = 0;
         let nextDir = currentDir;
+        let isMoveAction = false;
+        let isPaintAction = false;
 
         switch (action) {
-            case BlockType.MOVE_UP: nextY--; nextDir = 'up'; didMove = true; break;
-            case BlockType.MOVE_DOWN: nextY++; nextDir = 'down'; didMove = true; break;
-            case BlockType.MOVE_LEFT: nextX--; nextDir = 'left'; didMove = true; break;
-            case BlockType.MOVE_RIGHT: nextX++; nextDir = 'right'; didMove = true; break;
+            case BlockType.MOVE_UP: 
+                deltaY = -1; nextDir = 'up'; isMoveAction = true; break;
+            case BlockType.MOVE_DOWN: 
+                deltaY = 1; nextDir = 'down'; isMoveAction = true; break;
+            case BlockType.MOVE_LEFT: 
+                deltaX = -1; nextDir = 'left'; isMoveAction = true; break;
+            case BlockType.MOVE_RIGHT: 
+                deltaX = 1; nextDir = 'right'; isMoveAction = true; break;
             case BlockType.PAINT: 
-                localPainted = [...localPainted, {x: currentX, y: currentY}];
-                setPaintedCells(localPainted);
-                await new Promise(r => setTimeout(r, ANIMATION_DURATION / 1.5));
-                break;
+                isPaintAction = true; break;
         }
 
-        if (didMove) {
-            // Verificação de Colisão PREDITIVA
+        if (isPaintAction) {
+            localPainted = [...localPainted, {x: currentX, y: currentY}];
+            setPaintedCells(localPainted);
+            await wait(DELAY_PAINT);
+        }
+
+        if (isMoveAction) {
+            const nextX = currentX + deltaX;
+            const nextY = currentY + deltaY;
+
             const isObstacle = level.obstacles.some(o => o.x === nextX && o.y === nextY);
             const isOutOfBounds = nextX < 0 || nextX >= level.gridSize || nextY < 0 || nextY >= level.gridSize;
             
             if (isObstacle || isOutOfBounds) {
-                setRobotState({ x: currentX, y: currentY, dir: nextDir as any });
+                setRobotState({ x: currentX, y: currentY, dir: nextDir });
                 setGameStatus('lost');
                 throw new Error('Collision');
+            } else {
+                currentX = nextX;
+                currentY = nextY;
+                currentDir = nextDir;
+                setRobotState({ x: currentX, y: currentY, dir: nextDir });
+                await wait(DELAY_MOVE);
             }
+        }
+    };
 
-            currentX = nextX;
-            currentY = nextY;
-            currentDir = nextDir;
+    // --- EXECUTION ENGINE (RECURSIVE) ---
+    const executeBlock = async (idx: number): Promise<void> => {
+        if (idx >= program.length || signal.aborted) return;
+        if (timeLeft !== null && timeLeft <= 0) throw new Error('Timeout');
+
+        setCurrentBlockIndex(idx);
+        const type = program[idx];
+
+        // --- REPETIÇÃO ---
+        if (type === BlockType.REPEAT_2 || type === BlockType.REPEAT_3) {
+            const count = type === BlockType.REPEAT_2 ? 2 : 3;
+            const bodyIdx = idx + 1;
             
-            setRobotState({ x: currentX, y: currentY, dir: currentDir as any });
-            await new Promise(r => setTimeout(r, ANIMATION_DURATION));
+            // Verifica se existe bloco dentro
+            if (bodyIdx < program.length) {
+                for (let i = 0; i < count; i++) {
+                     if (signal.aborted) return;
+                     // IMPORTANTE: Recurso para permitir IF dentro de REPEAT
+                     await executeBlock(bodyIdx); 
+                }
+            }
+            return; // O loop principal controlará o salto baseado em getBlockSize
+        }
+
+        // --- CONDICIONAIS ---
+        else if (type === BlockType.IF_OBSTACLE || type === BlockType.IF_PATH) {
+            const front = getFrontPosition(currentX, currentY, currentDir);
+            const isObstacle = level.obstacles.some(o => o.x === front.x && o.y === front.y) || 
+                                front.x < 0 || front.x >= level.gridSize || front.y < 0 || front.y >= level.gridSize;
+            
+            const conditionMet = type === BlockType.IF_OBSTACLE ? isObstacle : !isObstacle;
+            
+            if (conditionMet) {
+                // Executa bloco True
+                await executeBlock(idx + 1);
+            } else {
+                // Procura cadeia de Else
+                let offset = 1 + getBlockSize(idx + 1);
+                let currentCheckIdx = idx + offset;
+                let executed = false;
+
+                while (currentCheckIdx < program.length) {
+                    const nextType = program[currentCheckIdx];
+                    if (nextType === BlockType.ELSE) {
+                        await executeBlock(currentCheckIdx + 1);
+                        executed = true;
+                        break;
+                    } else if (nextType === BlockType.ELSE_IF) {
+                        // Verifica nova condição (igual a IF_OBSTACLE)
+                        const frontNow = getFrontPosition(currentX, currentY, currentDir);
+                        const isObsNow = level.obstacles.some(o => o.x === frontNow.x && o.y === frontNow.y) || 
+                                         frontNow.x < 0 || frontNow.x >= level.gridSize || frontNow.y < 0 || frontNow.y >= level.gridSize;
+                        
+                        if (isObsNow) {
+                            await executeBlock(currentCheckIdx + 1);
+                            executed = true;
+                            break;
+                        }
+                    } else {
+                        break; // Fim da cadeia
+                    }
+                    // Pula para o próximo bloco da cadeia Else
+                    const branchSize = 1 + getBlockSize(currentCheckIdx + 1);
+                    currentCheckIdx += branchSize;
+                }
+            }
+            return;
+        }
+
+        // --- AÇÃO SIMPLES ---
+        else if (type !== BlockType.ELSE && type !== BlockType.ELSE_IF) {
+            await processAtomicCommand(type);
         }
     };
 
     try {
-        let pc = 0; 
-        
+        let pc = 0;
         while (pc < program.length) {
             if (signal.aborted) return;
-            if (timeLeft !== null && timeLeft <= 0) {
-                setGameStatus('lost');
-                throw new Error('Timeout');
-            }
-
-            setCurrentBlockIndex(pc);
-
-            const block = program[pc];
             
-            // --- LOGIC: REPEAT ---
-            if (block === BlockType.REPEAT_2 || block === BlockType.REPEAT_3) {
-                const count = block === BlockType.REPEAT_2 ? 2 : 3;
-                const actionBlock = program[pc + 1];
-                
-                if (actionBlock && actionBlock !== BlockType.ELSE && actionBlock !== BlockType.IF_OBSTACLE && actionBlock !== BlockType.IF_PATH && actionBlock !== BlockType.ELSE_IF) {
-                    for (let i = 0; i < count; i++) {
-                         if (signal.aborted) return;
-                         setCurrentBlockIndex(pc + 1); 
-                         await executeAction(actionBlock);
-                    }
-                    pc += 2; 
-                    continue; 
-                } else {
-                    pc++; 
-                    continue;
-                }
-            }
-
-            // --- LOGIC: IF_OBSTACLE (SE OBSTÁCULO) ---
-            else if (block === BlockType.IF_OBSTACLE) {
-                const front = getFrontPosition(currentX, currentY, currentDir);
-                const hasObstacle = level.obstacles.some(o => o.x === front.x && o.y === front.y) || 
-                                    front.x < 0 || front.x >= level.gridSize || front.y < 0 || front.y >= level.gridSize;
-
-                const trueBlock = program[pc + 1];
-                const nextControlBlock = program[pc + 2];
-                const isElse = nextControlBlock === BlockType.ELSE;
-                const isElseIf = nextControlBlock === BlockType.ELSE_IF;
-                
-                const hasChainedLogic = isElse || isElseIf;
-                const chainedBlock = hasChainedLogic ? program[pc + 3] : null;
-
-                if (hasObstacle) {
-                    if (trueBlock && !hasChainedLogic && trueBlock !== BlockType.IF_OBSTACLE && trueBlock !== BlockType.IF_PATH) {
-                         setCurrentBlockIndex(pc + 1);
-                         await executeAction(trueBlock);
-                    }
-                    // Se executou o IF, pula o bloco ELSE/ELSE_IF
-                    pc += (hasChainedLogic ? 4 : 2);
-                } else {
-                    // Não tem obstáculo
-                    if (isElse) {
-                        setCurrentBlockIndex(pc + 3);
-                        await executeAction(chainedBlock);
-                        pc += 4;
-                    } else if (isElseIf) {
-                        // Se é ELSE_IF, tratamos como se caísse direto nele
-                        // O ELSE_IF está na posição pc+2. Atualizamos o PC para lá
-                        // para que o loop principal o execute na próxima iteração
-                        pc += 2;
-                    } else {
-                        // Apenas pula o IF
-                        pc += 2;
-                    }
-                }
-                continue;
-            }
-
-            // --- LOGIC: IF_PATH (SE CAMINHO LIVRE) ---
-            else if (block === BlockType.IF_PATH) {
-                const front = getFrontPosition(currentX, currentY, currentDir);
-                const hasObstacle = level.obstacles.some(o => o.x === front.x && o.y === front.y) || 
-                                    front.x < 0 || front.x >= level.gridSize || front.y < 0 || front.y >= level.gridSize;
-                
-                // Caminho é livre se NÃO tem obstáculo
-                const isPathFree = !hasObstacle;
-
-                const trueBlock = program[pc + 1];
-                const nextControlBlock = program[pc + 2];
-                const isElse = nextControlBlock === BlockType.ELSE;
-                const isElseIf = nextControlBlock === BlockType.ELSE_IF;
-                
-                const hasChainedLogic = isElse || isElseIf;
-                const chainedBlock = hasChainedLogic ? program[pc + 3] : null;
-
-                if (isPathFree) {
-                    if (trueBlock && !hasChainedLogic && trueBlock !== BlockType.IF_OBSTACLE && trueBlock !== BlockType.IF_PATH) {
-                         setCurrentBlockIndex(pc + 1);
-                         await executeAction(trueBlock);
-                    }
-                    // Se executou o IF (Caminho livre), pula o bloco ELSE/ELSE_IF
-                    pc += (hasChainedLogic ? 4 : 2);
-                } else {
-                    // Caminho bloqueado
-                    if (isElse) {
-                        setCurrentBlockIndex(pc + 3);
-                        await executeAction(chainedBlock);
-                        pc += 4;
-                    } else if (isElseIf) {
-                        // Cai no ELSE_IF (Senão Se)
-                        // Atualiza PC para o índice do ELSE_IF (pc + 2)
-                        pc += 2;
-                    } else {
-                        pc += 2;
-                    }
-                }
-                continue;
-            }
-
-            // --- LOGIC: ELSE_IF (SENÃO SE - Tratado como Verificação de Obstáculo Secundária) ---
-            // Em linguagens visuais simplificadas, o "Senão Se" muitas vezes carrega uma condição implícita ou explícita.
-            // Aqui, assumiremos que ELSE_IF funciona como um "Se Obstáculo" que só é verificado se o anterior falhou.
-            else if (block === BlockType.ELSE_IF) {
-                const front = getFrontPosition(currentX, currentY, currentDir);
-                const hasObstacle = level.obstacles.some(o => o.x === front.x && o.y === front.y) || 
-                                    front.x < 0 || front.x >= level.gridSize || front.y < 0 || front.y >= level.gridSize;
-
-                const trueBlock = program[pc + 1];
-                // Verifica se há mais encadeamento (outro else depois desse else if)
-                const nextControl = program[pc + 2];
-                const isElse = nextControl === BlockType.ELSE;
-                const chainedBlock = isElse ? program[pc + 3] : null;
-
-                if (hasObstacle) {
-                    if (trueBlock && trueBlock !== BlockType.ELSE) {
-                        setCurrentBlockIndex(pc + 1);
-                        await executeAction(trueBlock);
-                    }
-                    // Pula o eventual ELSE final
-                    pc += (isElse ? 4 : 2);
-                } else {
-                    if (isElse) {
-                        setCurrentBlockIndex(pc + 3);
-                        await executeAction(chainedBlock);
-                        pc += 4;
-                    } else {
-                        pc += 2;
-                    }
-                }
-                continue;
-            }
+            await executeBlock(pc);
             
-            // --- LOGIC: ELSE (Orphaned) ---
-            // Se encontrarmos um ELSE solto que não foi pulado por um IF anterior, significa que ele não deve executar
-            // (pois o IF anterior foi verdadeiro e deveria ter pulado, ou o interpretador está desalinhado)
-            // No entanto, pela lógica acima, se chegamos aqui é porque ele é apenas um token passivo se não for tratado pelo IF.
-            else if (block === BlockType.ELSE) {
-                pc++;
-                continue;
-            }
-
-            // --- LOGIC: STANDARD ACTION ---
-            else {
-                await executeAction(block);
-                pc++;
-            }
+            // Avança o contador baseado no tamanho total da estrutura executada
+            pc += getBlockSize(pc);
         }
 
-        // Win Condition
+        // Verificação de Vitória
         if (level.goalPos) {
             if (currentX === level.goalPos.x && currentY === level.goalPos.y) {
                 setGameStatus('won');
@@ -560,7 +527,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     } catch (e) {
         if (e instanceof Error) {
             if (e.message !== 'Collision' && e.message !== 'Timeout') {
-                console.log("Error", e);
+                console.log("Runtime Error", e);
             }
         }
         setIsPlaying(false);
@@ -780,7 +747,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                     backgroundSize: '60px 60px',
                     backgroundImage: isHackerMode 
                       ? 'linear-gradient(to right, #003300 1px, transparent 1px), linear-gradient(to bottom, #003300 1px, transparent 1px)'
-                      : 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)'
+                      : 'linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)'
                 }}
               >
                   {/* Goal */}

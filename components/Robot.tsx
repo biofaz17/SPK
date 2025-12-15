@@ -27,14 +27,16 @@ export const Robot: React.FC<RobotProps> = ({
 }) => {
   const stride = cellSize + gap;
   
-  // Rotação baseada na direção (Mantendo a correção para não deitar verticalmente)
+  // Lógica de Rotação e Espelhamento
+  // Usamos scaleX para esquerda/direita para manter o sprite olhando corretamente
+  // Usamos rotate para cima/baixo para dar a sensação de direção sem quebrar a perspectiva 2.5D
   let rotation = 0;
   let scaleX = 1;
 
   switch (direction) {
-    case 'up': rotation = 0; break; 
-    case 'down': rotation = 0; break;
-    case 'left': scaleX = -1; rotation = 0; break; // Espelha para esquerda
+    case 'up': rotation = -15; break; // Leve inclinação para cima
+    case 'down': rotation = 15; break; // Leve inclinação para baixo
+    case 'left': scaleX = -1; rotation = 0; break; 
     case 'right': scaleX = 1; rotation = 0; break;
     default: rotation = 0;
   }
@@ -42,30 +44,34 @@ export const Robot: React.FC<RobotProps> = ({
   return (
     <motion.div
       className="absolute z-20 flex items-center justify-center pointer-events-none"
-      initial={false}
+      // Importante: Não usar 'initial={false}' aqui para garantir que o Framer saiba a posição inicial exata ao montar
+      initial={{ x: x * stride, y: y * stride }}
       animate={{
         x: x * stride,
         y: y * stride,
       }}
       transition={{ 
-        // USANDO SPRING (MOLA) PARA FLUIDEZ
-        // Isso permite transições suaves mesmo se o X e Y mudarem rapidamente
-        x: { type: "spring", stiffness: 250, damping: 25, mass: 1 },
-        y: { type: "spring", stiffness: 250, damping: 25, mass: 1 }
+        // CONFIGURAÇÃO DE FÍSICA OTIMIZADA
+        // Stiffness mais alto = movimento mais rápido
+        // Damping ajustado = menos "balanço" ao chegar no destino (snappy)
+        x: { type: "spring", stiffness: 300, damping: 28, mass: 0.8 },
+        y: { type: "spring", stiffness: 300, damping: 28, mass: 0.8 }
       }}
       style={{ width: cellSize, height: cellSize }}
     >
       <motion.div 
         className={`relative w-4/5 h-4/5 transition-transform ${isHappy ? 'animate-bounce' : ''}`}
         animate={{ rotate: rotation, scaleX: scaleX }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.2, type: "tween", ease: "circOut" }}
       >
         {/* Efeito de Pintura */}
         {isPainting && (
            <motion.div 
-             initial={{ scale: 0 }}
-             animate={{ scale: 1 }}
-             className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-full h-2 bg-purple-400 rounded-full opacity-50 blur-sm"
+             initial={{ scale: 0, opacity: 0 }}
+             animate={{ scale: 1.5, opacity: 1 }}
+             exit={{ opacity: 0 }}
+             transition={{ duration: 0.3 }}
+             className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-full h-4 bg-purple-400 rounded-full blur-md z-[-1]"
            />
         )}
 
