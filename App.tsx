@@ -164,8 +164,10 @@ export default function App() {
         }
 
         // --- MARKETING TRIGGER (FREE USERS) ---
-        // Se o usuário for Grátis, mostra o modal de marketing antes de voltar ao mapa
-        if (user.subscription === SubscriptionTier.FREE) {
+        // Se o usuário for Grátis, mostra o modal de marketing APENAS a cada 3 níveis (3, 6, 9...)
+        const justFinishedLevel = typeof currentLevelId === 'number' ? currentLevelId : 0;
+        
+        if (user.subscription === SubscriptionTier.FREE && justFinishedLevel > 0 && justFinishedLevel % 3 === 0) {
            setShowMarketingModal(true);
            // O modal lidará com o fechamento (retornar ao Mapa)
            return; 
