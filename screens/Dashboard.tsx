@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '../components/Button';
-import { Map, Palette, UserCircle, Star, Lock, Trophy, Zap, Crown } from 'lucide-react';
+import { Map, Palette, UserCircle, Star, Lock, Trophy, Zap, Crown, Instagram, ShieldCheck, Mail } from 'lucide-react';
 import { UserProgress } from '../types';
 import { SparkyLogo } from '../components/SparkyLogo';
 
@@ -31,6 +31,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenParents 
 }) => {
   
+  const currentYear = new Date().getFullYear();
+
   // Lógica AUMENTADA de Dificuldade
   const achievements: Achievement[] = [
     // TIER: COMMON (Fácil de entrar, mas requer esforço)
@@ -157,7 +159,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-6xl mx-auto w-full p-4 flex flex-col gap-10 mt-4">
+      <main className="flex-1 max-w-6xl mx-auto w-full p-4 flex flex-col gap-10 mt-4 z-10">
         
         {/* Actions Row */}
         <div className="flex flex-col md:flex-row gap-6">
@@ -226,8 +228,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 ))}
              </div>
         </div>
-
       </main>
+
+      {/* Footer - Abaixo da Sala de Troféus */}
+      <footer className="w-full py-8 mt-12 bg-slate-900 text-slate-400 text-center z-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-y-3 gap-x-6 text-[11px] md:text-xs font-bold px-4">
+           
+           <div className="flex items-center gap-1">
+             <span>© {currentYear} TekTok TI.</span>
+           </div>
+           
+           <span className="hidden md:inline text-slate-700">|</span>
+
+           <div className="flex items-center gap-1">
+             <span>Criado por: Prof. Fabio Gouvêa Cabral T.</span>
+           </div>
+
+           <span className="hidden md:inline text-slate-700">|</span>
+           
+           <a 
+             href="https://instagram.com/sparky.aventura" 
+             target="_blank" 
+             rel="noreferrer"
+             className="flex items-center gap-1.5 hover:text-white transition cursor-pointer"
+           >
+             <Instagram size={14} className="text-pink-500" />
+             <span>@sparky.aventura</span>
+           </a>
+
+           <span className="hidden md:inline text-slate-700">|</span>
+
+           <div className="flex items-center gap-1.5">
+             <ShieldCheck size={14} className="text-blue-500" />
+             <span>CNPJ 14.773.860/0001-72</span>
+           </div>
+           
+           <span className="hidden md:inline text-slate-700">|</span>
+           
+           <a 
+             href="mailto:robotix28@gmail.com?subject=Suporte%20Sparky" 
+             className="flex items-center gap-1.5 hover:text-white transition cursor-pointer"
+           >
+             <Mail size={14} className="text-indigo-400" />
+             <span>Suporte</span>
+           </a>
+        </div>
+      </footer>
+
     </div>
   );
 };
