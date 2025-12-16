@@ -1,5 +1,4 @@
 
-
 import { BlockType, LevelConfig, SubscriptionTier, BlockCategory } from './types';
 
 // ========================================================================
@@ -118,11 +117,11 @@ export const LEVELS: LevelConfig[] = [
     mission: "Muitos passos iguais? Use a Repetição!",
     gridSize: 5,
     startPos: { x: 0, y: 2 },
-    goalPos: { x: 4, y: 2 },
+    goalPos: { x: 3, y: 2 }, 
     obstacles: [],
     maxBlocks: 2,
     availableBlocks: [BlockType.MOVE_RIGHT, BlockType.REPEAT_3, BlockType.REPEAT_2],
-    tutorialMessage: "Coloque 'Andar Dir.' DENTRO do 'Repetir 3x'.",
+    tutorialMessage: "Arraste 'Andar Dir.' para dentro ou logo abaixo do 'Repetir 3x'.",
     explanation: "Loops economizam tempo e energia!",
     ageGroup: '5-7',
     requiredSubscription: SubscriptionTier.FREE,
@@ -130,16 +129,16 @@ export const LEVELS: LevelConfig[] = [
   },
   {
     id: 5,
-    title: "A Escada",
-    mission: "Suba os degraus usando um padrão.",
+    title: "Caminho em L",
+    mission: "Ande bastante para a direita, depois suba.",
     gridSize: 5,
     startPos: { x: 0, y: 4 },
-    goalPos: { x: 3, y: 1 },
-    obstacles: [{x:1, y:4}, {x:2, y:4}, {x:0, y:3}, {x:2, y:3}, {x:0, y:2}, {x:1, y:2}],
-    maxBlocks: 8,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.REPEAT_2],
-    tutorialMessage: "O padrão é: Direita, Cima. Repita isso!",
-    explanation: "Identificar padrões é a chave da matemática.",
+    goalPos: { x: 3, y: 2 },
+    obstacles: [{x:0, y:3}, {x:1, y:3}, {x:2, y:3}], 
+    maxBlocks: 5, 
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.REPEAT_3, BlockType.REPEAT_2],
+    tutorialMessage: "Use um 'Repetir 3x' para Direita, e DEPOIS um 'Repetir 2x' para Cima.",
+    explanation: "Você combinou dois loops! Isso é algoritmos em ação.",
     ageGroup: '5-7',
     requiredSubscription: SubscriptionTier.FREE
   },
@@ -160,65 +159,69 @@ export const LEVELS: LevelConfig[] = [
   },
   {
     id: 7,
-    title: "Otimização",
-    mission: "Chegue lá usando APENAS 3 blocos.",
+    title: "Matemática",
+    mission: "Chegue lá. Distância = 5. (Dica: 3 + 2)",
     gridSize: 6,
     startPos: { x: 0, y: 2 },
     goalPos: { x: 5, y: 2 },
     obstacles: [],
-    maxBlocks: 3,
+    maxBlocks: 4, 
     availableBlocks: [BlockType.MOVE_RIGHT, BlockType.REPEAT_3, BlockType.REPEAT_2],
-    tutorialMessage: "Dica: Você pode colocar um Loop DENTRO de outro? Não, mas pode usar 'Repetir 3' e 'Repetir 2'.",
-    explanation: "Eficiência máxima!",
+    tutorialMessage: "Combine 'Repetir 3' e 'Repetir 2' para andar 5 casas.",
+    explanation: "Eficiência máxima! 3 + 2 = 5.",
     ageGroup: '5-7',
     requiredSubscription: SubscriptionTier.FREE
   },
+  // --- NÍVEL 8 CORRIGIDO: CAMINHO LIVRE PARA ZIGZAGUE ---
   {
     id: 8,
     title: "Ziguezague Longo",
-    mission: "Atravesse o corredor estreito.",
+    mission: "Desvie dos obstáculos: Direita, Baixo, Direita, Baixo...",
     gridSize: 6,
-    startPos: { x: 0, y: 1 },
-    goalPos: { x: 5, y: 4 },
+    startPos: { x: 0, y: 0 },
+    goalPos: { x: 4, y: 4 },
+    // Obstáculos forçando um ziguezague (Escadinha)
     obstacles: [
-       {x:1,y:0}, {x:2,y:0}, {x:3,y:0}, {x:4,y:0}, {x:5,y:0},
-       {x:0,y:2}, {x:2,y:2}, {x:3,y:2}, {x:4,y:2}, {x:5,y:2},
-       {x:0,y:3}, {x:1,y:3}, {x:2,y:3}, {x:4,y:3}, {x:5,y:3},
-       {x:0,y:5}, {x:1,y:5}, {x:2,y:5}, {x:3,y:5}, {x:4,y:5}
+       {x:1,y:0}, {x:2,y:0}, {x:3,y:0}, {x:4,y:0}, // Bloqueia topo direto
+       {x:0,y:2}, {x:2,y:2}, {x:3,y:2}, {x:4,y:2}, // Bloqueia meio
+       {x:0,y:4}, {x:1,y:4}, {x:3,y:4}             // Bloqueia fim
     ],
     maxBlocks: 10,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.MOVE_LEFT, BlockType.REPEAT_2],
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.REPEAT_2],
     explanation: "Cuidado com a cabeça! Passamos raspando.",
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
+  // --- NÍVEL 9 CORRIGIDO: CAMINHO CIRCULAR SIMPLES ---
   {
     id: 9,
-    title: "Ida e Volta",
-    mission: "Vá até o ponto azul e volte para o início.",
+    title: "Patrulha Quadrada",
+    mission: "Faça um quadrado para voltar ao início.",
     gridSize: 5,
-    startPos: { x: 0, y: 2 },
-    goalPos: { x: 0, y: 2 },
-    obstacles: [], // Espaço aberto, mas a missão é lógica
-    maxBlocks: 6,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_LEFT, BlockType.REPEAT_3],
-    tutorialMessage: "A missão exige voltar para casa. Use a lógica inversa.",
+    startPos: { x: 1, y: 1 },
+    goalPos: { x: 1, y: 1 },
+    obstacles: [{x:2,y:2}], // Obstáculo no centro
+    maxBlocks: 10,
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.MOVE_LEFT, BlockType.MOVE_UP, BlockType.REPEAT_2],
+    tutorialMessage: "Direita 2x, Baixo 2x, Esquerda 2x, Cima 2x.",
     explanation: "Ir e voltar é um conceito importante em funções!",
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
+  // --- NÍVEL 10 CORRIGIDO: ENTRADA LIBERADA ---
   {
     id: 10,
     title: "Caracol Quadrado",
-    mission: "Entre no espiral até o centro.",
+    mission: "Entre na espiral até o centro.",
     gridSize: 5,
     startPos: { x: 0, y: 0 },
     goalPos: { x: 2, y: 2 },
     obstacles: [
-       {x:1,y:1}, {x:2,y:1}, {x:3,y:1},
-       {x:3,y:2},
-       {x:1,y:3}, {x:2,y:3}, {x:3,y:3},
-       {x:1,y:2}
+       {x:1,y:1}, {x:2,y:1}, {x:3,y:1}, // Parede interna Cima
+       {x:3,y:2},                       // Parede interna Dir
+       {x:1,y:3}, {x:2,y:3}, {x:3,y:3}, // Parede interna Baixo
+       {x:1,y:2}                        // Parede interna Esq
+       // A entrada deve ser feita contornando tudo
     ],
     maxBlocks: 12,
     availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.MOVE_LEFT, BlockType.MOVE_UP],
@@ -226,33 +229,34 @@ export const LEVELS: LevelConfig[] = [
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
+  // --- NÍVEL 11 CORRIGIDO: CAMINHO LIVRE PARA PULO ---
   {
     id: 11,
-    title: "O Pulo do Gato",
-    mission: "Use loops para pular os buracos.",
+    title: "Pulo Longo",
+    mission: "Use loops para cruzar o vazio rapidamente.",
     gridSize: 7,
     startPos: { x: 0, y: 3 },
     goalPos: { x: 6, y: 3 },
-    obstacles: [{x:1,y:3}, {x:3,y:3}, {x:5,y:3}],
-    maxBlocks: 6,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.REPEAT_3],
-    tutorialMessage: "Padrão: Cima, Direita, Direita, Baixo. Repita.",
-    explanation: "Algoritmo de salto definido com sucesso.",
+    obstacles: [{x:1,y:2}, {x:1,y:4}, {x:5,y:2}, {x:5,y:4}], // Obstáculos nas laterais, corredor livre
+    maxBlocks: 6, 
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.REPEAT_3],
+    tutorialMessage: "Dois grandes saltos de 3 passos cada.",
+    explanation: "Você cobriu uma grande distância com pouco código.",
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
   {
     id: 12,
-    title: "Campo Aberto?",
-    mission: "Parece vazio, mas você tem pouca bateria (blocos). Otimize!",
-    gridSize: 8,
+    title: "Otimização II",
+    mission: "Otimize! Chegue em X=5 usando apenas loops.",
+    gridSize: 6,
     startPos: { x: 0, y: 0 },
-    goalPos: { x: 7, y: 7 },
+    goalPos: { x: 5, y: 0 }, 
     obstacles: [],
-    maxBlocks: 4, // Exige 2 loops aninhados ou sequenciais grandes
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.REPEAT_3, BlockType.REPEAT_2],
-    tutorialMessage: "Use 'Repetir 3' e 'Repetir 2' de forma inteligente para cobrir grandes distâncias.",
-    explanation: "Matemática aplicada! 3 + 2 + 2 = Chegada.",
+    maxBlocks: 4, 
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.REPEAT_3, BlockType.REPEAT_2],
+    tutorialMessage: "Matemática: 3 + 2 = 5 passos.",
+    explanation: "Matemática aplicada é programação eficiente.",
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
@@ -270,14 +274,22 @@ export const LEVELS: LevelConfig[] = [
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
+  // --- NÍVEL 14 CORRIGIDO: OBSTÁCULOS COERENTES ---
   {
     id: 14,
     title: "Desafio da Memória",
-    mission: "Memorize o caminho: Dir, Baixo, Dir, Cima, Dir.",
+    mission: "Caminho: Dir, Baixo, Dir, Cima, Dir.",
     gridSize: 6,
-    startPos: { x: 0, y: 2 },
-    goalPos: { x: 5, y: 2 },
-    obstacles: [{x:1,y:2}, {x:2,y:1}, {x:3,y:2}, {x:4,y:3}],
+    startPos: { x: 0, y: 1 }, // Começa em Y=1
+    goalPos: { x: 3, y: 1 },
+    // Caminho desejado: (0,1) -> (1,1) -> (1,2) -> (2,2) -> (2,1) -> (3,1)
+    // Obstáculos para forçar esse caminho:
+    obstacles: [
+        {x:1,y:0}, {x:2,y:0}, // Bloqueia cima
+        {x:2,y:1},            // Bloqueia direto (1,1)->(2,1)
+        {x:0,y:2},            // Bloqueia descer cedo demais? nao
+        {x:3,y:2}, {x:4,y:2}
+    ],
     maxBlocks: 10,
     availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.MOVE_DOWN],
     explanation: "Memória sequencial é vital para programar.",
@@ -303,18 +315,23 @@ export const LEVELS: LevelConfig[] = [
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
+  // --- NÍVEL 16 CORRIGIDO: PINTAR O CAMINHO ---
   {
     id: 16,
-    title: "Pontes Divertidas",
-    mission: "Conecte as ilhas com blocos!",
-    gridSize: 4,
-    startPos: { x: 0, y: 3 },
-    goalPos: { x: 3, y: 0 },
-    obstacles: [{ x: 1, y: 3 }, { x: 2, y: 2 }],
-    maxBlocks: 6,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.PAINT],
-    tutorialMessage: "Conecte as ilhas com blocos!",
-    explanation: "Você construiu uma ótima ponte!",
+    title: "Caminho Colorido",
+    mission: "Pinte o caminho seguro entre as águas.",
+    gridSize: 5,
+    startPos: { x: 0, y: 2 },
+    goalPos: { x: 4, y: 2 },
+    // Obstáculos (Água) ao redor do caminho
+    obstacles: [
+        {x:0,y:1}, {x:1,y:1}, {x:2,y:1}, {x:3,y:1}, {x:4,y:1}, // Água cima
+        {x:0,y:3}, {x:1,y:3}, {x:2,y:3}, {x:3,y:3}, {x:4,y:3}  // Água baixo
+    ],
+    maxBlocks: 8,
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.PAINT, BlockType.REPEAT_3],
+    tutorialMessage: "Use 'Pintar' a cada passo para marcar o chão seguro.",
+    explanation: "Você criou uma trilha segura!",
     ageGroup: '5-7',
     requiredSubscription: SubscriptionTier.FREE
   },
@@ -604,212 +621,84 @@ export const LEVELS: LevelConfig[] = [
     obstacles: [{x:2,y:2}, {x:4,y:2}],
     maxBlocks: 8,
     availableBlocks: [BlockType.MOVE_RIGHT, BlockType.IF_OBSTACLE, BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.REPEAT_3],
-    explanation: "Código genérico é melhor que código específico.",
+    explanation: "Código genérico funciona em qualquer situação!",
     ageGroup: '11-14',
     requiredSubscription: SubscriptionTier.PRO
   },
   {
     id: 35,
-    title: "Patrulha",
-    mission: "Ande até achar uma parede, então vire.",
+    title: "Até Chegar",
+    mission: "Use o loop 'Até Chegar' para andar até a bandeira.",
     gridSize: 5,
-    startPos: { x: 0, y: 0 },
-    goalPos: { x: 0, y: 4 },
-    obstacles: [{x:4,y:0}, {x:4,y:4}], // Paredes nos cantos opostos
-    maxBlocks: 10,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.REPEAT_3],
-    tutorialMessage: "Use 'Se Obstáculo' para detectar o fim do corredor.",
-    explanation: "Sensores são os olhos dos robôs.",
+    startPos: { x: 0, y: 2 },
+    goalPos: { x: 4, y: 2 },
+    obstacles: [],
+    maxBlocks: 3,
+    availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.MOVE_RIGHT],
+    tutorialMessage: "Este bloco repete o comando até o objetivo ser alcançado.",
+    explanation: "Isso é um loop While!",
     ageGroup: '11-14',
     requiredSubscription: SubscriptionTier.PRO
   },
   {
     id: 36,
-    title: "Ziguezague Inteligente",
-    mission: "Suba a escada, mas verifique cada degrau.",
+    title: "Desvio Automático",
+    mission: "Avance e desvie automaticamente dos obstáculos.",
     gridSize: 6,
-    startPos: { x: 0, y: 5 },
-    goalPos: { x: 5, y: 0 },
-    obstacles: [
-       {x:1,y:5}, {x:2,y:4}, {x:3,y:3}, {x:4,y:2}, {x:5,y:1} // Degraus
-    ],
-    maxBlocks: 12,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.IF_OBSTACLE, BlockType.ELSE, BlockType.REPEAT_3],
-    explanation: "Você está programando como um engenheiro de software.",
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 37,
-    title: "O Buscador",
-    mission: "Use 'Se Caminho Livre' para achar a saída.",
-    gridSize: 7,
-    startPos: { x: 0, y: 3 },
-    goalPos: { x: 6, y: 3 },
-    obstacles: [{x:1,y:3}, {x:3,y:3}, {x:5,y:3}],
-    maxBlocks: 10,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.IF_PATH, BlockType.MOVE_UP, BlockType.ELSE, BlockType.REPEAT_3],
-    tutorialMessage: "Se caminho livre: Ande. Senão: Pule.",
-    explanation: "Busca de caminho (Pathfinding) básico.",
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 38,
-    title: "Labirinto de Decisão",
-    mission: "Esquerda ou Direita? O código deve decidir.",
-    gridSize: 5,
-    startPos: { x: 2, y: 4 },
-    goalPos: { x: 2, y: 0 },
-    obstacles: [{x:2,y:3}, {x:2,y:1}],
-    maxBlocks: 12,
-    availableBlocks: [BlockType.MOVE_UP, BlockType.MOVE_RIGHT, BlockType.MOVE_LEFT, BlockType.IF_OBSTACLE, BlockType.ELSE],
-    explanation: "Árvores de decisão são a base da IA.",
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 39,
-    title: "Loop Infinito?",
-    mission: "Cuidado para não ficar preso num loop eterno. Chegue ao fim.",
-    gridSize: 6,
-    startPos: { x: 0, y: 0 },
-    goalPos: { x: 5, y: 5 },
-    obstacles: [],
-    maxBlocks: 5, // Muito restrito, exige loops aninhados perfeitos
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.REPEAT_3, BlockType.REPEAT_2],
-    tutorialMessage: "Matemática: 3 x 2 movimentos.",
-    explanation: "Loops aninhados multiplicam o poder do código.",
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 40,
-    title: "O Campo Minado Lógico",
-    mission: "Desvie das minas usando apenas lógica, sem saber onde elas estão (simulação).",
-    gridSize: 8,
-    startPos: { x: 0, y: 4 },
-    goalPos: { x: 7, y: 4 },
-    obstacles: [{x:2,y:4}, {x:4,y:4}, {x:6,y:4}],
-    maxBlocks: 8,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.IF_OBSTACLE, BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.REPEAT_3],
-    explanation: "Abstração total. Você resolveu o problema sem ver o problema.",
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 41,
-    title: "Hacking da Matrix",
-    mission: "O sistema está tentando te bloquear. Use condicionais aninhadas.",
-    gridSize: 7,
-    startPos: { x: 0, y: 0 },
-    goalPos: { x: 6, y: 6 },
-    obstacles: [{x:1,y:0}, {x:0,y:1}, {x:1,y:1}, {x:5,y:6}, {x:6,y:5}, {x:5,y:5}],
-    maxBlocks: 15,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.ELSE_IF, BlockType.ELSE],
-    tutorialMessage: "Se obstáculo -> Tente outro lado. Senão Se -> Tente outro",
-    explanation: "Você hackeou o sistema! A lógica é sua.",
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 42,
-    title: "Algoritmo de Busca",
-    mission: "Encontre o caminho livre em um grid denso.",
-    gridSize: 6,
-    startPos: { x: 0, y: 0 },
-    goalPos: { x: 5, y: 5 },
-    obstacles: [
-       {x:1,y:0}, {x:2,y:1}, {x:3,y:2}, {x:4,y:3}, // Diagonal wall
-       {x:0,y:2}, {x:2,y:4}
-    ],
-    maxBlocks: 12,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.ELSE, BlockType.REPEAT_3],
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 43,
-    title: "Lógica Inversa",
-    mission: "Chegue ao fim, mas seus controles estão invertidos! (Simulação mental)",
-    gridSize: 6,
-    startPos: { x: 5, y: 5 },
-    goalPos: { x: 0, y: 0 },
-    obstacles: [{x:2,y:2}, {x:3,y:3}],
-    maxBlocks: 8,
-    availableBlocks: [BlockType.MOVE_LEFT, BlockType.MOVE_UP, BlockType.REPEAT_3],
-    explanation: "Pensar ao contrário é útil para desfazer erros.",
-    ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO
-  },
-  {
-    id: 44,
-    title: "Loop com Condição",
-    mission: "Avance enquanto não houver parede. Se houver, vire.",
-    gridSize: 7,
-    startPos: { x: 0, y: 0 },
-    goalPos: { x: 6, y: 6 },
-    obstacles: [{x:6,y:0}, {x:6,y:1}, {x:6,y:2}, {x:6,y:3}, {x:6,y:4}, {x:6,y:5}], // Parede final
-    maxBlocks: 10,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.REPEAT_3],
+    startPos: { x: 0, y: 2 },
+    goalPos: { x: 5, y: 2 },
+    obstacles: [{x:2,y:2}, {x:3,y:2}],
+    maxBlocks: 6,
+    availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.MOVE_RIGHT, BlockType.IF_OBSTACLE, BlockType.MOVE_UP, BlockType.MOVE_DOWN],
+    explanation: "Sensor de obstáculos ativado.",
     ageGroup: '11-14',
     requiredSubscription: SubscriptionTier.PRO
   },
   {
     id: 45,
-    title: "O Labirinto Final",
-    mission: "Use todo o seu conhecimento para escapar.",
-    gridSize: 9,
-    startPos: { x: 4, y: 4 },
-    goalPos: { x: 8, y: 8 },
-    obstacles: [
-       {x:4,y:3}, {x:5,y:4}, {x:4,y:5}, {x:3,y:4}, // Box around start
-       {x:6,y:6}, {x:7,y:7}
-    ],
-    maxBlocks: 20,
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.ELSE, BlockType.REPEAT_3, BlockType.REPEAT_2],
+    title: "Desafio Hacker",
+    mission: "Um labirinto complexo que exige condicionais e loops.",
+    gridSize: 8,
+    startPos: {x:0,y:0},
+    goalPos: {x:7,y:7},
+    obstacles: [{x:1,y:0}, {x:3,y:2}, {x:5,y:4}, {x:6,y:6}],
+    maxBlocks: 15,
+    availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.IF_OBSTACLE, BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.ELSE],
+    explanation: "Você dominou a lógica de programação!",
     ageGroup: '11-14',
     requiredSubscription: SubscriptionTier.PRO
   },
   {
     id: 46,
-    title: "Desafio do Mestre Codificador",
-    mission: "A prova final. Crie um algoritmo inteligente que navegue pela escada traiçoeira.",
-    gridSize: 9,
-    startPos: { x: 0, y: 0 },
-    goalPos: { x: 8, y: 8 },
-    obstacles: [
-       // Padrão de escada que exige "Se bloqueado para a direita, vá para baixo, senão direita"
-       {x:1,y:0}, {x:2,y:1}, {x:3,y:2}, {x:4,y:3}, {x:5,y:4}, {x:6,y:5}, {x:7,y:6}, {x:8,y:7},
-       // Bloqueios extras APENAS para forçar a lógica de "Se não der direita, vai para baixo"
-       // Removidos os obstáculos de "baixo" (ex: 0,2) para permitir que o sensor funcione quando virado para baixo.
-       {x:4,y:6}, {x:6,y:8} 
-    ],
-    maxBlocks: 8, // Permite: Repetir_Até [ Se Obs Baixo Senão Dir ] (5 blocos)
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.ELSE, BlockType.REPEAT_UNTIL],
-    tutorialMessage: "Dica de Mestre: Coloque o bloco 'Se Obstáculo' DENTRO do 'Até Chegar'. O código deve decidir a cada passo!",
-    explanation: "VOCÊ É O MESTRE SUPREMO DO CÓDIGO! 🏆",
+    title: "Mestre da Lógica",
+    mission: "Use tudo o que aprendeu para vencer o nível final.",
+    gridSize: 8,
+    startPos: {x: 0, y: 0},
+    goalPos: {x: 7, y: 7},
+    obstacles: [{x:1,y:1}, {x:2,y:2}, {x:3,y:3}, {x:4,y:4}, {x:5,y:5}, {x:6,y:6}],
+    maxBlocks: 20,
+    availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.IF_OBSTACLE, BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.ELSE, BlockType.MOVE_UP, BlockType.MOVE_LEFT],
+    explanation: "Parabéns! Você é um verdadeiro mestre.",
     ageGroup: '11-14',
-    requiredSubscription: SubscriptionTier.PRO,
-    timeLimit: 180
+    requiredSubscription: SubscriptionTier.PRO
   }
 ];
 
 export const CREATIVE_LEVEL: LevelConfig = {
   id: 'creative',
-  title: "Modo Criativo",
-  mission: "Crie o que quiser! O limite é sua imaginação.",
-  gridSize: 8,
+  title: 'Modo Criativo',
+  mission: 'Crie sua própria arte ou caminho!',
+  gridSize: 10,
   startPos: { x: 0, y: 0 },
   obstacles: [],
-  maxBlocks: 50,
+  maxBlocks: 100,
   availableBlocks: [
     BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.MOVE_LEFT, BlockType.MOVE_RIGHT,
-    BlockType.REPEAT_2, BlockType.REPEAT_3, BlockType.REPEAT_UNTIL,
-    BlockType.PAINT,
+    BlockType.PAINT, BlockType.REPEAT_2, BlockType.REPEAT_3, BlockType.REPEAT_UNTIL,
     BlockType.IF_OBSTACLE, BlockType.IF_PATH, BlockType.ELSE_IF, BlockType.ELSE
   ],
-  ageGroup: '8-10',
-  requiredSubscription: SubscriptionTier.FREE,
-  isCreative: true
+  isCreative: true,
+  ageGroup: '5-7',
+  requiredSubscription: SubscriptionTier.STARTER,
+  explanation: "Sua imaginação é o limite."
 };

@@ -130,9 +130,13 @@ export default function App() {
         let nextLevelId = currentLevelId; // Default fallback
         
         if (currentIndex !== -1 && currentIndex < sortedLevels.length - 1) {
-            // Avança para o próximo nível na lista ordenada, independente da faixa etária
-            // Isso corrige o bug de travamento no nível 7 (fim da faixa 5-7) para o 8
-            nextLevelId = sortedLevels[currentIndex + 1].id as number;
+            // Try to find the next level in the SAME age group first
+            const currentLevel = sortedLevels[currentIndex];
+            const nextPotential = sortedLevels[currentIndex + 1];
+            
+            if (nextPotential.ageGroup === currentLevel.ageGroup) {
+                 nextLevelId = nextPotential.id as number;
+            }
         }
 
         const newProgress = {

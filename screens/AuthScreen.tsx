@@ -135,7 +135,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-indigo-500 flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+    <div className="min-h-full w-full bg-indigo-500 flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] py-12">
       <div className="bg-white rounded-[2.5rem] p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col">
         {/* Decor */}
         <div className={`absolute top-0 left-0 w-full h-4 bg-gradient-to-r transition-colors duration-500 from-blue-400 via-purple-400 to-yellow-400`} />
@@ -250,7 +250,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
         <button 
           onClick={handleGuestPlay}
-          className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm"
+          className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm touch-manipulation"
         >
            <Gamepad2 size={18} /> Testar como Visitante (Sem salvar)
         </button>
