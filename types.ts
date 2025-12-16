@@ -70,6 +70,7 @@ export interface UserSettings {
 export interface UserProfile {
   id: string;
   name: string;
+  password?: string; // NOVO: Senha para login
   parentEmail: string;
   age: number;
   subscription: SubscriptionTier;
