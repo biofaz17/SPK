@@ -11,6 +11,7 @@ import { UserProfile, SubscriptionTier } from './types';
 import { LEVELS } from './constants';
 import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
+import { MarketingModal } from './components/MarketingModal';
 import { Mail } from 'lucide-react';
 
 // Enhanced Toast Notification
@@ -21,8 +22,8 @@ const NotificationToast = ({ msg, subMsg, show }: { msg: string, subMsg?: string
             <Mail size={20} />
          </div>
          <div>
-            <div className="font-bold text-sm">{msg}</div>
-            {subMsg && <div className="text-xs text-slate-500 mt-1">{subMsg}</div>}
+            <div className="font-bold text-sm">{typeof msg === 'string' ? msg : ''}</div>
+            {subMsg && typeof subMsg === 'string' && <div className="text-xs text-slate-500 mt-1">{subMsg}</div>}
          </div>
       </div>
    </div>
@@ -48,6 +49,7 @@ export default function App() {
   const [currentLevelId, setCurrentLevelId] = useState<number | string>(1);
   const [showParentGate, setShowParentGate] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showMarketingModal, setShowMarketingModal] = useState(false); // New Marketing Modal State
   const [gateAction, setGateAction] = useState(''); // What triggered the gate?
   const [notification, setNotification] = useState({ title: '', body: '' });
   
@@ -98,6 +100,15 @@ export default function App() {
 
   const handleUpdateProfile = (updatedUser: UserProfile) => {
     setUser(updatedUser);
+  };
+
+  const handleUpdateSkin = (skinId: string) => {
+    if (!user) return;
+    setUser({
+      ...user,
+      activeSkin: skinId
+    });
+    showNotification("Novo Visual!", "Sua skin foi atualizada com sucesso.");
   };
 
   const showNotification = (title: string, body: string = '') => {
@@ -152,6 +163,14 @@ export default function App() {
             }
         }
 
+        // --- MARKETING TRIGGER (FREE USERS) ---
+        // Se o usuário for Grátis, mostra o modal de marketing antes de voltar ao mapa
+        if (user.subscription === SubscriptionTier.FREE) {
+           setShowMarketingModal(true);
+           // O modal lidará com o fechamento (retornar ao Mapa)
+           return; 
+        }
+
         if (nextLevelId !== currentLevelId) {
           setScreen(Screen.MAP);
         } else {
@@ -168,6 +187,16 @@ export default function App() {
         setUser({ ...user, progress: newProgress, lastActive: Date.now() });
         setScreen(Screen.DASHBOARD);
     }
+  };
+
+  const closeMarketingModal = () => {
+     setShowMarketingModal(false);
+     setScreen(Screen.MAP); // Alterado de DASHBOARD para MAP para continuar o fluxo do jogo
+  };
+
+  const handleMarketingUpgrade = () => {
+    setShowMarketingModal(false);
+    setShowSubscriptionModal(true);
   };
 
   // --- Parent Gate Logic ---
@@ -215,13 +244,14 @@ export default function App() {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
-  if (!user) return null; // Should not happen
+  // Ensure user exists for other screens
+  if (!user) return null; 
 
   return (
     <div className="antialiased text-slate-800 font-sans">
       <NotificationToast 
-        msg={notification.title} 
-        subMsg={notification.body} 
+        msg={notification.title || ''} 
+        subMsg={notification.body || ''} 
         show={!!notification.title} 
       />
 
@@ -255,6 +285,8 @@ export default function App() {
           levelId={currentLevelId}
           onBack={() => setScreen(Screen.MAP)}
           onNextLevel={handleLevelComplete}
+          user={user}
+          onUpdateSkin={handleUpdateSkin}
         />
       )}
 
@@ -288,6 +320,13 @@ export default function App() {
       )}
 
       {/* Modals */}
+      {showMarketingModal && (
+        <MarketingModal 
+           onUpgrade={handleMarketingUpgrade}
+           onClose={closeMarketingModal}
+        />
+      )}
+
       {showParentGate && (
         <ParentGate 
           action={gateAction === 'upgrade' ? 'fazer compras' : 'acessar área dos pais'}

@@ -1,32 +1,30 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush } from 'lucide-react';
+import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LevelConfig, BlockType, BlockCategory, GridPosition, BLOCK_DEFINITIONS } from '../types';
+import { LevelConfig, BlockType, BlockCategory, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier } from '../types';
 import { LEVELS, CREATIVE_LEVEL } from '../constants';
 import { Button } from '../components/Button';
 import { Robot } from '../components/Robot';
 import { BlockIcon } from '../components/BlockIcon';
 import confetti from 'canvas-confetti';
+import { audioService } from '../services/AudioService';
 
 interface GameScreenProps {
   levelId: number | string;
   onBack: () => void;
   onNextLevel: (blocksUsed: number) => void;
+  user?: UserProfile | null; // Adicionado para checar permissão de skin
+  onUpdateSkin?: (skinId: string) => void; // Adicionado
 }
 
-// ... (Manter os componentes de tutorial MotionTutorialDemo, ActionTutorialDemo, TutorialDemo inalterados, pois são apenas visuais)
-// --- Componente de Animação do Tutorial de Movimento ---
+// ... (Manter os componentes de tutorial MotionTutorialDemo, ActionTutorialDemo, TutorialDemo inalterados)
 const MotionTutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
-
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => (prev + 1) % 3); // 0: Highlight Block, 1: Move Robot, 2: Reset
-    }, 1200);
-
+    const interval = setInterval(() => { setStep((prev) => (prev + 1) % 3); }, 1200);
     return () => clearInterval(interval);
   }, []);
-
   return (
     <div className="bg-slate-100 rounded-xl p-6 mb-6 flex flex-col md:flex-row items-center justify-center gap-8 border-2 border-slate-200 shadow-inner">
        <div className="flex flex-col gap-2 items-center">
@@ -35,22 +33,15 @@ const MotionTutorialDemo: React.FC = () => {
              <BlockIcon type={BlockType.MOVE_RIGHT} />
           </div>
        </div>
-
-       <div className="text-slate-300 hidden md:block">
-          <ArrowRight size={32} />
-       </div>
-
+       <div className="text-slate-300 hidden md:block"><ArrowRight size={32} /></div>
        <div className="flex flex-col items-center">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Resultado</span>
           <div className="bg-white p-2 rounded-lg border border-slate-200 grid grid-cols-2 gap-1 w-32 h-16 items-center relative overflow-hidden shadow-sm">
               <div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div>
               <div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div>
-              
               <motion.div 
                 className="absolute top-2 left-2 w-12 h-12 z-10"
-                animate={{
-                  x: step >= 1 ? 60 : 0, 
-                }}
+                animate={{ x: step >= 1 ? 60 : 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
               >
                 <div className="w-full h-full bg-blue-600 rounded-lg shadow-md border-2 border-blue-800 flex items-center justify-center relative">
@@ -59,28 +50,17 @@ const MotionTutorialDemo: React.FC = () => {
                 </div>
               </motion.div>
           </div>
-          <p className="text-xs text-slate-400 font-bold mt-2 h-4">
-            {step === 0 && "Ler Bloco..."}
-            {step === 1 && "Mover!"}
-            {step === 2 && "Pronto."}
-          </p>
+          <p className="text-xs text-slate-400 font-bold mt-2 h-4">{step === 0 && "Ler Bloco..."}{step === 1 && "Mover!"}{step === 2 && "Pronto."}</p>
        </div>
     </div>
   );
 };
-
-// --- Componente de Animação do Tutorial de Ação (Pintura) ---
 const ActionTutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
-
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => (prev + 1) % 4); // 0: Wait, 1: Paint, 2: Move Away, 3: Reset
-    }, 1000);
-
+    const interval = setInterval(() => { setStep((prev) => (prev + 1) % 4); }, 1000);
     return () => clearInterval(interval);
   }, []);
-
   return (
     <div className="bg-slate-100 rounded-xl p-6 mb-6 flex flex-col md:flex-row items-center justify-center gap-8 border-2 border-slate-200 shadow-inner">
        <div className="flex flex-col gap-2 items-center">
@@ -89,124 +69,164 @@ const ActionTutorialDemo: React.FC = () => {
              <BlockIcon type={BlockType.PAINT} />
           </div>
        </div>
-
-       <div className="text-slate-300 animate-pulse hidden md:block">
-          <ArrowRight size={32} />
-       </div>
-
+       <div className="text-slate-300 animate-pulse hidden md:block"><ArrowRight size={32} /></div>
        <div className="flex flex-col items-center">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">A Mágica</span>
           <div className="bg-white p-2 rounded-lg border border-slate-200 grid grid-cols-2 gap-1 w-32 h-16 items-center relative overflow-hidden shadow-sm">
-              {/* Célula Pintada */}
               <div className={`border-2 border-dashed border-slate-200 rounded h-full transition-colors duration-500 ${step >= 1 ? 'bg-purple-400/50 border-purple-300' : 'bg-slate-50/50'}`}></div>
               <div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div>
-              
               <motion.div 
                 className="absolute top-2 left-2 w-12 h-12 z-10"
-                animate={{
-                  x: step >= 2 ? 60 : 0, 
-                  scale: step === 1 ? 1.1 : 1 // Pulo ao pintar
-                }}
+                animate={{ x: step >= 2 ? 60 : 0, scale: step === 1 ? 1.1 : 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
               >
                 <div className="w-full h-full bg-blue-600 rounded-lg shadow-md border-2 border-blue-800 flex items-center justify-center relative">
                     <div className="w-8 h-4 bg-white rounded-md border border-blue-200"></div>
-                    {/* Efeito de Pincel */}
                     <AnimatePresence>
-                      {step === 1 && (
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1.5 }}
-                          exit={{ opacity: 0 }}
-                          className="absolute -bottom-2 text-purple-600"
-                        >
-                          <Brush size={16} fill="currentColor" />
-                        </motion.div>
-                      )}
+                      {step === 1 && (<motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1.5 }} exit={{ opacity: 0 }} className="absolute -bottom-2 text-purple-600"><Brush size={16} fill="currentColor" /></motion.div>)}
                     </AnimatePresence>
                 </div>
               </motion.div>
           </div>
-          <p className="text-xs text-slate-400 font-bold mt-2 h-4">
-            {step === 0 && "Preparar..."}
-            {step === 1 && "PINTAR!"}
-            {step === 2 && "Andar..."}
-            {step === 3 && "Olha a cor!"}
-          </p>
+          <p className="text-xs text-slate-400 font-bold mt-2 h-4">{step === 0 && "Preparar..."}{step === 1 && "PINTAR!"}{step === 2 && "Andar..."}{step === 3 && "Olha a cor!"}</p>
        </div>
     </div>
   );
 };
-
-// --- Componente de Animação do Tutorial de Controle ---
 const TutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
-
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => (prev + 1) % 4); // 0: Start, 1: Move 1, 2: Move 2, 3: Pause
-    }, 800);
-
+    const interval = setInterval(() => { setStep((prev) => (prev + 1) % 4); }, 800);
     return () => clearInterval(interval);
   }, []);
-
   return (
     <div className="bg-slate-100 rounded-xl p-6 mb-6 flex flex-col md:flex-row items-center justify-center gap-8 border-2 border-slate-200 shadow-inner">
        <div className="flex flex-col gap-2 items-center">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">O Código</span>
           <div className={`transform transition-all duration-300 flex flex-col items-center ${step === 0 ? 'scale-100 opacity-50' : 'scale-110 opacity-100'}`}>
-             <BlockIcon type={BlockType.REPEAT_3} />
-             <div className="h-4 w-1 bg-orange-300"></div>
-             <div className="transform scale-90 opacity-90">
-                <BlockIcon type={BlockType.MOVE_RIGHT} />
-             </div>
+             <BlockIcon type={BlockType.REPEAT_3} /><div className="h-4 w-1 bg-orange-300"></div><div className="transform scale-90 opacity-90"><BlockIcon type={BlockType.MOVE_RIGHT} /></div>
           </div>
        </div>
-
-       <div className="text-slate-300 animate-pulse hidden md:block">
-          <ArrowRight size={32} />
-       </div>
-
+       <div className="text-slate-300 animate-pulse hidden md:block"><ArrowRight size={32} /></div>
        <div className="flex flex-col items-center">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">A Ação</span>
           <div className="bg-white p-2 rounded-lg border border-slate-200 grid grid-cols-3 gap-1 w-48 h-16 items-center relative overflow-hidden shadow-sm">
-              <div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div>
-              <div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div>
-              <div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div>
-              
+              <div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div><div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div><div className="border-2 border-dashed border-slate-200 rounded h-full bg-slate-50/50"></div>
               <motion.div 
                 className="absolute top-2 left-2 w-12 h-12 z-10"
-                animate={{
-                  x: step === 0 ? 0 : step * 52, 
-                  opacity: step === 3 ? 0 : 1,
-                  scale: step === 3 ? 0.8 : 1
-                }}
+                animate={{ x: step === 0 ? 0 : step * 52, opacity: step === 3 ? 0 : 1, scale: step === 3 ? 0.8 : 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
-                <div className="w-full h-full bg-blue-500 rounded-lg shadow-md border-2 border-blue-700 flex items-center justify-center relative">
-                    <div className="w-8 h-4 bg-blue-900 rounded-md"></div>
-                    <div className="absolute -top-1 w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
-                </div>
+                <div className="w-full h-full bg-blue-500 rounded-lg shadow-md border-2 border-blue-700 flex items-center justify-center relative"><div className="w-8 h-4 bg-blue-900 rounded-md"></div><div className="absolute -top-1 w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div></div>
               </motion.div>
           </div>
-          <p className="text-xs text-slate-400 font-bold mt-2">
-            {step === 0 && "Prepara..."}
-            {step === 1 && "1. Andou"}
-            {step === 2 && "2. Andou"}
-            {step === 3 && "3. Andou!"}
-          </p>
+          <p className="text-xs text-slate-400 font-bold mt-2">{step === 0 && "Prepara..."}{step === 1 && "1. Andou"}{step === 2 && "2. Andou"}{step === 3 && "3. Andou!"}</p>
        </div>
     </div>
   );
 };
 
-export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextLevel }) => {
+// --- SKIN SELECTOR MODAL ---
+const SkinSelector: React.FC<{ 
+  currentSkin: string, 
+  onSelect: (id: string) => void, 
+  onClose: () => void,
+  userTier: SubscriptionTier
+}> = ({ currentSkin, onSelect, onClose, userTier }) => {
+  
+  const skins = [
+    { id: 'default', name: 'Sparky Clássico', desc: 'O original.', locked: false },
+    { id: 'ninja', name: 'Ninja do Código', desc: 'Rápido e silencioso.', locked: userTier === SubscriptionTier.FREE },
+    { id: 'fairy', name: 'Fada da Lógica', desc: 'Voando pelos bugs.', locked: userTier === SubscriptionTier.FREE },
+    { id: 'dino', name: 'Dino Dados', desc: 'Forte e destemido.', locked: userTier === SubscriptionTier.FREE },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+       <div className="bg-white rounded-[2rem] p-6 max-w-2xl w-full border-4 border-indigo-200 relative animate-popIn shadow-2xl">
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200"><XCircle /></button>
+          
+          <div className="text-center mb-6">
+             <h2 className="text-3xl font-heading text-indigo-900 mb-2 flex items-center justify-center gap-3">
+               <Shirt className="text-indigo-500" size={32} /> Guarda-Roupa do Robô
+             </h2>
+             <p className="text-slate-500 font-bold">Escolha o visual do seu personagem!</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             {skins.map(skin => (
+                <button 
+                  key={skin.id}
+                  disabled={skin.locked}
+                  onClick={() => onSelect(skin.id)}
+                  className={`
+                    relative group rounded-2xl p-4 border-4 transition-all duration-200 flex flex-col items-center gap-3
+                    ${currentSkin === skin.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 bg-slate-50 hover:bg-white hover:shadow-lg'}
+                    ${skin.locked ? 'opacity-80' : ''}
+                  `}
+                >
+                   {/* Preview Container */}
+                   <div className="w-20 h-20 relative">
+                      <Robot x={0} y={0} cellSize={80} skinId={skin.id} direction="right" />
+                      
+                      {skin.locked && (
+                         <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center backdrop-blur-[1px]">
+                            <Lock className="text-white drop-shadow-md" size={32} />
+                         </div>
+                      )}
+                      {currentSkin === skin.id && (
+                        <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 border-2 border-white shadow-sm z-20">
+                           <CheckCircle size={16} />
+                        </div>
+                      )}
+                   </div>
+
+                   <div className="text-center">
+                      <h3 className="font-heading text-sm text-slate-800 leading-tight">{skin.name}</h3>
+                      {skin.locked ? (
+                         <div className="text-[10px] font-bold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full mt-1 inline-flex items-center gap-1">
+                            <Crown size={10} /> VIP
+                         </div>
+                      ) : (
+                         <span className="text-[10px] text-slate-400">{skin.desc}</span>
+                      )}
+                   </div>
+                </button>
+             ))}
+          </div>
+
+          {userTier === SubscriptionTier.FREE && (
+             <div className="mt-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-4">
+                <div className="bg-yellow-100 p-3 rounded-full text-yellow-600">
+                   <Crown size={24} />
+                </div>
+                <div>
+                   <h4 className="font-bold text-yellow-900">Desbloqueie todas as skins!</h4>
+                   <p className="text-xs text-yellow-800">O plano Starter libera Ninja, Fada e Dino para você usar.</p>
+                </div>
+                {/* Nota: O botão de compra seria complexo aqui, então apenas informamos */}
+             </div>
+          )}
+
+          <div className="mt-6 flex justify-center">
+             <Button onClick={onClose} variant="primary" size="md" className="min-w-[150px]">
+                Pronto!
+             </Button>
+          </div>
+       </div>
+    </div>
+  );
+};
+
+
+export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextLevel, user, onUpdateSkin }) => {
   // --- LEVEL SETUP ---
   const level = levelId === 'creative' 
     ? CREATIVE_LEVEL 
     : (LEVELS.find(l => l.id === levelId) || LEVELS[0]);
 
   const isHackerMode = level.id === 45 || level.id === 'creative'; // 45 is the new Master level
+  const isWaterLevel = level.id === 16; // Nível "Pontes Divertidas"
 
   const [program, setProgram] = useState<BlockType[]>([]);
   const [robotState, setRobotState] = useState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' as 'left' | 'right' | 'up' | 'down' });
@@ -215,6 +235,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   const [gameStatus, setGameStatus] = useState<'idle' | 'running' | 'won' | 'lost'>('idle');
   const [paintedCells, setPaintedCells] = useState<GridPosition[]>([]);
   const [tutorialOpen, setTutorialOpen] = useState(true);
+  
+  // Skin Selector State
+  const [showSkinSelector, setShowSkinSelector] = useState(false);
+  
+  // Audio State
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+
+  // Drag State for Visual Feedback
+  const [draggingBlock, setDraggingBlock] = useState<BlockType | null>(null);
 
   // Timer State
   const [timeLeft, setTimeLeft] = useState<number | null>(level.timeLimit || null);
@@ -228,10 +258,51 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   const [hasSeenActionGuide, setHasSeenActionGuide] = useState(false);
 
   const abortController = useRef<AbortController | null>(null);
+  const programListRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Audio
+  useEffect(() => {
+    audioService.setMute(isMuted);
+  }, [isMuted]);
 
   useEffect(() => {
     resetGame();
+    // Speak Mission on Entry with better instruction mood
+    if (level.mission && !isMuted) {
+      setTimeout(() => {
+        audioService.speak(
+          `Missão ${level.id === 'creative' ? 'Criativa' : level.id}: ${level.mission}. ${level.tutorialMessage || ''}`,
+          'instruction',
+          () => setIsSpeaking(true),
+          () => setIsSpeaking(false)
+        );
+      }, 500); // Small delay to allow fade in
+    }
+    
+    return () => {
+      audioService.stop();
+    };
   }, [levelId]);
+
+  // Handle Level Success/Failure Audio
+  useEffect(() => {
+    if (gameStatus === 'won') {
+       audioService.playSfx('success');
+       const winPhrases = ["Conseguimos! Você é incrível!", "Vitória! Próximo nível, lá vamos nós!", "Uau, seu código funcionou perfeitamente!", "Nós somos uma ótima equipe!"];
+       const phrase = winPhrases[Math.floor(Math.random() * winPhrases.length)];
+       // Delay speech slightly to let SFX play
+       setTimeout(() => {
+           audioService.speak(phrase, 'happy', () => setIsSpeaking(true), () => setIsSpeaking(false));
+       }, 500);
+    } else if (gameStatus === 'lost') {
+       audioService.playSfx('error');
+       const failPhrases = ["Ops, batemos! Tente novamente.", "Quase lá. Vamos revisar o código?", "Minha bateria acabou ou bati. Preciso da sua ajuda!"];
+       const phrase = failPhrases[Math.floor(Math.random() * failPhrases.length)];
+       setTimeout(() => {
+           audioService.speak(phrase, 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
+       }, 500);
+    }
+  }, [gameStatus]);
 
   // Timer Logic
   useEffect(() => {
@@ -252,6 +323,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     return () => clearInterval(timer);
   }, [timeLeft, gameStatus, level.timeLimit]);
 
+  // Auto-scroll program list
+  useEffect(() => {
+    if (programListRef.current) {
+        programListRef.current.scrollTo({ top: programListRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [program.length]);
+
   const resetGame = () => {
     if (abortController.current) abortController.current.abort();
     setRobotState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' });
@@ -260,11 +338,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     setIsPlaying(false);
     setCurrentBlockIndex(null);
     setTimeLeft(level.timeLimit || null);
+    audioService.stop();
   };
 
   const addBlock = (type: BlockType) => {
     if (program.length < level.maxBlocks) {
-      setProgram([...program, type]);
+      setProgram(prev => [...prev, type]);
+      // Play POP sound
+      audioService.playSfx('pop');
+      // Speak block explanation lightly
+      const def = BLOCK_DEFINITIONS[type];
+      if (!isPlaying && !isMuted) {
+          // Curto delay para não sobrepor o POP
+          setTimeout(() => {
+              audioService.speak(def.label, 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
+          }, 150);
+      }
+    } else {
+        audioService.playSfx('error');
+        if (!isMuted) audioService.speak("Limite de blocos atingido!", 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
     }
   };
 
@@ -273,41 +365,66 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     const newProgram = [...program];
     newProgram.splice(index, 1);
     setProgram(newProgram);
+    audioService.playSfx('delete');
   };
 
   const handleDragStart = (e: React.DragEvent, type: BlockType) => {
     e.dataTransfer.setData('blockType', type);
+    e.dataTransfer.effectAllowed = 'copy';
+    setDraggingBlock(type);
+    audioService.playSfx('click');
+  };
+  
+  const handleDragEnd = () => {
+    setDraggingBlock(null);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     const type = e.dataTransfer.getData('blockType') as BlockType;
     if (type) addBlock(type);
+    setDraggingBlock(null);
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
   };
 
   // --- INTERPRETER ENGINE ---
   const runProgram = async (skipGuideCheck = false) => {
     if (program.length === 0) return;
     
-    // Tutorial Checks (Skip if hacker mode to flow better)
+    // Tutorial Checks
     const hasMotionBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.MOTION);
     if (hasMotionBlock && !hasSeenMotionGuide && !skipGuideCheck && !isHackerMode) {
         setShowMotionGuide(true);
+        audioService.speak("Veja como me mover com os blocos azuis!", 'excited', () => setIsSpeaking(true), () => setIsSpeaking(false));
         return;
     }
     const hasActionBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.ACTION);
     if (hasActionBlock && !hasSeenActionGuide && !skipGuideCheck && !isHackerMode) {
         setShowActionGuide(true);
+        audioService.speak("Hora de pintar o mundo com o bloco roxo!", 'excited', () => setIsSpeaking(true), () => setIsSpeaking(false));
         return;
     }
     const hasControlBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.CONTROL);
     if (hasControlBlock && !hasSeenControlGuide && !skipGuideCheck && !isHackerMode) {
         setShowControlGuide(true);
+        audioService.speak("Vamos repetir ações para ir mais longe!", 'excited', () => setIsSpeaking(true), () => setIsSpeaking(false));
         return;
     }
 
     resetGame();
     setIsPlaying(true);
     setGameStatus('running');
+    
+    // SFX de Start + Fala
+    audioService.playSfx('start');
+    if (!isMuted) {
+        setTimeout(() => {
+            audioService.speak("Executando código!", 'excited', () => setIsSpeaking(true), () => setIsSpeaking(false));
+        }, 300);
+    }
+
     abortController.current = new AbortController();
     const signal = abortController.current.signal;
 
@@ -333,7 +450,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
       if (idx >= program.length) return 0;
       const type = program[idx];
 
-      if (type === BlockType.REPEAT_2 || type === BlockType.REPEAT_3) {
+      if (type === BlockType.REPEAT_2 || type === BlockType.REPEAT_3 || type === BlockType.REPEAT_UNTIL) {
         return 1 + getBlockSize(idx + 1);
       }
 
@@ -409,6 +526,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
             
             if (isObstacle || isOutOfBounds) {
                 setRobotState({ x: currentX, y: currentY, dir: nextDir });
+                await wait(1000); // Delay antes de mostrar erro
                 setGameStatus('lost');
                 throw new Error('Collision');
             } else {
@@ -443,6 +561,32 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                 }
             }
             return; // O loop principal controlará o salto baseado em getBlockSize
+        }
+
+        // --- REPETIÇÃO ATÉ CHEGAR (WHILE NOT GOAL) ---
+        else if (type === BlockType.REPEAT_UNTIL) {
+             const bodyIdx = idx + 1;
+             let safety = 0;
+             const MAX_SAFETY = 200; // Evita loop infinito travando o browser
+             
+             // Loop enquanto não atingir o objetivo
+             while (
+                 (level.goalPos && (currentX !== level.goalPos.x || currentY !== level.goalPos.y)) && 
+                 safety < MAX_SAFETY &&
+                 !signal.aborted
+             ) {
+                 if (timeLeft !== null && timeLeft <= 0) throw new Error('Timeout');
+
+                 if (bodyIdx < program.length) {
+                     await executeBlock(bodyIdx);
+                 } else {
+                     break; // Loop vazio
+                 }
+                 safety++;
+             }
+
+             if (safety >= MAX_SAFETY) console.warn("Safety break: Infinite loop detected.");
+             return;
         }
 
         // --- CONDICIONAIS ---
@@ -510,6 +654,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
         // Verificação de Vitória
         if (level.goalPos) {
             if (currentX === level.goalPos.x && currentY === level.goalPos.y) {
+                await wait(1000); // Delay antes da vitória
                 setGameStatus('won');
                 confetti({ 
                     particleCount: 150, 
@@ -518,9 +663,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                     colors: isHackerMode ? ['#22c55e', '#000000'] : undefined 
                 });
             } else {
+                await wait(1000); // Delay antes da derrota (posição final errada)
                 setGameStatus('lost');
             }
         } else {
+            await wait(1000); // Delay antes da vitória (modo sem goalPos fixo)
             setGameStatus('won');
         }
 
@@ -576,17 +723,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   const isLowTime = timeLeft !== null && timeLeft <= 15;
   
   return (
-    <div className={`h-screen flex flex-col md:flex-row overflow-hidden ${bgClass} ${textClass}`}>
+    <div className={`flex flex-col md:flex-row md:h-screen md:overflow-hidden min-h-screen ${bgClass} ${textClass}`}>
       
       {/* HEADER (Mobile) */}
-      <div className={`md:hidden p-4 flex justify-between items-center z-20 shadow-md ${isHackerMode ? 'bg-green-900 text-green-100' : 'bg-indigo-600 text-white'}`}>
+      <div className={`md:hidden p-4 flex justify-between items-center z-20 shadow-md shrink-0 sticky top-0 ${isHackerMode ? 'bg-green-900 text-green-100' : 'bg-indigo-600 text-white'}`}>
          <button onClick={onBack}><ArrowLeft /></button>
          <span className="font-heading">{level.title}</span>
          <button onClick={() => setTutorialOpen(true)}><HelpCircle /></button>
       </div>
 
       {/* LEFT: TOOLBOX */}
-      <div className={`w-full md:w-64 border-r flex flex-col z-10 shadow-lg ${toolboxClass}`}>
+      <div className={`w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 ${toolboxClass} h-64 md:h-full`}>
          <div className={`hidden md:flex p-4 border-b items-center gap-3 ${isHackerMode ? 'bg-slate-900 border-slate-700' : 'bg-indigo-50 border-slate-100'}`}>
             <button onClick={onBack} className={`p-2 rounded-full transition ${isHackerMode ? 'hover:bg-slate-800 text-green-500' : 'hover:bg-white text-indigo-900'}`}>
                 <ArrowLeft size={20} />
@@ -595,6 +742,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                 <h2 className={`font-bold text-sm truncate ${isHackerMode ? 'text-green-400' : 'text-slate-800'}`}>{level.title}</h2>
                 <div className={`text-[10px] uppercase font-bold tracking-wider ${isHackerMode ? 'text-green-700' : 'text-slate-400'}`}>Nível {level.id}</div>
             </div>
+            
+            {/* Skin Selector Button */}
+            {!isHackerMode && (
+              <button onClick={() => setShowSkinSelector(true)} className="p-2 rounded-full hover:bg-black/5 mr-1 text-purple-500 relative group">
+                  <Shirt size={18} />
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Mudar Roupa</span>
+              </button>
+            )}
+
+            {/* Mute Button */}
+            <button onClick={toggleMute} className="p-2 rounded-full hover:bg-black/5">
+                {isMuted ? <VolumeX size={18} className="text-red-500" /> : <Volume2 size={18} className="text-blue-500" />}
+            </button>
          </div>
          
          {/* TIMER WIDGET (IF EXISTS) */}
@@ -627,16 +787,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                                   key={type}
                                   draggable={!isPlaying}
                                   onDragStart={(e) => handleDragStart(e, type)}
-                                  className="cursor-grab active:cursor-grabbing touch-none"
+                                  onDragEnd={handleDragEnd}
+                                  className={`cursor-grab active:cursor-grabbing touch-pan-y relative transition-all duration-200 ${draggingBlock === type ? 'z-50' : ''}`}
                                >
                                   <button 
                                       onClick={() => addBlock(type)}
                                       disabled={isPlaying}
-                                      className="w-full transition-all duration-200 hover:scale-105"
+                                      className={`
+                                        w-full transition-all duration-200
+                                        ${draggingBlock === type ? 'scale-110 shadow-xl -translate-y-1' : 'hover:scale-105 active:scale-95 active:bg-blue-50'}
+                                      `}
+                                      aria-label={`Adicionar bloco ${BLOCK_DEFINITIONS[type].label}`}
                                   >
                                       <BlockIcon 
                                         type={type} 
-                                        className={`${isHackerMode ? 'font-mono' : ''} active:!scale-110 active:!shadow-2xl active:!-translate-y-2 active:!border-b-4 active:z-10`} 
+                                        className={`${isHackerMode ? 'font-mono' : ''} ${draggingBlock === type ? 'border-yellow-400 ring-2 ring-yellow-400/50' : ''}`}
                                       />
                                   </button>
                                </div>
@@ -649,7 +814,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
       </div>
 
       {/* MIDDLE: WORKSPACE */}
-      <div className={`flex-1 flex flex-col relative ${workspaceClass}`}>
+      <div className={`flex-1 flex flex-col relative ${workspaceClass} min-h-[500px] md:min-h-0`}>
           
           {/* MISSION BANNER - FIXED ON TOP */}
           <div className={`
@@ -669,7 +834,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
 
           {/* Program List */}
           <div 
-            className="flex-1 p-4 overflow-y-auto content-start flex flex-wrap content-start gap-2"
+            ref={programListRef}
+            className="flex-1 p-4 overflow-y-auto content-start flex flex-wrap content-start gap-2 scroll-smooth"
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
           >
@@ -680,29 +846,37 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                   </div>
               )}
               
-              {program.map((block, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`relative group transition-all duration-300 ${currentBlockIndex === idx ? 'scale-110 z-10 ring-4 ring-yellow-400 rounded-lg shadow-xl' : ''}`}
-                  >
-                      <BlockIcon type={block} showLabel={false} className="w-12 h-12 justify-center" />
-                      {!isPlaying && (
-                          <button 
-                            onClick={() => removeBlock(idx)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow-sm scale-75 hover:scale-100"
-                          >
-                             <Trash2 size={12} />
-                          </button>
-                      )}
-                      <div className={`absolute -bottom-2 -right-2 text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border ${isHackerMode ? 'bg-green-900 text-green-400 border-green-700' : 'bg-slate-200 text-slate-500 border-white'}`}>
-                         {idx + 1}
-                      </div>
-                  </div>
-              ))}
+              <AnimatePresence mode="popLayout">
+                {program.map((block, idx) => (
+                    <motion.div 
+                      key={`${idx}-${block}`} // Use index combined with type for basic stability
+                      layout
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      className={`relative group transition-all duration-300 ${currentBlockIndex === idx ? 'scale-110 z-10 ring-4 ring-yellow-400 rounded-lg shadow-xl' : ''}`}
+                    >
+                        <BlockIcon type={block} showLabel={false} className="w-12 h-12 justify-center" />
+                        {!isPlaying && (
+                            <button 
+                              onClick={() => removeBlock(idx)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow-sm scale-75 hover:scale-100"
+                              aria-label="Remover bloco"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                        )}
+                        <div className={`absolute -bottom-2 -right-2 text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border ${isHackerMode ? 'bg-green-900 text-green-400 border-green-700' : 'bg-slate-200 text-slate-500 border-white'}`}>
+                          {idx + 1}
+                        </div>
+                    </motion.div>
+                ))}
+              </AnimatePresence>
           </div>
 
           {/* Controls */}
-          <div className={`p-4 border-t flex items-center justify-between shadow-lg z-20 ${isHackerMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <div className={`p-4 border-t flex items-center justify-between shadow-lg z-20 sticky bottom-0 md:static ${isHackerMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
               <div className={`text-xs font-bold ${isHackerMode ? 'text-green-600' : 'text-slate-400'}`}>
                  {program.length} / {level.maxBlocks} {isHackerMode ? 'CMDS' : 'Blocos'}
               </div>
@@ -734,12 +908,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
       </div>
 
       {/* RIGHT: PREVIEW */}
-      <div className={`w-full md:w-[400px] flex flex-col border-l relative ${isHackerMode ? 'bg-black border-green-900' : 'bg-slate-200 border-slate-300'}`}>
+      <div className={`w-full md:w-[400px] flex flex-col border-l relative shrink-0 ${isHackerMode ? 'bg-black border-green-900' : 'bg-slate-200 border-slate-300'} min-h-[500px] md:min-h-0`}>
           
           <div className="flex-1 relative overflow-hidden flex items-center justify-center p-8">
               {/* Grid Container */}
               <div 
-                className={`relative shadow-2xl rounded-xl overflow-hidden ${isHackerMode ? 'shadow-green-500/20' : ''}`}
+                className={`
+                    relative shadow-2xl rounded-xl overflow-hidden transition-all duration-300
+                    ${isHackerMode ? 'shadow-green-500/20' : ''}
+                    ${gameStatus === 'lost' ? 'ring-4 ring-red-400 border-red-500 animate-shake' : ''}
+                `}
                 style={{
                     width: level.gridSize * 60,
                     height: level.gridSize * 60,
@@ -766,11 +944,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                   {level.obstacles.map((obs, i) => (
                       <div 
                         key={i}
-                        className={`absolute rounded-lg shadow-lg border-b-4 ${isHackerMode ? 'bg-green-950 border-green-800' : 'bg-slate-700 border-slate-900'}`}
+                        className={`absolute rounded-lg shadow-lg border-b-4 
+                          ${isWaterLevel 
+                             ? 'bg-blue-400 border-blue-600' 
+                             : (isHackerMode ? 'bg-green-950 border-green-800' : 'bg-slate-700 border-slate-900')
+                          }
+                        `}
                         style={{ left: obs.x * 60 + 5, top: obs.y * 60 + 5, width: 50, height: 50 }}
                       >
-                          <div className={`w-full h-full opacity-50 ${isHackerMode ? '' : "bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]"}`}>
+                          <div className={`w-full h-full opacity-50 flex items-center justify-center ${isHackerMode ? '' : (isWaterLevel ? '' : "bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]")}`}>
                              {isHackerMode && <span className="text-[10px] text-green-800 font-mono p-1">ERR</span>}
+                             {isWaterLevel && <Waves size={24} className="text-blue-100 animate-pulse" />}
                           </div>
                       </div>
                   ))}
@@ -779,12 +963,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                   {paintedCells.map((cell, i) => (
                        <div 
                          key={`paint-${i}`}
-                         className={`absolute ${isHackerMode ? 'bg-green-500/30' : 'bg-purple-400/50'}`}
+                         className={`absolute 
+                            ${isWaterLevel 
+                                ? 'bg-amber-600/90 border-2 border-amber-800 bg-[url("https://www.transparenttextures.com/patterns/wood-pattern.png")]' 
+                                : (isHackerMode ? 'bg-green-500/30' : 'bg-purple-400/50')
+                            }
+                         `}
                          style={{ left: cell.x * 60, top: cell.y * 60, width: 60, height: 60 }}
                        />
                   ))}
 
-                  {/* Robot */}
+                  {/* Robot - Agora com SKIN ID */}
                   <Robot 
                     x={robotState.x} 
                     y={robotState.y} 
@@ -792,7 +981,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                     direction={robotState.dir}
                     isHappy={gameStatus === 'won'}
                     isSad={gameStatus === 'lost'}
-                    isTalking={tutorialOpen} // Robot animates when talking
+                    isTalking={isSpeaking || tutorialOpen}
+                    skinId={user?.activeSkin} // Passando a skin do usuário
                   />
               </div>
           </div>
@@ -832,6 +1022,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
               </div>
           )}
       </div>
+
+      {/* Skin Selector Modal */}
+      {showSkinSelector && user && onUpdateSkin && (
+        <SkinSelector 
+          currentSkin={user.activeSkin || 'default'} 
+          userTier={user.subscription}
+          onClose={() => setShowSkinSelector(false)}
+          onSelect={(id) => {
+             onUpdateSkin(id);
+             setShowSkinSelector(false);
+          }}
+        />
+      )}
 
       {/* Tutorial Modal */}
       {tutorialOpen && level.tutorialMessage && (

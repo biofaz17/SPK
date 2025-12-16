@@ -16,6 +16,7 @@ export enum BlockType {
   MOVE_RIGHT = 'MOVE_RIGHT',
   REPEAT_2 = 'REPEAT_2',
   REPEAT_3 = 'REPEAT_3',
+  REPEAT_UNTIL = 'REPEAT_UNTIL', // Novo: Repetir até o Objetivo
   PAINT = 'PAINT',
   START = 'START',
   IF_OBSTACLE = 'IF_OBSTACLE',
@@ -74,6 +75,7 @@ export interface UserProfile {
   subscription: SubscriptionTier;
   progress: UserProgress;
   settings: UserSettings;
+  activeSkin?: string; // NOVO: Skin selecionada (default, ninja, fairy, dino)
   isGuest?: boolean;
   lastActive?: number;
 }
@@ -106,6 +108,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, { category: BlockCategory, lab
   [BlockType.MOVE_RIGHT]: { category: BlockCategory.MOTION, label: 'Andar Dir.', icon: 'arrow-right' },
   [BlockType.REPEAT_2]: { category: BlockCategory.CONTROL, label: 'Repetir 2x', icon: 'repeat' },
   [BlockType.REPEAT_3]: { category: BlockCategory.CONTROL, label: 'Repetir 3x', icon: 'repeat' },
+  [BlockType.REPEAT_UNTIL]: { category: BlockCategory.CONTROL, label: 'Até Chegar', icon: 'infinity' },
   [BlockType.PAINT]: { category: BlockCategory.ACTION, label: 'Pintar Chão', icon: 'brush' },
   [BlockType.START]: { category: BlockCategory.EVENT, label: 'Ao Iniciar', icon: 'play' },
   [BlockType.IF_OBSTACLE]: { category: BlockCategory.DECISION, label: 'Se Obstáculo', icon: 'split' },

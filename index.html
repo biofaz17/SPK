@@ -3,20 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
     <title>Aventura de Código do Sparky</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
       body {
         font-family: 'Nunito', sans-serif;
         background-color: #f0f9ff;
-        user-select: none; /* Prevent text selection for game feel */
+        user-select: none;
         overscroll-behavior: none;
       }
       h1, h2, h3, .font-heading {
         font-family: 'Fredoka One', cursive;
       }
-      /* Custom scrollbar for block list */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -33,23 +38,30 @@
         animation: float 3s ease-in-out infinite;
       }
     </style>
-  <script type="importmap">
+
+    <!-- Import Map com Versões Estáveis (React 18) -->
+    <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
-    "canvas-confetti": "https://esm.sh/canvas-confetti@^1.9.4",
-    "react-hot-toast": "https://esm.sh/react-hot-toast@^2.6.0"
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.292.0?external=react,react-dom",
+    "framer-motion": "https://esm.sh/framer-motion@10.16.4?external=react,react-dom",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@1.6.0",
+    "react-hot-toast": "https://esm.sh/react-hot-toast@2.4.1?external=react,react-dom",
+    "react-dom/": "https://esm.sh/react-dom@^18.2.3/",
+    "react/": "https://esm.sh/react@^18.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0"
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
+    <!-- Carrega a aplicação -->
+    <script type="module" src="index.tsx"></script>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

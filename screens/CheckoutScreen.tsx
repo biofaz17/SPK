@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { SubscriptionTier, UserProfile } from '../types';
 import { MERCADO_PAGO_CONFIG, PLANS } from '../constants';
-import { ArrowLeft, Loader2, Lock, CheckCircle, Store, AlertTriangle, User, Mail, FileText, FlaskConical, ShieldCheck, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Loader2, Lock, CheckCircle, Store, AlertTriangle, User, Mail, FileText, ArrowRight, ShieldCheck, Building2 } from 'lucide-react';
 
 interface CheckoutScreenProps {
   user: UserProfile;
@@ -12,6 +11,11 @@ interface CheckoutScreenProps {
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'error';
+
+// Security: Basic Sanitization
+const sanitizeInput = (input: string) => {
+  return input.replace(/[<>'"/]/g, '').trim();
+};
 
 // Helper de Validação de CPF
 const isValidCPF = (cpf: string) => {
@@ -39,15 +43,16 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
   const [errorMessage, setErrorMessage] = useState('');
   
   // Data Collection State
-  // Tenta preencher com dados existentes se disponíveis, mas o nome do aluno geralmente não é o do pagador
   const [payerName, setPayerName] = useState(''); 
   const [payerEmail, setPayerEmail] = useState(user.parentEmail || '');
   const [payerDoc, setPayerDoc] = useState('');
   const [docError, setDocError] = useState('');
 
   // Flag para saber se precisamos coletar dados
-  // Se for Guest, ou se não tiver email de pai, ou se não tiver CPF válido salvo (simulação), pede dados.
   const [needsDataCollection, setNeedsDataCollection] = useState(true);
+
+  // Rate Limiting State
+  const [lastRequestTime, setLastRequestTime] = useState(0);
 
   // Get plan details
   const plan = PLANS[tier] || PLANS[SubscriptionTier.STARTER];
@@ -58,8 +63,6 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
   const MP_HOVER = "hover:bg-[#007EB5]";
 
   useEffect(() => {
-    // Simulação: Se tivéssemos dados reais do pagador salvos no perfil do usuário (ex: em um backend),
-    // verificaríamos aqui. Como user.name é o nome da criança, sempre pedimos o nome do responsável.
     if (user.parentEmail) {
         setPayerEmail(user.parentEmail);
     }
@@ -67,7 +70,6 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
-      // Mascara simples
       const masked = raw
         .replace(/\D/g, '')
         .replace(/(\d{3})(\d)/, '$1.$2')
@@ -82,7 +84,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
   const validateAndProceed = (e: React.FormEvent) => {
       e.preventDefault();
       
-      if (!isValidCPF(payerDoc)) {
+      // Sanitization
+      const cleanDoc = sanitizeInput(payerDoc);
+      
+      if (!isValidCPF(cleanDoc)) {
           setDocError('CPF inválido. Verifique os números.');
           return;
       }
@@ -91,12 +96,23 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
   };
 
   const handleGoToPayment = async () => {
+    // SECURITY: Client-side Rate Limiting (Simple Cooldown)
+    const now = Date.now();
+    if (now - lastRequestTime < 2000) {
+        // Prevent clicking faster than 2 seconds
+        return; 
+    }
+    setLastRequestTime(now);
+
     setStatus('loading');
     setErrorMessage('');
     
     try {
-      // Criação da Preferência de Checkout (Checkout Pro / Hosted)
-      // Isso retorna um link para onde redirecionamos o usuário
+      // SECURITY: Input Sanitization before sending payload
+      const safeName = sanitizeInput(payerName);
+      const safeEmail = sanitizeInput(payerEmail);
+      const safeDoc = payerDoc.replace(/\D/g, ''); // Numeric only for CPF
+
       const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
         method: 'POST',
         headers: {
@@ -107,29 +123,28 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
           items: [
             {
               id: tier,
-              title: `Assinatura Sparky - Plano ${plan.title}`,
-              description: `Acesso ao conteúdo ${plan.title} do Sparky App`,
+              title: `Sparky App - Plano ${plan.title} (Vitalício)`,
+              description: `Acesso completo e vitalício ao conteúdo ${plan.title}`,
               quantity: 1,
               currency_id: 'BRL',
               unit_price: plan.price
             }
           ],
           payer: {
-            name: payerName.split(' ')[0],
-            surname: payerName.split(' ').slice(1).join(' '),
-            email: payerEmail,
-            identification: { type: "CPF", number: payerDoc.replace(/\D/g, '') }
+            name: safeName.split(' ')[0],
+            surname: safeName.split(' ').slice(1).join(' '),
+            email: safeEmail,
+            identification: { type: "CPF", number: safeDoc }
           },
           back_urls: {
-            // Em produção, isso seria a URL do seu site hospedado
-            success: window.location.href, // App.tsx vai ler os params e tratar
+            success: window.location.href, 
             failure: window.location.href,
             pending: window.location.href
           },
           auto_return: "approved",
-          statement_descriptor: "SPARKY APP",
+          statement_descriptor: "SPARKY TI",
           payment_methods: {
-              excluded_payment_types: [{ id: "ticket" }], // Opcional: Excluir boleto se quiser só Pix/Cartão
+              excluded_payment_types: [{ id: "ticket" }], 
               installments: 12
           }
         })
@@ -142,7 +157,6 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
       }
 
       if (data.init_point) {
-        // REDIRECIONAMENTO REAL
         window.location.href = data.init_point; 
       } else {
         throw new Error('Link de pagamento não gerado');
@@ -155,10 +169,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
       
       if (isCors) {
           // MODO DE COMPATIBILIDADE (FALLBACK PARA DEMO SEM BACKEND)
-          // Como estamos rodando client-side puro, o navegador bloqueia chamadas diretas à API do MP por CORS.
-          // Em produção real, você chamaria seu backend, que chamaria o MP.
+          // Isso é apenas para a demonstração funcionar no navegador sem servidor proxy.
           setErrorMessage('Modo Simulação: Redirecionamento bloqueado pelo navegador (CORS).');
-          // Simulando sucesso imediato para o propósito do teste do usuário
           setTimeout(() => {
               onConfirm();
           }, 2000);
@@ -180,7 +192,6 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
          <h2 className="text-xl font-bold mb-2">Conectando ao Mercado Pago...</h2>
          <p className="text-slate-500 text-sm max-w-xs text-center">Você será redirecionado para um ambiente seguro.</p>
          
-         {/* Feedback visual caso caia no fallback de CORS */}
          {errorMessage && (
              <p className="mt-4 text-xs text-green-600 font-bold bg-green-50 p-2 rounded">
                  {errorMessage} <br/> Ativando plano automaticamente...
@@ -217,18 +228,35 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
            <div className="mt-12 mb-6">
               <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Você escolheu</h3>
               <div className="text-2xl font-heading text-slate-800 mb-1">Plano {plan.title}</div>
-              <div className="text-3xl font-black text-[#009EE3]">R$ {price} <span className="text-sm text-slate-400 font-normal">/mês</span></div>
+              <div className="text-3xl font-black text-[#009EE3]">R$ {price} <span className="text-sm text-slate-500 font-normal block mt-1">(Pagamento Único)</span></div>
            </div>
            <div className="flex-1">
              <ul className="space-y-3 text-sm text-slate-600">
+               <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-green-500 shrink-0 mt-0.5" /> <span>Acesso Vitalício</span></li>
+               <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-green-500 shrink-0 mt-0.5" /> <span>Sem mensalidades</span></li>
                <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-green-500 shrink-0 mt-0.5" /> <span>Ambiente criptografado</span></li>
-               <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-green-500 shrink-0 mt-0.5" /> <span>Pix, Cartão ou Boleto</span></li>
-               <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-green-500 shrink-0 mt-0.5" /> <span>Recibo por E-mail</span></li>
              </ul>
            </div>
+           
+           {/* Company Info */}
            <div className="mt-6 border-t border-slate-200 pt-4">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1"><Store size={14} /> Processado por</div>
-              <div className="font-bold text-sm text-slate-700">Mercado Pago</div>
+              <div className="flex flex-col gap-3">
+                  <div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-1"><Store size={14} /> Processado por</div>
+                      <div className="font-bold text-sm text-slate-700">Mercado Pago</div>
+                  </div>
+                  <div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-1"><Building2 size={14} /> Vendido por</div>
+                      <div className="font-bold text-sm text-slate-700">TekTok TI</div>
+                      <div className="text-[10px] text-slate-500">CNPJ: 14.773.860/0001-72</div>
+                      <a 
+                        href="mailto:robotix28@gmail.com?subject=Dúvida%20Pagamento" 
+                        className="text-[10px] text-blue-500 font-bold hover:underline mt-1 flex items-center gap-1"
+                      >
+                         <Mail size={10} /> Dúvidas? Envie um e-mail
+                      </a>
+                  </div>
+              </div>
            </div>
         </div>
 
@@ -241,7 +269,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                        <ShieldCheck className="text-[#009EE3]" /> Dados do Responsável
                    </h2>
-                   <p className="text-sm text-slate-500">Informe os dados do titular do pagamento para emissão da nota.</p>
+                   <p className="text-sm text-slate-500">Informe os dados do titular do pagamento para emissão da nota fiscal.</p>
                 </div>
                 
                 <form onSubmit={validateAndProceed} className="space-y-4 flex-1">
@@ -253,7 +281,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
                             type="text" 
                             required 
                             value={payerName} 
-                            onChange={e => setPayerName(e.target.value)} 
+                            onChange={e => setPayerName(sanitizeInput(e.target.value))} 
                             className="w-full border-2 border-slate-200 rounded-xl p-2.5 pl-10 outline-none focus:border-[#009EE3]" 
                             placeholder="Nome do titular do cartão/conta" 
                          />
@@ -268,7 +296,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
                             type="email" 
                             required 
                             value={payerEmail} 
-                            onChange={e => setPayerEmail(e.target.value)} 
+                            onChange={e => setPayerEmail(sanitizeInput(e.target.value))} 
                             className="w-full border-2 border-slate-200 rounded-xl p-2.5 pl-10 outline-none focus:border-[#009EE3]" 
                             placeholder="email@exemplo.com" 
                          />
@@ -325,9 +353,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
                 <div className="space-y-3">
                    <button 
                      onClick={handleGoToPayment} 
-                     className={`w-full ${MP_BLUE} ${MP_HOVER} text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2`}
+                     disabled={status === 'loading'}
+                     className={`w-full ${MP_BLUE} ${MP_HOVER} text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                    >
-                       <Lock size={18} /> Pagar R$ {price} com Mercado Pago
+                       <Lock size={18} /> Pagar R$ {price} (Único)
                    </button>
                    
                    <button onClick={() => setNeedsDataCollection(true)} className="w-full text-slate-400 hover:text-slate-600 text-sm font-bold underline">

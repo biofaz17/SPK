@@ -5,9 +5,24 @@ import { BlockType, LevelConfig, SubscriptionTier, BlockCategory } from './types
 // ========================================================================
 // CONFIGURAÇÃO DE PAGAMENTO (MERCADO PAGO)
 // ========================================================================
+// SECURITY WARNING: Em produção, JAMAIS exponha o ACCESS_TOKEN no frontend.
+// O correto é o Frontend chamar seu Backend, e o Backend chamar o Mercado Pago.
+// Para este ambiente de demonstração, usamos uma variável simulada ou fallback.
+
+const getEnvVar = (key: string, fallback: string) => {
+  // @ts-ignore - Em Vite/React moderno usa-se import.meta.env, em Node process.env
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+     // @ts-ignore
+     return import.meta.env[key];
+  }
+  return fallback;
+};
+
 export const MERCADO_PAGO_CONFIG = {
-  // Token de Teste (Sandbox)
-  ACCESS_TOKEN: "APP_USR-8166086179258406-121408-05022e7e0a81de5650dd39b508fe1fc7-92174155", 
+  // Access Token deve vir de variáveis de ambiente (.env)
+  // Fallback mantido APENAS para funcionamento da demo. 
+  // TODO: Remover fallback string em produção.
+  ACCESS_TOKEN: getEnvVar("VITE_MP_ACCESS_TOKEN", "APP_USR-8166086179258406-121408-05022e7e0a81de5650dd39b508fe1fc7-92174155"), 
   RECEIVER_NAME: "Sparky Educação Digital Ltda",
   RECEIVER_DOCUMENT: "00.000.000/0001-99", 
   STATEMENT_DESCRIPTOR: "SPARKYAPP", 
@@ -43,12 +58,12 @@ export const PLANS = {
 };
 
 // ========================================================================
-// LISTA DE NÍVEIS COM DIFICULDADE PROGRESSIVA (45 NÍVEIS)
+// LISTA DE NÍVEIS COM DIFICULDADE PROGRESSIVA (46 NÍVEIS)
 // ========================================================================
 
 export const LEVELS: LevelConfig[] = [
   // ========================================================================
-  // MUNDO 1: A BASE LÓGICA (GRÁTIS) - Níveis 1 a 15
+  // MUNDO 1: A BASE LÓGICA (GRÁTIS) - Níveis 1 a 16
   // Foco: Sequência, Orientação Espacial e Loops Simples
   // ========================================================================
   {
@@ -288,13 +303,28 @@ export const LEVELS: LevelConfig[] = [
     ageGroup: '8-10',
     requiredSubscription: SubscriptionTier.FREE
   },
+  {
+    id: 16,
+    title: "Pontes Divertidas",
+    mission: "Conecte as ilhas com blocos!",
+    gridSize: 4,
+    startPos: { x: 0, y: 3 },
+    goalPos: { x: 3, y: 0 },
+    obstacles: [{ x: 1, y: 3 }, { x: 2, y: 2 }],
+    maxBlocks: 6,
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.PAINT],
+    tutorialMessage: "Conecte as ilhas com blocos!",
+    explanation: "Você construiu uma ótima ponte!",
+    ageGroup: '5-7',
+    requiredSubscription: SubscriptionTier.FREE
+  },
 
   // ========================================================================
-  // MUNDO 2: A FLORESTA DE CORES (STARTER) - Níveis 16 a 30
+  // MUNDO 2: A FLORESTA DE CORES (STARTER) - Níveis 17 a 31
   // Foco: Ação (Pintar), Reconhecimento de Padrões e Debugging
   // ========================================================================
   {
-    id: 16,
+    id: 17,
     title: "O Pincel Mágico",
     mission: "Bem-vindo à Floresta! Pinte o chão marcado.",
     gridSize: 4,
@@ -310,7 +340,7 @@ export const LEVELS: LevelConfig[] = [
     introData: { title: "Ação", description: "Programas executam tarefas, como pintar, apagar ou enviar mensagens.", category: BlockCategory.ACTION }
   },
   {
-    id: 17,
+    id: 18,
     title: "Marcando Território",
     mission: "Pinte os dois cantos da sala.",
     gridSize: 5,
@@ -325,7 +355,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 18,
+    id: 19,
     title: "Linha de Montagem",
     mission: "Pinte 3 blocos em sequência usando um loop.",
     gridSize: 6,
@@ -340,7 +370,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 19,
+    id: 20,
     title: "Padrão Tracejado",
     mission: "Pinte um, pule um. Repita.",
     gridSize: 7,
@@ -355,7 +385,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 20,
+    id: 21,
     title: "O Jardineiro",
     mission: "Plante (pinte) flores em volta da pedra central.",
     gridSize: 5,
@@ -370,7 +400,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 21,
+    id: 22,
     title: "Labirinto Invisível",
     mission: "Pinte o caminho correto para não se perder na volta.",
     gridSize: 6,
@@ -385,7 +415,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 22,
+    id: 23,
     title: "Padrão Xadrez",
     mission: "Pinte como um tabuleiro de xadrez numa linha.",
     gridSize: 6,
@@ -400,7 +430,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 23,
+    id: 24,
     title: "Contornando o Lago",
     mission: "Dê a volta no lago e pinte os 4 cantos.",
     gridSize: 6,
@@ -414,7 +444,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 24,
+    id: 25,
     title: "A Ponte de Cores",
     mission: "Construa uma ponte (pinte) para atravessar o abismo imaginário.",
     gridSize: 7,
@@ -428,7 +458,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 25,
+    id: 26,
     title: "Slalom Gigante",
     mission: "Desvie das árvores e pinte a neve ao passar.",
     gridSize: 8,
@@ -442,7 +472,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 26,
+    id: 27,
     title: "Depuração (Debug)",
     mission: "O caminho parece óbvio, mas tem uma pegadinha. Atenção!",
     gridSize: 6,
@@ -457,7 +487,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 27,
+    id: 28,
     title: "A Espiral Pintada",
     mission: "Entre na espiral pintando o caminho.",
     gridSize: 7,
@@ -476,7 +506,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 28,
+    id: 29,
     title: "Economia de Tinta",
     mission: "Chegue ao fim, mas você só pode usar o bloco 'Pintar' 2 vezes.",
     gridSize: 6,
@@ -491,7 +521,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 29,
+    id: 30,
     title: "Labirinto Espelhado",
     mission: "O mapa é simétrico. Use isso a seu favor.",
     gridSize: 7,
@@ -511,7 +541,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.STARTER
   },
   {
-    id: 30,
+    id: 31,
     title: "Desafio Final Starter",
     mission: "Atravesse, pinte o centro, e saia pelo outro lado.",
     gridSize: 9,
@@ -530,11 +560,11 @@ export const LEVELS: LevelConfig[] = [
   },
 
   // ========================================================================
-  // MUNDO 3: O HACKER (PRO) - Níveis 31 a 45
+  // MUNDO 3: O HACKER (PRO) - Níveis 32 a 46
   // Foco: Lógica Condicional (IA), Abstração e Algoritmos Complexos
   // ========================================================================
   {
-    id: 31,
+    id: 32,
     title: "O Sensor Inteligente",
     mission: "Use o 'Se Obstáculo' para não bater na parede invisível.",
     gridSize: 5,
@@ -550,7 +580,7 @@ export const LEVELS: LevelConfig[] = [
     introData: { title: "Condicionais", description: "O código se adapta ao mundo: SE algo acontecer, FAÇA isso.", category: BlockCategory.DECISION }
   },
   {
-    id: 32,
+    id: 33,
     title: "Decisão Binária",
     mission: "Se tiver parede, vá para cima. Senão, vá para a direita.",
     gridSize: 6,
@@ -565,7 +595,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 33,
+    id: 34,
     title: "Corredor Incerto",
     mission: "O caminho muda toda vez (na lógica). Crie um código genérico.",
     gridSize: 6,
@@ -579,7 +609,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 34,
+    id: 35,
     title: "Patrulha",
     mission: "Ande até achar uma parede, então vire.",
     gridSize: 5,
@@ -594,7 +624,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 35,
+    id: 36,
     title: "Ziguezague Inteligente",
     mission: "Suba a escada, mas verifique cada degrau.",
     gridSize: 6,
@@ -610,7 +640,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 36,
+    id: 37,
     title: "O Buscador",
     mission: "Use 'Se Caminho Livre' para achar a saída.",
     gridSize: 7,
@@ -625,7 +655,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 37,
+    id: 38,
     title: "Labirinto de Decisão",
     mission: "Esquerda ou Direita? O código deve decidir.",
     gridSize: 5,
@@ -639,7 +669,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 38,
+    id: 39,
     title: "Loop Infinito?",
     mission: "Cuidado para não ficar preso num loop eterno. Chegue ao fim.",
     gridSize: 6,
@@ -654,7 +684,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 39,
+    id: 40,
     title: "O Campo Minado Lógico",
     mission: "Desvie das minas usando apenas lógica, sem saber onde elas estão (simulação).",
     gridSize: 8,
@@ -668,7 +698,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 40,
+    id: 41,
     title: "Hacking da Matrix",
     mission: "O sistema está tentando te bloquear. Use condicionais aninhadas.",
     gridSize: 7,
@@ -683,7 +713,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 41,
+    id: 42,
     title: "Algoritmo de Busca",
     mission: "Encontre o caminho livre em um grid denso.",
     gridSize: 6,
@@ -699,7 +729,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 42,
+    id: 43,
     title: "Lógica Inversa",
     mission: "Chegue ao fim, mas seus controles estão invertidos! (Simulação mental)",
     gridSize: 6,
@@ -713,7 +743,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 43,
+    id: 44,
     title: "Loop com Condição",
     mission: "Avance enquanto não houver parede. Se houver, vire.",
     gridSize: 7,
@@ -726,7 +756,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 44,
+    id: 45,
     title: "O Labirinto Final",
     mission: "Use todo o seu conhecimento para escapar.",
     gridSize: 9,
@@ -742,7 +772,7 @@ export const LEVELS: LevelConfig[] = [
     requiredSubscription: SubscriptionTier.PRO
   },
   {
-    id: 45,
+    id: 46,
     title: "Desafio do Mestre Codificador",
     mission: "A prova final. Crie um algoritmo inteligente que navegue pela escada traiçoeira.",
     gridSize: 9,
@@ -751,11 +781,13 @@ export const LEVELS: LevelConfig[] = [
     obstacles: [
        // Padrão de escada que exige "Se bloqueado para a direita, vá para baixo, senão direita"
        {x:1,y:0}, {x:2,y:1}, {x:3,y:2}, {x:4,y:3}, {x:5,y:4}, {x:6,y:5}, {x:7,y:6}, {x:8,y:7},
-       {x:0,y:2}, {x:2,y:4}, {x:4,y:6}, {x:6,y:8} // Bloqueios extras para forçar lógica
+       // Bloqueios extras APENAS para forçar a lógica de "Se não der direita, vai para baixo"
+       // Removidos os obstáculos de "baixo" (ex: 0,2) para permitir que o sensor funcione quando virado para baixo.
+       {x:4,y:6}, {x:6,y:8} 
     ],
-    maxBlocks: 8, // Exige Loop + Condicional aninhada (Repetir { Se Parede Baixo Senão Dir })
-    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.ELSE, BlockType.REPEAT_3],
-    tutorialMessage: "Dica de Mestre: Use Repetição envolvendo uma decisão 'Se... Senão'.",
+    maxBlocks: 8, // Permite: Repetir_Até [ Se Obs Baixo Senão Dir ] (5 blocos)
+    availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.ELSE, BlockType.REPEAT_UNTIL],
+    tutorialMessage: "Dica de Mestre: Coloque o bloco 'Se Obstáculo' DENTRO do 'Até Chegar'. O código deve decidir a cada passo!",
     explanation: "VOCÊ É O MESTRE SUPREMO DO CÓDIGO! 🏆",
     ageGroup: '11-14',
     requiredSubscription: SubscriptionTier.PRO,
@@ -773,7 +805,7 @@ export const CREATIVE_LEVEL: LevelConfig = {
   maxBlocks: 50,
   availableBlocks: [
     BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.MOVE_LEFT, BlockType.MOVE_RIGHT,
-    BlockType.REPEAT_2, BlockType.REPEAT_3,
+    BlockType.REPEAT_2, BlockType.REPEAT_3, BlockType.REPEAT_UNTIL,
     BlockType.PAINT,
     BlockType.IF_OBSTACLE, BlockType.IF_PATH, BlockType.ELSE_IF, BlockType.ELSE
   ],

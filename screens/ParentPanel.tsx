@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { UserProfile, SubscriptionTier, UserSettings } from '../types';
 import { PLANS } from '../constants';
 import { 
   BarChart3, Clock, Brain, ArrowLeft, User, CreditCard, 
-  Settings, LogOut, ShieldCheck, CheckCircle, AlertCircle, Volume2, Music
+  Settings, LogOut, ShieldCheck, CheckCircle, AlertCircle, Volume2, Music,
+  Building2, Mail
 } from 'lucide-react';
 
 interface ParentPanelProps {
@@ -223,7 +223,7 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                          <p className={`text-sm ${isFree ? 'text-slate-500' : 'text-indigo-100'}`}>
                             {isFree 
                                ? 'Acesso limitado aos níveis iniciais.' 
-                               : `Renovação automática em ${new Date(Date.now() + 2592000000).toLocaleDateString('pt-BR')}`
+                               : 'Acesso Vitalício Garantido. Sem pagamentos futuros.'
                             }
                          </p>
                       </div>
@@ -234,7 +234,7 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                          </Button>
                       ) : (
                          <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/30 text-sm font-bold">
-                            Assinatura Ativa
+                            Assinatura Vitalícia
                          </div>
                       )}
                    </div>
@@ -242,16 +242,13 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
 
                 {!isFree && (
                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                      <h4 className="font-bold text-slate-800 mb-4">Método de Pagamento</h4>
-                      <div className="flex items-center gap-4 text-slate-600 bg-slate-50 p-4 rounded-xl">
-                         <CreditCard size={24} />
-                         <span className="flex-1 font-mono">•••• •••• •••• 4242</span>
-                         <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">MERCADO PAGO</span>
+                      <h4 className="font-bold text-slate-800 mb-4">Informações de Pagamento</h4>
+                      <div className="flex items-center gap-4 text-slate-600 bg-green-50 p-4 rounded-xl border border-green-100">
+                         <CheckCircle className="text-green-500" size={24} />
+                         <span className="flex-1 font-bold">Pagamento Único Realizado</span>
+                         <span className="text-xs font-bold bg-green-200 text-green-800 px-2 py-1 rounded">VITALÍCIO</span>
                       </div>
-                      <div className="mt-4 flex gap-4">
-                         <button className="text-indigo-600 font-bold text-sm hover:underline">Atualizar Cartão</button>
-                         <button className="text-red-500 font-bold text-sm hover:underline">Cancelar Assinatura</button>
-                      </div>
+                      <p className="text-xs text-slate-400 mt-2">Você tem acesso permanente a todo o conteúdo do plano {plan.title}.</p>
                    </div>
                 )}
 
@@ -261,7 +258,7 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                          <AlertCircle className="text-yellow-600 flex-shrink-0" />
                          <div>
                             <h4 className="font-bold text-yellow-800">Liberar Modo Criativo?</h4>
-                            <p className="text-sm text-yellow-700 mt-1">O plano Starter libera criações ilimitadas e remove anúncios.</p>
+                            <p className="text-sm text-yellow-700 mt-1">O plano Starter libera criações ilimitadas com um único pagamento.</p>
                          </div>
                       </div>
                    </div>
@@ -274,7 +271,7 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
              <div className="max-w-xl animate-fadeIn">
                 <h2 className="text-2xl font-bold text-slate-800 mb-6">Preferências do App</h2>
                 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
                    <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                          <div className="bg-indigo-100 p-2 rounded-full text-indigo-600">
@@ -306,6 +303,26 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                         onToggle={() => toggleSetting('musicEnabled')} 
                       />
                    </div>
+                </div>
+
+                {/* Company & Support Section */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Sobre o Desenvolvedor</h3>
+                    <div className="flex items-start gap-4">
+                        <div className="bg-slate-100 p-3 rounded-full">
+                            <Building2 className="text-slate-600" size={24} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-slate-800">TekTok TI</h4>
+                            <p className="text-xs text-slate-500 mb-1">CNPJ: 14.773.860/0001-72</p>
+                            <a 
+                                href="mailto:robotix28@gmail.com?subject=Suporte%20Sparky" 
+                                className="inline-flex items-center gap-1.5 text-sm text-indigo-600 font-bold hover:underline mt-2 bg-indigo-50 px-3 py-1.5 rounded-lg transition"
+                            >
+                                <Mail size={14} /> Fale com nosso Suporte
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="mt-8">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowRight, ArrowLeft, ArrowUp, ArrowDown, Repeat, Play, Brush, Split, CornerDownRight, GitBranch, GitMerge } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ArrowUp, ArrowDown, Repeat, Play, Brush, Split, CornerDownRight, GitBranch, GitMerge, Flag } from 'lucide-react';
 import { BlockType, BlockCategory, BLOCK_DEFINITIONS } from '../types';
 
 interface BlockIconProps {
@@ -33,6 +33,7 @@ export const BlockIcon: React.FC<BlockIconProps> = ({ type, className = "", show
       case BlockType.MOVE_DOWN: return <ArrowDown size={size} strokeWidth={3} />;
       case BlockType.REPEAT_2: return <Repeat size={size} strokeWidth={3} />;
       case BlockType.REPEAT_3: return <Repeat size={size} strokeWidth={3} />;
+      case BlockType.REPEAT_UNTIL: return <Flag size={size} strokeWidth={3} />;
       case BlockType.PAINT: return <Brush size={size} strokeWidth={3} />;
       case BlockType.START: return <Play size={size} strokeWidth={3} fill="currentColor" />;
       case BlockType.IF_OBSTACLE: return <Split size={size} strokeWidth={3} />;
