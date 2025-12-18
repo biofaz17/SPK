@@ -1,15 +1,17 @@
 
 import React from 'react';
 import { Button } from '../components/Button';
-import { Map, Palette, UserCircle, Star, Lock, Trophy, Zap, Crown, Instagram, ShieldCheck, Mail } from 'lucide-react';
+import { Map, Palette, UserCircle, Star, Lock, Trophy, Zap, Crown, Instagram, ShieldCheck, Mail, ArrowLeft } from 'lucide-react';
 import { UserProgress } from '../types';
 import { SparkyLogo } from '../components/SparkyLogo';
+import { StatusIndicator } from '../components/StatusIndicator';
 
 interface DashboardProps {
   progress: UserProgress;
   onPlayMission: () => void;
   onCreativeMode: () => void;
   onOpenParents: () => void;
+  onBackToHub: () => void; // NOVO: Voltar ao Hub
 }
 
 type AchievementTier = 'common' | 'rare' | 'epic' | 'legendary' | 'secret';
@@ -28,7 +30,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   progress, 
   onPlayMission, 
   onCreativeMode, 
-  onOpenParents 
+  onOpenParents,
+  onBackToHub
 }) => {
   
   const currentYear = new Date().getFullYear();
@@ -130,13 +133,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Header */}
       <header className="p-6 flex flex-col md:flex-row justify-between items-center max-w-6xl mx-auto w-full gap-4 z-10">
         
-        {/* Brand Logo */}
-        <div className="bg-white px-6 py-2 rounded-full border-4 border-white shadow-xl transform hover:scale-105 transition cursor-pointer" onClick={() => alert("Você encontrou um segredo? (WIP)")}>
-           <SparkyLogo size="sm" showText={true} />
+        {/* Brand Logo & Back Button */}
+        <div className="flex items-center gap-4">
+            <button 
+              onClick={onBackToHub} 
+              className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition"
+              title="Voltar para a Plataforma"
+            >
+               <ArrowLeft size={24} />
+            </button>
+            <div className="bg-white px-6 py-2 rounded-full border-4 border-white shadow-xl transform hover:scale-105 transition cursor-pointer">
+               <SparkyLogo size="sm" showText={true} />
+            </div>
         </div>
 
         {/* User Stats Bar */}
-        <div className="flex gap-3 bg-indigo-900/40 backdrop-blur-md p-2 rounded-full pr-2 border border-white/10 shadow-lg">
+        <div className="flex gap-3 bg-indigo-900/40 backdrop-blur-md p-2 rounded-full pr-2 border border-white/10 shadow-lg items-center">
+           <StatusIndicator className="mr-1 hidden sm:flex" />
+
            <div className="bg-white px-5 py-2 rounded-full flex items-center gap-2 shadow-inner border-2 border-slate-100">
               <Star className="text-yellow-500 fill-yellow-500 filter drop-shadow-sm" size={20} />
               <span className="font-black text-slate-800 text-xl">{progress.stars}</span>
@@ -230,7 +244,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </main>
 
-      {/* Footer - Abaixo da Sala de Troféus */}
+      {/* Footer */}
       <footer className="w-full py-8 mt-12 bg-slate-900 text-slate-400 text-center z-10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center gap-y-3 gap-x-6 text-[11px] md:text-xs font-bold px-4">
            

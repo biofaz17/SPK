@@ -3,7 +3,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <title>Aventura de Código do Sparky</title>
     
@@ -17,39 +17,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-      body, html, #root {
-        height: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden; /* Trava o scroll da página */
-        position: fixed; /* Fixa o corpo para evitar bounce no iOS */
-        inset: 0;
-      }
       body {
         font-family: 'Nunito', sans-serif;
         background-color: #f0f9ff;
         user-select: none;
-        -webkit-user-select: none;
         overscroll-behavior: none;
-        touch-action: none; /* Desabilita toques padrão globais, reabilita em containers específicos */
       }
-      /* Habilita scroll e toque onde necessário */
-      .scrollable-y {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        touch-action: pan-y;
-      }
-      .scrollable-x {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        touch-action: pan-x;
-      }
-      /* Elementos clicáveis */
-      button, a, input {
-        touch-action: manipulation;
-      }
-      
       h1, h2, h3, .font-heading {
         font-family: 'Fredoka One', cursive;
       }

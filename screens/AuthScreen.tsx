@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { UserProfile, SubscriptionTier } from '../types';
-import { User, Lock, Gamepad2, PlayCircle, LogIn, UserPlus } from 'lucide-react';
+import { User, Lock, Gamepad2, LogIn, UserPlus, KeyRound, Mail } from 'lucide-react';
 import { SparkyLogo } from '../components/SparkyLogo';
-import toast from 'react-hot-toast';
 
 interface AuthScreenProps {
   onLogin: (user: UserProfile) => void;
@@ -14,73 +13,65 @@ type AuthMode = 'login' | 'register';
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('register');
-  
-  // Form States
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [age, setAge] = useState('');
   const [parentEmail, setParentEmail] = useState('');
-  
-  const [error, setError] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // Helper para gerar ID consistente (Simulando Backend)
-  const generateUserId = (username: string) => {
-      return 'user_' + username.toLowerCase().trim().replace(/\s+/g, '');
-  };
+  // Normaliza o ID para busca consistente
+  const generateUserId = (userName: string) => `user_${userName.trim().toLowerCase().replace(/\s/g, '_')}`;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setErrorMsg('');
 
     const userId = generateUserId(name);
-    const storageKey = `sparky_user_${userId}`;
-    const storedData = localStorage.getItem(storageKey);
+    const savedData = localStorage.getItem(`sparky_user_${userId}`);
 
-    if (!storedData) {
-        setError('Usuário não encontrado. Verifique o nome ou crie uma conta.');
-        return;
-    }
-
-    try {
-        const user: UserProfile = JSON.parse(storedData);
-        
-        // Verificação de Senha (Simples para Demo)
-        if (user.password && user.password !== password) {
-            setError('Senha incorreta.');
-            return;
+    if (savedData) {
+        try {
+            const user: UserProfile = JSON.parse(savedData);
+            if (user.password === password) {
+                onLogin({ ...user, lastActive: Date.now() });
+            } else {
+                setErrorMsg('Senha incorreta! Peça ajuda aos seus pais se esqueceu.');
+            }
+        } catch (err) {
+            setErrorMsg('Erro ao carregar dados. Tente criar uma nova conta.');
         }
-
-        // Login Sucesso
-        onLogin({ ...user, lastActive: Date.now() });
-    } catch (err) {
-        setError('Erro ao ler dados do usuário.');
+    } else {
+        setErrorMsg('Usuário não encontrado. Verifique o nome ou crie uma conta nova!');
     }
   };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setErrorMsg('');
 
-    const userId = generateUserId(name);
-    const storageKey = `sparky_user_${userId}`;
-
-    // Verifica se já existe
-    if (localStorage.getItem(storageKey)) {
-        setError('Este nome de usuário já existe. Tente outro ou faça login.');
+    if (name.length < 3) {
+        setErrorMsg('O nome deve ter pelo menos 3 letras.');
         return;
     }
 
     if (password.length < 4) {
-        setError('A senha deve ter pelo menos 4 caracteres.');
+        setErrorMsg('Crie uma senha de pelo menos 4 números ou letras.');
         return;
     }
 
-    // Cria novo usuário
+    const userId = generateUserId(name);
+    
+    // Verifica duplicidade
+    if (localStorage.getItem(`sparky_user_${userId}`)) {
+        setErrorMsg('Este nome já está em uso! Tente fazer login ou use outro nome.');
+        return;
+    }
+
     const newUser: UserProfile = {
       id: userId,
       name: name.trim(),
-      password: password, // Persiste a senha
-      parentEmail: parentEmail || 'pai@exemplo.com',
+      password: password,
+      parentEmail: parentEmail,
       age: parseInt(age) || 7,
       subscription: SubscriptionTier.FREE, 
       progress: {
@@ -94,21 +85,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         soundEnabled: true,
         musicEnabled: true
       },
+      activeSkin: 'default',
       isGuest: false,
       lastActive: Date.now()
     };
-
-    // Salva "no banco" (LocalStorage)
-    localStorage.setItem(storageKey, JSON.stringify(newUser));
     
-    // Autentica
+    // Persistência imediata
+    localStorage.setItem(`sparky_user_${userId}`, JSON.stringify(newUser));
+    localStorage.setItem('sparky_last_user_id', userId);
+    
     onLogin(newUser);
   };
 
   const handleGuestPlay = () => {
     const guestUser: UserProfile = {
-      id: 'guest_' + Date.now(),
-      name: 'Visitante',
+      id: 'guest_' + Math.random().toString(36).substr(2, 9),
+      name: 'Explorador Convidado',
       parentEmail: '',
       age: 7, 
       subscription: SubscriptionTier.FREE,
@@ -128,131 +120,114 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     onLogin(guestUser);
   };
 
-  const toggleMode = (mode: AuthMode) => {
-      setAuthMode(mode);
-      setError('');
-      setPassword('');
-  };
-
   return (
-    <div className="min-h-full w-full bg-indigo-500 flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] py-12">
-      <div className="bg-white rounded-[2.5rem] p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col">
-        {/* Decor */}
-        <div className={`absolute top-0 left-0 w-full h-4 bg-gradient-to-r transition-colors duration-500 from-blue-400 via-purple-400 to-yellow-400`} />
+    <div className="min-h-screen bg-indigo-600 flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+      <div className="bg-white rounded-[2.5rem] p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden border-4 border-indigo-400">
         
-        <div className="flex flex-col items-center mb-6">
-           <div className="transform hover:scale-105 transition-transform duration-300">
-             <SparkyLogo size="lg" />
-           </div>
+        <div className="flex flex-col items-center mb-8">
+           <SparkyLogo size="lg" />
+           <p className="text-slate-400 text-sm font-bold mt-2">Sua aventura começa aqui!</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
+        <div className="flex bg-slate-100 p-1 rounded-2xl mb-8">
             <button 
-                onClick={() => toggleMode('login')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => { setAuthMode('login'); setErrorMsg(''); }}
+                className={`flex-1 py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-400'}`}
             >
-                <LogIn size={16} /> Entrar
+                <LogIn size={18} /> ENTRAR
             </button>
             <button 
-                onClick={() => toggleMode('register')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => { setAuthMode('register'); setErrorMsg(''); }}
+                className={`flex-1 py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-400'}`}
             >
-                <UserPlus size={16} /> Criar Conta
+                <UserPlus size={18} /> CRIAR CONTA
             </button>
         </div>
 
-        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister} className="space-y-4">
-          
+        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister} className="space-y-5">
           <div>
-            <label className="block text-sm font-bold text-slate-600 mb-1 ml-2">Nome de Usuário (Criança)</label>
+            <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Nome do Explorador</label>
             <div className="relative">
-               <User className="absolute left-4 top-3.5 text-slate-400" size={20} />
+               <User className="absolute left-4 top-3.5 text-indigo-300" size={20} />
                <input 
                  type="text" 
                  value={name}
                  onChange={e => setName(e.target.value)}
-                 className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition"
-                 placeholder="Ex: supermario"
+                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 pl-12 font-bold text-slate-700 focus:border-indigo-400 focus:bg-white outline-none transition-all shadow-inner"
+                 placeholder="Como quer ser chamado?"
                  required
                />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-600 mb-1 ml-2">Senha Secreta</label>
+            <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Código Secreto (Senha)</label>
             <div className="relative">
-               <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
+               <KeyRound className="absolute left-4 top-3.5 text-indigo-300" size={20} />
                <input 
                  type="password" 
                  value={password}
                  onChange={e => setPassword(e.target.value)}
-                 className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition"
-                 placeholder="****"
+                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 pl-12 font-bold text-slate-700 focus:border-indigo-400 focus:bg-white outline-none transition-all shadow-inner"
+                 placeholder="Sua senha secreta"
                  required
                />
             </div>
           </div>
 
           {authMode === 'register' && (
-            <div className="animate-fadeIn space-y-4">
+            <div className="animate-fadeIn space-y-5">
                 <div>
-                <label className="block text-sm font-bold text-slate-600 mb-1 ml-2">Idade</label>
-                <input 
+                  <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Idade</label>
+                  <input 
                     type="number" 
                     value={age}
                     onChange={e => setAge(e.target.value)}
-                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 font-bold text-slate-700 focus:border-indigo-400 outline-none transition"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 font-bold text-slate-700 focus:border-indigo-400 outline-none transition shadow-inner"
                     placeholder="Ex: 8"
-                    min="5"
-                    max="16"
-                    required
-                />
+                    min="5" max="15" required
+                  />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold text-slate-600 mb-1 ml-2">Email do Responsável</label>
+                    <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Email do Responsável (Para salvar o progresso)</label>
                     <div className="relative">
-                    <input 
-                        type="email" 
-                        value={parentEmail}
-                        onChange={e => setParentEmail(e.target.value)}
-                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 font-bold text-slate-700 focus:border-indigo-400 outline-none transition"
-                        placeholder="pai@email.com"
-                        required
-                    />
+                       <Mail className="absolute left-4 top-3.5 text-indigo-300" size={20} />
+                       <input 
+                         type="email" 
+                         value={parentEmail}
+                         onChange={e => setParentEmail(e.target.value)}
+                         className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition shadow-inner"
+                         placeholder="email@dopapai.com"
+                         required
+                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1 ml-2">Para recuperar senha e receber relatórios.</p>
                 </div>
             </div>
           )}
 
-          {error && (
-              <div className="bg-red-50 text-red-600 text-sm font-bold p-3 rounded-xl border border-red-100 text-center animate-shake">
-                  {error}
+          {errorMsg && (
+              <div className="bg-red-50 text-red-500 text-xs font-bold p-4 rounded-2xl border border-red-100 animate-shake text-center">
+                  {errorMsg}
               </div>
           )}
 
-          <Button 
-            variant={'primary'} 
-            size="lg" 
-            className={`w-full mt-4`}
-          >
-             {authMode === 'login' ? 'Continuar Aventura' : 'Começar Aventura'}
+          <Button variant="primary" size="lg" className="w-full py-4 text-xl shadow-indigo-200">
+             {authMode === 'login' ? 'ENTRAR AGORA' : 'VAMOS NESSA!'}
           </Button>
         </form>
 
-        <div className="my-6 flex items-center gap-4">
-           <div className="h-px bg-slate-200 flex-1" />
-           <span className="text-slate-400 text-xs font-bold uppercase">OU</span>
-           <div className="h-px bg-slate-200 flex-1" />
+        <div className="my-8 flex items-center gap-4">
+           <div className="h-px bg-slate-100 flex-1" />
+           <span className="text-slate-300 text-[10px] font-black uppercase tracking-widest">OU</span>
+           <div className="h-px bg-slate-100 flex-1" />
         </div>
 
         <button 
           onClick={handleGuestPlay}
-          className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm touch-manipulation"
+          className="w-full bg-slate-50 hover:bg-slate-100 text-slate-400 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm border-2 border-transparent hover:border-slate-200"
         >
-           <Gamepad2 size={18} /> Testar como Visitante (Sem salvar)
+           <Gamepad2 size={18} /> Entrar como visitante (não salva)
         </button>
 
       </div>

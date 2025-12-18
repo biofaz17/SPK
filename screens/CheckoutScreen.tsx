@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { SubscriptionTier, UserProfile } from '../types';
 import { MERCADO_PAGO_CONFIG, PLANS } from '../constants';
@@ -209,7 +210,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
          </div>
          <h2 className="text-xl font-bold mb-2 text-red-800">Erro na Conexão</h2>
          <p className="text-red-700 text-sm max-w-md text-center mb-6 bg-red-100 p-3 rounded-lg border border-red-200">{errorMessage}</p>
-         <button onClick={() => setStatus('idle')} className="bg-white border border-red-200 text-red-600 px-6 py-2 rounded-lg font-bold hover:bg-red-50 transition">
+         <button onClick={() => setStatus('idle')} className="bg-white border border-red-200 text-red-600 px-6 py-2 rounded-lg font-bold hover:bg-red-100 transition">
              Tentar Novamente
          </button>
       </div>
@@ -353,7 +354,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
                 <div className="space-y-3">
                    <button 
                      onClick={handleGoToPayment} 
-                     disabled={status === 'loading'}
+                     disabled={(status as string) === 'loading'}
                      className={`w-full ${MP_BLUE} ${MP_HOVER} text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                    >
                        <Lock size={18} /> Pagar R$ {price} (Único)
