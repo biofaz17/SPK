@@ -1,17 +1,17 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves, Sparkles, Wand2, X, Map as MapIcon, LogOut, Maximize2, MessageSquare, Star } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LevelConfig, BlockType, BlockCategory, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier } from '../types';
-import { LEVELS, CREATIVE_LEVEL } from '../constants';
+import { GoogleGenAI } from "@google/genai";
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, Battery, Code, HelpCircle, MessageSquare, Pause, Play, RotateCcw, Shirt, Sparkles, Star, Target, Terminal, Trash2, Volume2, VolumeX, XCircle, CheckCircle, Lock, Crown } from 'lucide-react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import confetti from 'canvas-confetti';
+import { BlockIcon } from '../components/BlockIcon';
 import { Button } from '../components/Button';
 import { Robot } from '../components/Robot';
-import { BlockIcon } from '../components/BlockIcon';
 import { StatusIndicator } from '../components/StatusIndicator';
 import { SparkyLogo } from '../components/SparkyLogo';
-import confetti from 'canvas-confetti';
+import { CREATIVE_LEVEL, LEVELS } from '../constants';
 import { audioService } from '../services/AudioService';
-import { GoogleGenAI } from "@google/genai";
+import { BlockCategory, BlockType, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier, LevelConfig } from '../types';
 
 interface GameScreenProps {
   levelId: number | string;
@@ -53,12 +53,12 @@ const EndLevelModal: React.FC<{
             {isWon ? <CheckCircle size={60} strokeWidth={3} /> : <XCircle size={60} strokeWidth={3} />}
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-heading mb-2 text-slate-800 uppercase tracking-tighter">
+          <h2 className="text-4xl md:text-5xl font-heading mb-2 text-slate-800 uppercase tracking-tighter text-center">
             {isWon ? 'Missão Cumprida!' : 'Ops! Bati!'}
           </h2>
           
-          <p className="text-slate-500 font-bold text-lg mb-8">
-            {isWon ? `Nível ${level.id} Desbloqueado!` : 'Vamos revisar seu código?'}
+          <p className="text-slate-500 font-bold text-lg mb-8 text-center">
+            {isWon ? `Nível ${String(level.id)} Desbloqueado!` : 'Vamos revisar seu código?'}
           </p>
 
           {isWon && (
@@ -72,7 +72,7 @@ const EndLevelModal: React.FC<{
           <div className="bg-slate-50 rounded-2xl p-6 border-2 border-slate-100 mb-8 text-left">
             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
                 <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Estatísticas</span>
-                <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black">{blocksUsed} blocos usados</span>
+                <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black">{String(blocksUsed)} blocos usados</span>
             </div>
             
             <div className="flex items-start gap-4">
@@ -84,17 +84,17 @@ const EndLevelModal: React.FC<{
                     <div className="flex items-center gap-2 animate-pulse text-indigo-500">
                        <Sparkles size={16} /> Analisando sua lógica...
                     </div>
-                  ) : explanation || level.explanation || (isWon ? 'Você foi incrível! Seu robô seguiu cada comando perfeitamente.' : 'Quase lá! Tente mudar a ordem dos blocos ou remover o que não precisa.')}
+                  ) : String(explanation || level.explanation || (isWon ? 'Você foi incrível! Seu robô seguiu cada comando perfeitamente.' : 'Quase lá! Tente mudar a ordem dos blocos ou remover o que não precisa.'))}
                </div>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={onRetry} className="flex-1 py-4 text-xl font-heading bg-slate-100 text-slate-600 rounded-3xl border-b-4 border-slate-300 active:border-b-0 flex items-center justify-center gap-2">
+            <button onClick={onRetry} className="flex-1 py-4 text-xl font-heading bg-slate-100 text-slate-600 rounded-3xl border-b-4 border-slate-300 active:border-b-0 flex items-center justify-center gap-2 transition-all">
                <RotateCcw size={24} /> {isWon ? 'Tentar de Novo' : 'Revisar Código'}
             </button>
             {isWon && (
-              <button onClick={onNext} className="flex-1 py-4 text-xl font-heading bg-green-500 text-white rounded-3xl border-b-4 border-green-700 active:border-b-0 flex items-center justify-center gap-2 shadow-lg shadow-green-200">
+              <button onClick={onNext} className="flex-1 py-4 text-xl font-heading bg-green-500 text-white rounded-3xl border-b-4 border-green-700 active:border-b-0 flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all">
                  Próxima Missão <ArrowRight size={24} />
               </button>
             )}
@@ -114,8 +114,8 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
   ];
   return (
     <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-       <div className="bg-white rounded-[2rem] p-6 max-w-2xl w-full border-4 border-indigo-200 relative animate-popIn shadow-2xl">
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200"><XCircle /></button>
+       <div className="bg-white rounded-[2rem] p-6 max-w-2xl w-full border-4 border-indigo-200 relative animate-popIn shadow-2xl overflow-y-auto max-h-[90vh]">
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"><XCircle /></button>
           <div className="text-center mb-6">
              <h2 className="text-3xl font-heading text-indigo-900 mb-2 flex items-center justify-center gap-3">
                <Shirt className="text-indigo-500" size={32} /> Guarda-Roupa do Robô
@@ -135,7 +135,7 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
                       )}
                    </div>
                    <div className="text-center">
-                      <h3 className="font-heading text-xs text-slate-800 leading-tight">{skin.name}</h3>
+                      <h3 className="font-heading text-[10px] text-slate-800 leading-tight uppercase tracking-tighter">{skin.name}</h3>
                       {skin.locked ? <div className="text-[10px] font-bold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full mt-1 inline-flex items-center gap-1"><Crown size={10} /> VIP</div> : <span className="text-[10px] text-slate-400">{skin.desc}</span>}
                    </div>
                 </button>
@@ -157,14 +157,32 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
   const [currentBlockIndex, setCurrentBlockIndex] = useState<number | null>(null);
   const [gameStatus, setGameStatus] = useState<'idle' | 'running' | 'won' | 'lost'>('idle');
   const [paintedCells, setPaintedCells] = useState<GridPosition[]>([]);
-  
   const [activeObstacles, setActiveObstacles] = useState<GridPosition[]>(level.obstacles);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
-
   const [logicExplanation, setLogicExplanation] = useState<string | null>(null);
   const [isAnalyzingLogic, setIsAnalyzingLogic] = useState(false);
+
+  // Responsividade da Grade
+  const [gridScale, setGridScale] = useState(1);
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (stageRef.current) {
+        const containerWidth = stageRef.current.offsetWidth - 40;
+        const containerHeight = stageRef.current.offsetHeight - 40;
+        const gridPixelSize = level.gridSize * 60;
+        const scaleW = containerWidth / gridPixelSize;
+        const scaleH = containerHeight / gridPixelSize;
+        setGridScale(Math.min(1, scaleW, scaleH));
+      }
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [level.gridSize]);
 
   const abortController = useRef<AbortController | null>(null);
   const programListRef = useRef<HTMLDivElement>(null);
@@ -180,7 +198,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     if (level.mission && !isMuted) {
       setTimeout(() => {
         audioService.speak(
-          `Missão ${level.id === 'creative' ? 'Criativa' : level.id}: ${level.mission}.`,
+          `Missão ${level.id === 'creative' ? 'Criativa' : String(level.id)}: ${level.mission}.`,
           'instruction',
           () => setIsSpeaking(true),
           () => setIsSpeaking(false)
@@ -200,7 +218,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
       const blocksLabels = program.map(b => BLOCK_DEFINITIONS[b].label).join(', ');
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Você é o Sparky, robô tutor. O aluno usou: [${blocksLabels}] para vencer o nível ${level.id}. Explique por que essa lógica é boa para uma criança de 7 anos. Seja muito lúdico e encorajador. Use emojis. Curto (max 2 parágrafos).`,
+        contents: `Você é o Sparky, robô tutor. O aluno usou: [${blocksLabels}] para vencer o nível ${String(level.id)}. Explique por que essa lógica é boa para uma criança de 7 anos. Seja muito lúdico e encorajador. Use emojis. Curto (max 2 parágrafos).`,
       });
       setLogicExplanation(response.text || "Uau! Sua lógica funcionou!");
     } catch (e) {
@@ -245,6 +263,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     if (program.length < level.maxBlocks) {
       setProgram(prev => [...prev, type]);
       audioService.playSfx('pop');
+      // Scroll para o fim da lista quando adiciona
+      setTimeout(() => {
+          if (programListRef.current) {
+              programListRef.current.scrollTop = programListRef.current.scrollHeight;
+          }
+      }, 100);
     }
   };
 
@@ -270,7 +294,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
   const runProgram = async () => {
     if (program.length === 0 || isPlaying) return;
     
-    // Forçar reset para o início antes de começar
     resetGame();
     setRobotState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' });
     setGameStatus('running');
@@ -280,8 +303,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     abortController.current = new AbortController();
     const signal = abortController.current.signal;
 
-    const STEP_DURATION = level.isCreative ? 1200 : (isHackerMode ? 150 : 1000); 
-    const PAINT_DURATION = level.isCreative ? 1000 : (isHackerMode ? 100 : 800);
+    const STEP_DURATION = isHackerMode ? 350 : 800; 
+    const PAINT_DURATION = isHackerMode ? 300 : 700;
 
     const wait = (ms: number) => new Promise(resolve => {
         if (signal.aborted) return;
@@ -318,24 +341,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
         if (type === BlockType.PAINT) {
             localPainted = [...localPainted, {x: currentX, y: currentY}];
             setPaintedCells([...localPainted]);
+            audioService.playTone(880, 0.1, 'sine');
             await wait(PAINT_DURATION);
             return;
         }
 
         let dx = 0, dy = 0;
-        if (type === BlockType.MOVE_UP) { dy = -1; currentDir = 'up'; }
-        else if (type === BlockType.MOVE_DOWN) { dy = 1; currentDir = 'down'; }
-        else if (type === BlockType.MOVE_LEFT) { dx = -1; currentDir = 'left'; }
-        else if (type === BlockType.MOVE_RIGHT) { dx = 1; currentDir = 'right'; }
+        let nextDir = currentDir;
+        if (type === BlockType.MOVE_UP) { dy = -1; nextDir = 'up'; }
+        else if (type === BlockType.MOVE_DOWN) { dy = 1; nextDir = 'down'; }
+        else if (type === BlockType.MOVE_LEFT) { dx = -1; nextDir = 'left'; }
+        else if (type === BlockType.MOVE_RIGHT) { dx = 1; nextDir = 'right'; }
 
         if (dx !== 0 || dy !== 0) {
             const nx = currentX + dx, ny = currentY + dy;
             const isObs = activeObstacles.some(o => o.x === nx && o.y === ny) || nx < 0 || nx >= level.gridSize || ny < 0 || ny >= level.gridSize;
             
+            currentDir = nextDir;
+            setRobotState(prev => ({ ...prev, dir: currentDir }));
+            
             if (isObs) {
                 hasFailed = true;
-                setRobotState({ x: currentX, y: currentY, dir: currentDir });
-                await wait(800);
+                await wait(100);
                 if (!signal.aborted) setGameStatus('lost');
                 return;
             }
@@ -356,8 +383,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
         }
         
         if (!signal.aborted) {
-            // Aguardar exatamente 1 segundo após o último comando para confirmar sucesso/erro
-            await wait(1000);
+            await wait(500);
             if (signal.aborted) return;
 
             if (hasFailed) {
@@ -369,8 +395,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
                 if (isAtGoal && hasActuallyExecuted) {
                     setGameStatus('won');
                     confetti({ particleCount: 150, spread: 70 });
-                } else {
+                } else if (level.goalPos && !isAtGoal) {
                     setGameStatus('lost');
+                } else {
+                    // Creative mode or no goal level ends in idle/running
+                    setGameStatus('idle');
                 }
             }
         }
@@ -384,24 +413,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
 
   const availableBlocks = level.availableBlocks || [];
   const blocksByCategory = Array.from(new Set(availableBlocks.map(b => BLOCK_DEFINITIONS[b].category))) as BlockCategory[];
-  const workspaceClass = isHackerMode ? 'bg-slate-900' : 'bg-slate-100';
+  const workspaceClass = isHackerMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-100 border-slate-200';
 
   return (
-    <div className={`flex flex-col md:flex-row md:h-screen md:overflow-hidden min-h-screen ${isHackerMode ? 'bg-slate-900 text-green-400' : 'bg-slate-50 text-slate-800'}`}>
+    <div className={`flex flex-col md:flex-row h-screen overflow-hidden ${isHackerMode ? 'bg-slate-950 text-emerald-400' : 'bg-slate-50 text-slate-800'}`}>
       
-      <div className="w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 bg-white">
-         <div className="p-4 border-b flex items-center justify-between">
-            <button onClick={onBack} className="flex items-center gap-1 font-bold text-indigo-600"><ArrowLeft size={18}/> Mapa</button>
-            <button onClick={() => setIsMuted(!isMuted)}>{isMuted ? <VolumeX className="text-red-500" /> : <Volume2 className="text-blue-500" />}</button>
+      {/* Coluna 1: Paleta de Blocos */}
+      <div className="w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 bg-white h-[25vh] md:h-full overflow-hidden">
+         <div className="p-4 border-b flex items-center justify-between bg-white shrink-0">
+            <button onClick={onBack} className="flex items-center gap-1 font-bold text-indigo-600 hover:scale-105 transition-transform"><ArrowLeft size={18}/> Mapa</button>
+            <button onClick={() => setIsMuted(!isMuted)} className="hover:scale-110 transition-transform">{isMuted ? <VolumeX className="text-red-500" /> : <Volume2 className="text-blue-500" />}</button>
          </div>
-         <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
+         <div className="flex-1 overflow-y-auto p-4 no-scrollbar bg-slate-50">
             {blocksByCategory.map(cat => (
                 <div key={cat} className="mb-6">
-                    <h3 className="text-[10px] font-black uppercase text-slate-400 mb-2">{cat}</h3>
+                    <h3 className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">{String(cat)}</h3>
                     <div className="flex flex-col gap-2">
                         {availableBlocks.filter(b => BLOCK_DEFINITIONS[b].category === cat).map(type => (
-                            <button key={type} draggable onDragStart={(e) => handleDragStart(e, type)} onClick={() => addBlock(type)} className="text-left">
-                                <BlockIcon type={type} className="py-2" />
+                            <button key={type} draggable onDragStart={(e) => handleDragStart(e, type)} onClick={() => addBlock(type)} className="text-left group transform hover:translate-x-1 transition-transform">
+                                <BlockIcon type={type} className="py-2 shadow-sm" />
                             </button>
                         ))}
                     </div>
@@ -410,22 +440,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
          </div>
       </div>
 
-      <div className="flex-1 flex flex-col relative shrink-0 bg-slate-200 h-[45vh] md:h-auto border-x border-slate-300">
-          <div className="p-3 bg-white/80 border-b flex items-center justify-between">
-             <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><Target size={16}/> {level.mission}</div>
+      {/* Coluna 2: Palco do Robô (Grid Central) */}
+      <div ref={stageRef} className="flex-1 flex flex-col relative shrink-0 bg-slate-200 border-x border-slate-300 h-[40vh] md:h-full overflow-hidden">
+          <div className="p-3 bg-white/90 border-b flex items-center justify-between backdrop-blur-sm z-20">
+             <div className="flex items-center gap-2 text-xs font-bold text-slate-600 truncate max-w-[200px] md:max-w-none"><Target size={16} className="text-indigo-500"/> {String(level.mission)}</div>
              <StatusIndicator isGuest={user?.isGuest} />
           </div>
 
-          <div className="flex-1 relative overflow-auto flex items-center justify-center p-4">
-              <div 
-                className={`relative shadow-2xl rounded-2xl overflow-hidden bg-white border-4 border-white ${gameStatus === 'lost' ? 'animate-shake ring-4 ring-red-400' : ''}`}
-                style={{ width: level.gridSize * 60, height: level.gridSize * 60, backgroundSize: '60px 60px', backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)' }}
+          <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+              <motion.div 
+                style={{ 
+                    width: level.gridSize * 60, 
+                    height: level.gridSize * 60, 
+                    scale: gridScale,
+                    backgroundSize: '60px 60px', 
+                    backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)' 
+                }}
+                className={`relative shadow-2xl rounded-2xl overflow-hidden bg-white border-4 border-white transform origin-center ${gameStatus === 'lost' ? 'animate-shake ring-4 ring-red-400' : ''}`}
               >
                   {level.goalPos && <div className="absolute flex items-center justify-center animate-pulse" style={{ left: level.goalPos.x * 60, top: level.goalPos.y * 60, width: 60, height: 60 }}><div className="w-8 h-8 rounded-full border-4 border-green-400 bg-green-100" /></div>}
                   {activeObstacles.map((obs, i) => <div key={i} className="absolute rounded-xl bg-slate-700 border-b-4 border-slate-900" style={{ left: obs.x * 60 + 5, top: obs.y * 60 + 5, width: 50, height: 50 }} />)}
                   {paintedCells.map((cell, i) => <div key={i} className="absolute bg-purple-400/50" style={{ left: cell.x * 60, top: cell.y * 60, width: 60, height: 60 }} />)}
                   
-                  {/* Alerta de Colisão Visual (Shockwave) */}
                   <AnimatePresence>
                       {gameStatus === 'lost' && (
                         <motion.div 
@@ -439,16 +475,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
                   </AnimatePresence>
 
                   <Robot x={robotState.x} y={robotState.y} cellSize={60} direction={robotState.dir} isHappy={gameStatus === 'won'} isSad={gameStatus === 'lost'} skinId={user?.activeSkin} />
-              </div>
+              </motion.div>
 
-              {/* Botão de Skins - Ícone de Camiseta */}
               <button 
                 onClick={() => setShowSkinSelector(true)}
                 className="absolute bottom-6 left-6 p-4 bg-white rounded-full shadow-2xl border-4 border-indigo-100 text-indigo-600 hover:scale-110 active:scale-95 transition-all z-30 group"
                 title="Trocar de Roupa"
               >
                 <Shirt size={32} />
-                <div className="absolute -top-1 -right-1 bg-yellow-400 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white"><Sparkles size={12} className="text-yellow-800" /></div>
+                <div className="absolute -top-1 -right-1 bg-yellow-400 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-sm"><Sparkles size={14} className="text-yellow-800" /></div>
               </button>
           </div>
 
@@ -467,26 +502,86 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
           </AnimatePresence>
       </div>
 
-      <div className={`w-full md:w-72 flex flex-col relative ${workspaceClass} shadow-2xl z-10`}>
-          <div className="p-4 border-b flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
-              <span>Lógica de Comandos</span>
-              <span>{program.length}/{level.maxBlocks}</span>
+      {/* Coluna 3: Workspace de Código */}
+      <div className={`w-full md:w-80 flex flex-col relative ${workspaceClass} border-l shadow-2xl z-10 h-[35vh] md:h-full overflow-hidden`}>
+          <div className="p-4 border-b flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                 <Terminal size={14} /> Lógica de Comandos
+              </span>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${program.length >= level.maxBlocks ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                 {String(program.length)}/{String(level.maxBlocks)}
+              </span>
           </div>
-          <div ref={programListRef} className="flex-1 p-4 overflow-y-auto flex flex-col gap-1 no-scrollbar" onDragOver={e => e.preventDefault()} onDrop={handleDrop}>
-              {program.length === 0 && <div className="flex-1 flex flex-col items-center justify-center opacity-30 text-center"><Code size={32}/><p className="text-[10px] font-bold mt-2">Arraste blocos aqui</p></div>}
-              {program.map((block, idx) => (
-                  <motion.div key={idx} layout className={`flex items-center group ${currentBlockIndex === idx ? 'scale-105 brightness-110 shadow-lg' : ''}`}>
-                      <div className="bg-slate-200 text-slate-500 text-[9px] w-6 h-8 flex items-center justify-center rounded-l-lg font-black border-y-2 border-l-2">{idx+1}</div>
-                      <div className="flex-1"><BlockIcon type={block} className="rounded-l-none border-b-2 text-[11px] py-1.5" /></div>
-                      {!isPlaying && <button onClick={() => removeBlock(idx)} className="ml-1 p-1 text-red-500 opacity-0 group-hover:opacity-100 transition"><Trash2 size={14}/></button>}
-                  </motion.div>
-              ))}
+          
+          <div 
+            ref={programListRef} 
+            className="flex-1 p-4 overflow-y-auto flex flex-col gap-1.5 no-scrollbar bg-white/20" 
+            onDragOver={e => e.preventDefault()} 
+            onDrop={handleDrop}
+          >
+              {program.length === 0 && (
+                <div className="flex-1 flex flex-col items-center justify-center opacity-30 text-center pointer-events-none mt-10">
+                    <div className="p-4 bg-slate-200 rounded-full mb-4 animate-float">
+                        <Code size={40} className="text-slate-400" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest">Arraste ou clique nos blocos<br/>para começar sua lógica</p>
+                </div>
+              )}
+              
+              <AnimatePresence>
+                {program.map((block, idx) => (
+                    <motion.div 
+                        key={idx} 
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -20, opacity: 0 }}
+                        layout
+                        className={`flex items-center group relative ${currentBlockIndex === idx ? 'scale-105 brightness-110 z-20' : ''}`}
+                    >
+                        <div className="bg-slate-200 text-slate-500 text-[8px] w-6 h-8 flex items-center justify-center rounded-l-lg font-black border-y border-l shrink-0">
+                           {String(idx + 1)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <BlockIcon type={block} className="rounded-l-none border-b-2 text-[10px] py-2 shadow-sm" />
+                        </div>
+                        {!isPlaying && (
+                           <button 
+                             onClick={() => removeBlock(idx)} 
+                             className="ml-1 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                             title="Remover Bloco"
+                           >
+                             <Trash2 size={16}/>
+                           </button>
+                        )}
+                        {currentBlockIndex === idx && (
+                           <motion.div 
+                             layoutId="indicator" 
+                             className="absolute -left-2 top-0 bottom-0 w-1 bg-yellow-400 rounded-full shadow-[0_0_10px_rgba(250,204,21,0.8)]" 
+                           />
+                        )}
+                    </motion.div>
+                ))}
+              </AnimatePresence>
           </div>
-          <div className="p-4 bg-white border-t flex flex-col gap-2">
+
+          {/* Área de Controle Inferior */}
+          <div className="p-4 bg-white border-t flex flex-col gap-3 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
               <div className="flex gap-2">
-                  <button onClick={clearWorkspace} disabled={isPlaying} className="bg-red-100 text-red-600 p-3 rounded-xl disabled:opacity-50"><Trash2 size={20}/></button>
-                  <Button onClick={runProgram} variant={isPlaying ? 'secondary' : 'success'} size="md" className="flex-1" disabled={program.length === 0 || gameStatus === 'won'}>
-                      {isPlaying ? <><Pause size={18}/> Parar</> : <><Play size={18} fill="currentColor"/> Executar</>}
+                  <button 
+                    onClick={clearWorkspace} 
+                    disabled={isPlaying || program.length === 0} 
+                    className="bg-red-50 text-red-500 p-3.5 rounded-2xl disabled:opacity-20 hover:bg-red-100 active:scale-95 transition-all shadow-sm border border-red-100"
+                  >
+                    <Trash2 size={24}/>
+                  </button>
+                  <Button 
+                    onClick={runProgram} 
+                    variant={isPlaying ? 'secondary' : 'success'} 
+                    size="md" 
+                    className="flex-1 h-14 text-xl shadow-lg active:scale-95 transition-transform" 
+                    disabled={program.length === 0 || gameStatus === 'won'}
+                  >
+                      {isPlaying ? <><Pause size={24}/> Parar</> : <><Play size={24} fill="currentColor"/> Executar</>}
                   </Button>
               </div>
           </div>

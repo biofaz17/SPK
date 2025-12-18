@@ -48,7 +48,7 @@ export const ParentGate: React.FC<ParentGateProps> = ({ onSuccess, onCancel, act
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl p-8 max-w-sm w-full relative border-4 border-slate-300">
+      <div className="bg-white rounded-3xl p-8 max-sm:w-full max-w-sm w-full relative border-4 border-slate-300">
         <button onClick={onCancel} className="absolute top-4 right-4 text-slate-400 hover:text-red-500">
           <X size={24} />
         </button>
@@ -60,7 +60,7 @@ export const ParentGate: React.FC<ParentGateProps> = ({ onSuccess, onCancel, act
           
           <h3 className="font-heading text-xl text-slate-800 mb-2">Área Restrita</h3>
           <p className="text-slate-500 text-sm mb-6">
-            Para {action}, peça para seus pais resolverem o desafio:
+            Para {String(action)}, peça para seus pais resolverem o desafio:
           </p>
 
           <form onSubmit={handleSubmit} className="w-full">

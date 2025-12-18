@@ -17,20 +17,22 @@ import { RhythmGameScreen } from './screens/RhythmGameScreen';
 import { GeometryGameScreen } from './screens/GeometryGameScreen';
 import { LogicGameScreen } from './screens/LogicGameScreen';
 import { CodeGameScreen } from './screens/CodeGameScreen';
+import { AdminDashboard } from './screens/AdminDashboard'; // Novo componente
 import { UserProfile, SubscriptionTier } from './types';
 import { LEVELS } from './constants';
 import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { SparkyAssistant } from './components/SparkyAssistant';
 import { StatusIndicator } from './components/StatusIndicator';
-import { Cloud, Loader2 } from 'lucide-react';
+import { Cloud, Loader2, ShieldAlert } from 'lucide-react';
 import { audioService } from './services/AudioService';
 import { dataService } from './services/DataService';
 
 enum Screen {
   AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
   SCIENCE_GAME, MEMORY_GAME, RHYTHM_GAME, GEOMETRY_GAME, 
-  LOGIC_GAME, CODE_GAME, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS
+  LOGIC_GAME, CODE_GAME, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS,
+  ADMIN_LOGIN, ADMIN_DASHBOARD
 }
 
 const CURRENT_TERMS_VERSION = "v1.0";
@@ -45,6 +47,18 @@ export default function App() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [gateAction, setGateAction] = useState(''); 
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
+
+  // Monitoramento de URL para área Admin
+  useEffect(() => {
+    const checkAdminRoute = () => {
+      if (window.location.pathname === '/admin' || window.location.hash === '#/admin') {
+        setScreen(Screen.ADMIN_LOGIN);
+      }
+    };
+    checkAdminRoute();
+    window.addEventListener('popstate', checkAdminRoute);
+    return () => window.removeEventListener('popstate', checkAdminRoute);
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -64,7 +78,12 @@ export default function App() {
         setIsInitializing(false);
       }
     };
-    init();
+    // Só inicializa sessão se não estiver tentando entrar no admin
+    if (window.location.pathname !== '/admin') {
+      init();
+    } else {
+      setIsInitializing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -100,68 +119,32 @@ export default function App() {
     audioService.playSfx('delete');
   };
 
-  const handleTermsAccepted = (version: string, timestamp: string) => {
-    if (user) {
-        setUser({ ...user, termsAcceptedVersion: version, termsAcceptedAt: timestamp });
-        setScreen(Screen.HUB);
-    }
-  };
-
   const handleLevelComplete = (blocksUsed: number) => {
     if (!user) return;
-
     if (typeof currentLevelId === 'number') {
         const sortedLevels = [...LEVELS].sort((a,b) => (a.id as number) - (b.id as number));
         const currentIndex = sortedLevels.findIndex(l => l.id === currentLevelId);
-        
         let nextLevelId = currentLevelId; 
         let hasNext = false;
-
         if (currentIndex !== -1 && currentIndex < sortedLevels.length - 1) {
             const nextLevel = sortedLevels[currentIndex + 1];
-
-            // TRAVA OBRIGATÓRIA NÍVEL 15 -> 16
             if (currentLevelId === 15 && user.subscription === SubscriptionTier.FREE) {
-                // Salva o progresso do 15 mas não libera o 16 ainda no objeto de usuário
-                const newProgress = {
-                  ...user.progress,
-                  stars: user.progress.stars + 1,
-                  totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed
-                };
+                const newProgress = { ...user.progress, stars: user.progress.stars + 1, totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed };
                 setUser({ ...user, progress: newProgress, lastActive: Date.now() });
-                
-                // Redireciona para o mapa e dispara o modal de compra
                 setScreen(Screen.MAP);
                 setGateAction('upgrade');
                 setShowParentGate(true);
                 return;
             }
-
             nextLevelId = nextLevel.id as number;
             hasNext = true;
         }
-
-        const newProgress = {
-          ...user.progress,
-          unlockedLevels: Math.max(user.progress.unlockedLevels, hasNext ? nextLevelId : currentLevelId),
-          stars: user.progress.stars + 1,
-          totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed
-        };
-        
+        const newProgress = { ...user.progress, unlockedLevels: Math.max(user.progress.unlockedLevels, hasNext ? nextLevelId : currentLevelId), stars: user.progress.stars + 1, totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed };
         setUser({ ...user, progress: newProgress, lastActive: Date.now() });
-
-        if (hasNext) {
-            setCurrentLevelId(nextLevelId);
-            setScreen(Screen.GAME);
-        } else {
-            setScreen(Screen.DASHBOARD);
-        }
+        if (hasNext) { setCurrentLevelId(nextLevelId); setScreen(Screen.GAME); } 
+        else { setScreen(Screen.DASHBOARD); }
     } else {
-        const newProgress = { 
-            ...user.progress, 
-            creativeProjects: user.progress.creativeProjects + 1,
-            totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed
-        };
+        const newProgress = { ...user.progress, creativeProjects: user.progress.creativeProjects + 1, totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed };
         setUser({ ...user, progress: newProgress, lastActive: Date.now() });
         setScreen(Screen.DASHBOARD);
     }
@@ -179,6 +162,16 @@ export default function App() {
     );
   }
 
+  // --- RENDERING ADMIN LOGIN ---
+  if (screen === Screen.ADMIN_LOGIN) {
+    return <AdminLogin onAccess={() => setScreen(Screen.ADMIN_DASHBOARD)} onCancel={() => setScreen(Screen.AUTH)} />;
+  }
+
+  // --- RENDERING ADMIN DASHBOARD ---
+  if (screen === Screen.ADMIN_DASHBOARD) {
+    return <AdminDashboard onExit={() => setScreen(Screen.AUTH)} />;
+  }
+
   if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} />;
   if (!user) return null; 
 
@@ -193,9 +186,7 @@ export default function App() {
       )}
 
       {screen === Screen.HUB && (
-        <PlatformHub 
-           user={user}
-           onSelectGame={(id) => {
+        <PlatformHub user={user} onSelectGame={(id) => {
               if (id === 'sparky') setScreen(Screen.DASHBOARD);
               else if (id === 'math') setScreen(Screen.MATH_GAME);
               else if (id === 'words') setScreen(Screen.WORDS_GAME);
@@ -205,42 +196,20 @@ export default function App() {
               else if (id === 'geometry') setScreen(Screen.GEOMETRY_GAME);
               else if (id === 'logic') setScreen(Screen.LOGIC_GAME);
               else if (id === 'code') setScreen(Screen.CODE_GAME);
-           }}
-           onLogout={handleLogout}
-           onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }}
+           }} onLogout={handleLogout} onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }}
         />
       )}
 
       {screen === Screen.DASHBOARD && (
-        <Dashboard 
-           progress={user.progress}
-           onPlayMission={() => setScreen(Screen.MAP)}
-           onCreativeMode={() => { setCurrentLevelId('creative'); setScreen(Screen.GAME); }}
-           onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }}
-           onBackToHub={() => setScreen(Screen.HUB)}
-        />
+        <Dashboard progress={user.progress} onPlayMission={() => setScreen(Screen.MAP)} onCreativeMode={() => { setCurrentLevelId('creative'); setScreen(Screen.GAME); }} onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }} onBackToHub={() => setScreen(Screen.HUB)} />
       )}
       
       {screen === Screen.MAP && (
-        <LevelMap 
-          unlockedLevels={user.progress.unlockedLevels}
-          userSubscription={user.subscription}
-          onSelectLevel={(id) => { setCurrentLevelId(id); setScreen(Screen.GAME); }}
-          onBack={() => setScreen(Screen.DASHBOARD)}
-          onHome={() => setScreen(Screen.HUB)}
-          onRequestUpgrade={() => { setGateAction('upgrade'); setShowParentGate(true); }}
-        />
+        <LevelMap unlockedLevels={user.progress.unlockedLevels} userSubscription={user.subscription} onSelectLevel={(id) => { setCurrentLevelId(id); setScreen(Screen.GAME); }} onBack={() => setScreen(Screen.DASHBOARD)} onHome={() => setScreen(Screen.HUB)} onRequestUpgrade={() => { setGateAction('upgrade'); setShowParentGate(true); }} />
       )}
 
       {screen === Screen.GAME && (
-        <GameScreen 
-          levelId={currentLevelId}
-          onBack={() => currentLevelId === 'creative' ? setScreen(Screen.DASHBOARD) : setScreen(Screen.MAP)}
-          onHome={() => setScreen(Screen.HUB)}
-          onNextLevel={handleLevelComplete}
-          user={user}
-          onUpdateSkin={(skinId) => setUser({ ...user, activeSkin: skinId })}
-        />
+        <GameScreen levelId={currentLevelId} onBack={() => currentLevelId === 'creative' ? setScreen(Screen.DASHBOARD) : setScreen(Screen.MAP)} onHome={() => setScreen(Screen.HUB)} onNextLevel={handleLevelComplete} user={user} onUpdateSkin={(skinId) => setUser({ ...user, activeSkin: skinId })} />
       )}
 
       {screen === Screen.MATH_GAME && <MathGameScreen onBack={() => setScreen(Screen.HUB)} />}
@@ -253,32 +222,17 @@ export default function App() {
       {screen === Screen.CODE_GAME && <CodeGameScreen onBack={() => setScreen(Screen.HUB)} />}
 
       {screen === Screen.PARENTS && (
-         <ParentPanel 
-            user={user}
-            onUpdateUser={setUser}
-            onLogout={handleLogout}
-            onBack={() => setScreen(Screen.HUB)}
-            onRequestUpgrade={() => { setScreen(Screen.DASHBOARD); setTimeout(() => setShowSubscriptionModal(true), 100); }}
-         />
+         <ParentPanel user={user} onUpdateUser={setUser} onLogout={handleLogout} onBack={() => setScreen(Screen.HUB)} onRequestUpgrade={() => { setScreen(Screen.DASHBOARD); setTimeout(() => setShowSubscriptionModal(true), 100); }} />
       )}
 
       {screen === Screen.CHECKOUT && pendingSubscriptionTier && (
-         <CheckoutScreen 
-            user={user}
-            tier={pendingSubscriptionTier}
-            onConfirm={() => { setUser({...user, subscription: pendingSubscriptionTier}); setScreen(Screen.PAYMENT_SUCCESS); }}
-            onCancel={() => setScreen(Screen.DASHBOARD)}
-         />
+         <CheckoutScreen user={user} tier={pendingSubscriptionTier} onConfirm={() => { setUser({...user, subscription: pendingSubscriptionTier}); setScreen(Screen.PAYMENT_SUCCESS); }} onCancel={() => setScreen(Screen.DASHBOARD)} />
       )}
 
       {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.TERMS)} />}
 
       {screen === Screen.TERMS && (
-         <TermsScreen 
-           userId={user.id} 
-           onAccept={handleTermsAccepted} 
-           onReject={handleLogout} 
-         />
+         <TermsScreen userId={user.id} onAccept={(v, t) => { setUser({ ...user, termsAcceptedVersion: v, termsAcceptedAt: t }); setScreen(Screen.HUB); }} onReject={handleLogout} />
       )}
 
       {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras e liberar novos mundos' : 'acessar área dos pais'} onSuccess={() => { setShowParentGate(false); if (gateAction === 'upgrade') setShowSubscriptionModal(true); else setScreen(Screen.PARENTS); }} onCancel={() => setShowParentGate(false)} />}
@@ -286,3 +240,39 @@ export default function App() {
     </div>
   );
 }
+
+// --- SUB-COMPONENT: ADMIN LOGIN ---
+const AdminLogin: React.FC<{ onAccess: () => void, onCancel: () => void }> = ({ onAccess, onCancel }) => {
+  const [login, setLogin] = useState('');
+  const [pass, setPass] = useState('');
+  const [err, setErr] = useState(false);
+
+  const handle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (login === 'admin' && pass === '853817') {
+      onAccess();
+    } else {
+      setErr(true);
+      setTimeout(() => setErr(false), 2000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+       <form onSubmit={handle} className="bg-slate-900 p-8 rounded-[2rem] border-2 border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.2)] max-w-sm w-full">
+          <div className="flex flex-col items-center mb-6">
+             <ShieldAlert size={48} className="text-emerald-500 mb-2" />
+             <h2 className="text-xl font-heading text-white">Acesso Restrito</h2>
+             <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Terminal de Controle Sparky</p>
+          </div>
+          <div className="space-y-4">
+             <input type="text" placeholder="Login Admin" value={login} onChange={e=>setLogin(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none font-mono" />
+             <input type="password" placeholder="Senha" value={pass} onChange={e=>setPass(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none font-mono" />
+             {err && <div className="text-red-500 text-[10px] font-black uppercase text-center animate-pulse">Acesso Negado</div>}
+             <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-3 rounded-xl transition-all shadow-lg">ENTRAR NO TERMINAL</button>
+             <button type="button" onClick={onCancel} className="w-full text-slate-600 text-[10px] font-black uppercase hover:text-white transition">Voltar</button>
+          </div>
+       </form>
+    </div>
+  );
+};

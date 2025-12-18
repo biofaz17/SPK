@@ -75,19 +75,27 @@ class DataService {
         progress: profile.progress,
         settings: profile.settings,
         active_skin: profile.activeSkin,
-        subscription: profile.subscription, // Adicionado para garantir sync de pagamento
+        subscription: profile.subscription,
         last_active: new Date().toISOString()
       })
       .eq('id', profile.id);
   }
 
   /**
-   * Registra o aceite jurídico dos termos
+   * Obtém todos os perfis cadastrados (Admin only)
    */
+  async getAllProfiles(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('last_active', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
   async acceptTerms(userId: string, version: string): Promise<{ success: boolean; timestamp: string }> {
     const timestamp = new Date().toISOString();
-    
-    // Tenta obter o IP do usuário para registro legal
     let userIp = '0.0.0.0';
     try {
       const ipRes = await fetch('https://api.ipify.org?format=json');
