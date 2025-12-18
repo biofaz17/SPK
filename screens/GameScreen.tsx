@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves, Sparkles, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves, Sparkles, Wand2, X, Map as MapIcon, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LevelConfig, BlockType, BlockCategory, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier } from '../types';
 import { LEVELS, CREATIVE_LEVEL } from '../constants';
@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { Robot } from '../components/Robot';
 import { BlockIcon } from '../components/BlockIcon';
 import { StatusIndicator } from '../components/StatusIndicator';
+import { SparkyLogo } from '../components/SparkyLogo';
 import confetti from 'canvas-confetti';
 import { audioService } from '../services/AudioService';
 import { GoogleGenAI } from "@google/genai";
@@ -15,20 +16,13 @@ import { GoogleGenAI } from "@google/genai";
 interface GameScreenProps {
   levelId: number | string;
   onBack: () => void;
+  onHome?: () => void; // NOVO: Voltar ao Hub
   onNextLevel: (blocksUsed: number) => void;
   user?: UserProfile | null;
   onUpdateSkin?: (skinId: string) => void;
 }
 
-// Inicialização segura da IA
-let ai: any = null;
-try {
-  if (process.env.API_KEY) {
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  }
-} catch (e) {
-  console.warn("AI não inicializada: Chave ausente ou erro no ambiente.");
-}
+// Fix: Removed global ai initialization to follow guidelines (should be inside function)
 
 const MotionTutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
@@ -198,7 +192,7 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
   );
 };
 
-export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextLevel, user, onUpdateSkin }) => {
+export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome, onNextLevel, user, onUpdateSkin }) => {
   const level = levelId === 'creative' ? CREATIVE_LEVEL : (LEVELS.find(l => l.id === levelId) || LEVELS[0]);
   const isHackerMode = level.id === 45 || level.id === 'creative'; 
   const isWaterLevel = level.id === 16; 
@@ -253,8 +247,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     };
   }, [levelId]);
 
+  // Fix: moved ai generation to follow guidelines (instantiate inside function)
   const handleAiGeneration = async () => {
-    if (!ai) {
+    if (!process.env.API_KEY) {
         alert("A IA não está disponível neste momento. Verifique sua conexão ou chave de API.");
         return;
     }
@@ -265,8 +260,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     if (!aiPrompt.trim()) return;
     setIsGenerating(true);
     try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: `Create a creative list of obstacles for a ${level.gridSize}x${level.gridSize} grid (coordinates 0 to ${level.gridSize-1}). 
                    The user request is: "${aiPrompt}".
                    Return ONLY a JSON array of objects with 'x' and 'y' properties. 
@@ -305,6 +301,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     } else if (gameStatus === 'lost') {
        audioService.playSfx('error');
        const failPhrases = ["Ops, batemos! Tente novamente.", "Quase lá. Vamos revisar o código?", "Minha bateria acabou ou bati. Preciso da sua ajuda!"];
+       // Fix: use failPhrases.length instead of non-existent winPhrases
        const phrase = failPhrases[Math.floor(Math.random() * failPhrases.length)];
        setTimeout(() => {
            audioService.speak(phrase, 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
@@ -666,12 +663,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     <div className={`flex flex-col md:flex-row md:h-screen md:overflow-hidden min-h-screen ${bgClass} ${textClass}`}>
       
       <div className={`md:hidden p-4 flex justify-between items-center z-20 shadow-md shrink-0 sticky top-0 ${isHackerMode ? 'bg-green-900 text-green-100' : 'bg-indigo-600 text-white'}`}>
-         <button onClick={onBack}><ArrowLeft /></button>
+         <button onClick={onBack} className="flex items-center gap-1 font-bold"><ArrowLeft /> <span>Mapa</span></button>
          <div className="flex flex-col items-center">
             <span className="font-heading">{level.title}</span>
             <StatusIndicator className="scale-75 origin-top mt-0.5" />
          </div>
-         <button onClick={() => setTutorialOpen(true)}><HelpCircle /></button>
+         {onHome ? (
+            <button onClick={onHome} className="bg-white/20 p-1.5 rounded-lg border border-white/30">
+               <SparkyLogo size="sm" showText={false} />
+            </button>
+         ) : (
+            <button onClick={() => setTutorialOpen(true)}><HelpCircle /></button>
+         )}
       </div>
 
       <div className={`
@@ -793,10 +796,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
           h-auto md:h-full order-2 md:order-1
       `}>
          <div className={`hidden md:flex p-4 border-b items-center gap-3 ${isHackerMode ? 'bg-slate-900 border-slate-700' : 'bg-indigo-50 border-slate-100'}`}>
-            <button onClick={onBack} className={`p-2 rounded-full transition ${isHackerMode ? 'hover:bg-slate-800 text-green-500' : 'hover:bg-white text-indigo-900'}`}>
-                <ArrowLeft size={20} />
+            <button 
+                onClick={onBack} 
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl transition font-black text-xs uppercase border-b-4 active:border-b-0 active:translate-y-1 ${isHackerMode ? 'bg-green-900 border-green-700 text-green-400 hover:bg-green-800' : 'bg-white border-slate-200 text-indigo-900 hover:bg-slate-50'}`}
+                title="Voltar para o Mapa"
+            >
+                <MapIcon size={18} /> <span>Mapa</span>
             </button>
-            <div className="flex-1">
+            <div className="flex-1 overflow-hidden">
                 <h2 className={`font-bold text-sm truncate ${isHackerMode ? 'text-green-400' : 'text-slate-800'}`}>{level.title}</h2>
                 <div className="flex items-center gap-2">
                     <div className={`text-[10px] uppercase font-bold tracking-wider ${isHackerMode ? 'text-green-700' : 'text-slate-400'}`}>Nível {level.id}</div>
@@ -807,7 +814,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
             {!isHackerMode && (
               <button onClick={() => setShowSkinSelector(true)} className="p-2 rounded-full hover:bg-black/5 mr-1 text-purple-500 relative group">
                   <Shirt size={18} />
-                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Mudar Roupa</span>
               </button>
             )}
 
@@ -825,7 +831,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                   </div>
                   <div className="font-mono text-xl">{formatTime(timeLeft)}</div>
                </div>
-               {isLowTime && <div className="text-center text-[10px] text-red-500 font-bold mt-1 uppercase">Energia Crítica!</div>}
             </div>
          )}
          
@@ -852,28 +857,51 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
       <div className={`flex-1 flex flex-col relative ${workspaceClass} min-h-[300px] md:min-h-0 order-3 md:order-2`}>
           
           <div className={`p-3 border-b shadow-sm z-30 flex items-start justify-between gap-3 ${isHackerMode ? 'bg-slate-800 border-slate-700 text-green-400' : 'bg-yellow-50 border-yellow-100 text-yellow-900'}`}>
-             <div className="flex gap-3">
-                <div className={`mt-0.5 ${isHackerMode ? 'text-green-500' : 'text-yellow-600'}`}>
+             <div className="flex gap-3 overflow-hidden">
+                <div className={`mt-0.5 shrink-0 ${isHackerMode ? 'text-green-500' : 'text-yellow-600'}`}>
                     <Target size={18} />
                 </div>
-                <div>
+                <div className="overflow-hidden">
                     <div className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-0.5 ${isHackerMode ? 'text-green-600' : 'text-yellow-700'}`}>Missão</div>
-                    <div className="text-sm font-bold leading-tight">
+                    <div className="text-sm font-bold leading-tight truncate">
                         {level.mission || level.tutorialMessage || "Chegue ao objetivo!"}
                     </div>
                 </div>
              </div>
              
-             {level.isCreative && (
+             <div className="flex items-center gap-2 shrink-0">
+                 {/* NOVO: Logo Sparky Canto Superior Direito (Voltar ao Hub) no Desktop */}
+                 {onHome && (
+                    <button 
+                        onClick={onHome}
+                        className={`hidden md:flex flex-col items-center p-2 rounded-lg border transition shadow-sm group relative ${isHackerMode ? 'bg-slate-800 border-green-700 text-green-400 hover:bg-green-900' : 'bg-white border-blue-200 text-blue-600 hover:bg-blue-50'}`}
+                        title="Voltar ao Hub do Universo"
+                    >
+                        <SparkyLogo size="sm" showText={false} />
+                        <span className="absolute -bottom-10 right-0 bg-black/80 text-white text-[9px] font-black uppercase px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-50">HUB PRINCIPAL</span>
+                    </button>
+                 )}
+
                  <button 
-                    onClick={() => setShowAiModal(true)}
-                    className="flex flex-col items-center bg-white/50 hover:bg-white/80 p-2 rounded-lg border border-yellow-200 transition"
-                    title="IA Criativa"
+                    onClick={onBack}
+                    className={`flex flex-col items-center p-2 rounded-lg border transition shadow-sm ${isHackerMode ? 'bg-slate-800 border-green-700 text-green-400 hover:bg-green-900' : 'bg-white border-blue-200 text-blue-600 hover:bg-blue-50'}`}
+                    title="Voltar ao Mapa"
                  >
-                    <Sparkles className="text-purple-500" size={20} />
-                    <span className="text-[9px] font-bold text-purple-700 uppercase mt-1">{aiGenCount}/3</span>
+                    <LogOut size={20} className="rotate-180" />
+                    <span className="text-[9px] font-bold uppercase mt-1">SAIR</span>
                  </button>
-             )}
+
+                 {level.isCreative && (
+                     <button 
+                        onClick={() => setShowAiModal(true)}
+                        className="flex flex-col items-center bg-white/50 hover:bg-white/80 p-2 rounded-lg border border-yellow-200 transition"
+                        title="IA Criativa"
+                     >
+                        <Sparkles className="text-purple-500" size={20} />
+                        <span className="text-[9px] font-bold text-purple-700 uppercase mt-1">{aiGenCount}/3</span>
+                     </button>
+                 )}
+             </div>
           </div>
 
           <div ref={programListRef} className="flex-1 p-4 overflow-y-auto content-start flex flex-wrap content-start gap-2 scroll-smooth" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>

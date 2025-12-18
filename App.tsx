@@ -104,6 +104,11 @@ export default function App() {
     setScreen(Screen.AUTH);
   };
 
+  const handleGoToHub = () => {
+    setScreen(Screen.HUB);
+    audioService.playSfx('pop');
+  };
+
   const showNotification = (title: string, body: string = '') => {
      setNotification({ title, body });
      setTimeout(() => setNotification({ title: '', body: '' }), 4000);
@@ -226,7 +231,7 @@ export default function App() {
               setScreen(Screen.GAME);
            }}
            onOpenParents={() => triggerParentGate('parents_area')}
-           onBackToHub={() => setScreen(Screen.HUB)}
+           onBackToHub={handleGoToHub}
         />
       )}
       
@@ -239,6 +244,7 @@ export default function App() {
              setScreen(Screen.GAME);
           }}
           onBack={() => setScreen(Screen.DASHBOARD)}
+          onHome={handleGoToHub}
           onRequestUpgrade={() => triggerParentGate('upgrade')}
         />
       )}
@@ -246,27 +252,32 @@ export default function App() {
       {screen === Screen.GAME && (
         <GameScreen 
           levelId={currentLevelId}
-          onBack={() => setScreen(Screen.MAP)}
+          onBack={() => {
+             // Se for criativo volta pro Dashboard, se for nível volta pro Mapa
+             if (currentLevelId === 'creative') setScreen(Screen.DASHBOARD);
+             else setScreen(Screen.MAP);
+          }}
+          onHome={handleGoToHub}
           onNextLevel={handleLevelComplete}
           user={user}
           onUpdateSkin={handleUpdateSkin}
         />
       )}
 
-      {screen === Screen.MATH_GAME && <MathGameScreen onBack={() => setScreen(Screen.HUB)} />}
-      {screen === Screen.WORDS_GAME && <WordsGameScreen onBack={() => setScreen(Screen.HUB)} />}
-      {screen === Screen.SCIENCE_GAME && <ScienceGameScreen onBack={() => setScreen(Screen.HUB)} />}
-      {screen === Screen.MEMORY_GAME && <MemoryGameScreen onBack={() => setScreen(Screen.HUB)} />}
-      {screen === Screen.RHYTHM_GAME && <RhythmGameScreen onBack={() => setScreen(Screen.HUB)} />}
-      {screen === Screen.GEOMETRY_GAME && <GeometryGameScreen onBack={() => setScreen(Screen.HUB)} />}
-      {screen === Screen.LOGIC_GAME && <LogicGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.MATH_GAME && <MathGameScreen onBack={handleGoToHub} />}
+      {screen === Screen.WORDS_GAME && <WordsGameScreen onBack={handleGoToHub} />}
+      {screen === Screen.SCIENCE_GAME && <ScienceGameScreen onBack={handleGoToHub} />}
+      {screen === Screen.MEMORY_GAME && <MemoryGameScreen onBack={handleGoToHub} />}
+      {screen === Screen.RHYTHM_GAME && <RhythmGameScreen onBack={handleGoToHub} />}
+      {screen === Screen.GEOMETRY_GAME && <GeometryGameScreen onBack={handleGoToHub} />}
+      {screen === Screen.LOGIC_GAME && <LogicGameScreen onBack={handleGoToHub} />}
 
       {screen === Screen.PARENTS && (
          <ParentPanel 
             user={user}
             onUpdateUser={setUser}
             onLogout={handleLogout}
-            onBack={() => setScreen(Screen.HUB)}
+            onBack={handleGoToHub}
             onRequestUpgrade={() => {
               setScreen(Screen.DASHBOARD);
               setTimeout(() => setShowSubscriptionModal(true), 100);

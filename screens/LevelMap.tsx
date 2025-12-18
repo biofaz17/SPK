@@ -1,14 +1,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, ArrowLeft, Crown, Zap, Check, Star, Play } from 'lucide-react';
+import { Lock, ArrowLeft, Crown, Zap, Check, Star, Play, Home } from 'lucide-react';
 import { LEVELS } from '../constants';
 import { SubscriptionTier, LevelConfig } from '../types';
+import { SparkyLogo } from '../components/SparkyLogo';
 
 interface LevelMapProps {
   unlockedLevels: number;
   userSubscription: SubscriptionTier;
   onSelectLevel: (levelId: number) => void;
   onBack: () => void;
+  onHome?: () => void; // NOVO: Voltar ao Hub
   onRequestUpgrade: () => void;
 }
 
@@ -17,6 +19,7 @@ export const LevelMap: React.FC<LevelMapProps> = ({
   userSubscription,
   onSelectLevel, 
   onBack,
+  onHome,
   onRequestUpgrade
 }) => {
   
@@ -33,7 +36,6 @@ export const LevelMap: React.FC<LevelMapProps> = ({
     }
   }, []);
 
-  // Helper function to check if user has access to a specific tier
   const hasSubscriptionAccess = (requiredTier: SubscriptionTier): boolean => {
     if (requiredTier === SubscriptionTier.FREE) return true;
     if (requiredTier === SubscriptionTier.STARTER) {
@@ -53,7 +55,6 @@ export const LevelMap: React.FC<LevelMapProps> = ({
     onSelectLevel(level.id as number);
   };
 
-  // Group levels by Tier for display
   const freeLevels = LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.FREE);
   const starterLevels = LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.STARTER);
   const proLevels = LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.PRO);
@@ -73,16 +74,9 @@ export const LevelMap: React.FC<LevelMapProps> = ({
           <div className="flex flex-wrap justify-center md:justify-start gap-8 px-4">
               {levels.map((level, index) => {
                   const levelId = level.id as number;
-                  // Lógica de Estado do Nível
-                  // Nível Atual: Exatamente o unlockedLevels
-                  // Completado: Menor que unlockedLevels
-                  // Travado (Progresso): Maior que unlockedLevels
-                  
                   const isCurrent = levelId === unlockedLevels;
                   const isCompleted = levelId < unlockedLevels;
                   const isProgressionLocked = levelId > unlockedLevels;
-                  
-                  // Cannot play if tier is locked OR progression is locked
                   const isPlayable = !locked && !isProgressionLocked;
 
                   return (
@@ -90,7 +84,7 @@ export const LevelMap: React.FC<LevelMapProps> = ({
                         key={levelId}
                         ref={isCurrent ? currentLevelRef : null}
                         onClick={() => handleLevelClick(level)}
-                        disabled={!isPlayable && !locked} // Allow clicking locked tier to see upgrade modal
+                        disabled={!isPlayable && !locked}
                         className={`
                           group relative w-20 h-20 md:w-24 md:h-24 rounded-3xl flex flex-col items-center justify-center transition-all duration-300
                           ${locked 
@@ -98,7 +92,7 @@ export const LevelMap: React.FC<LevelMapProps> = ({
                               : (isProgressionLocked 
                                   ? 'bg-slate-200 opacity-50 cursor-not-allowed border-2 border-slate-300' 
                                   : (isCurrent 
-                                      ? `${tierColor.replace('bg-', 'bg-')} ring-4 ring-white ring-offset-4 ring-offset-green-600 scale-110 shadow-2xl z-10` 
+                                      ? `${tierColor} ring-4 ring-white ring-offset-4 ring-offset-green-600 scale-110 shadow-2xl z-10` 
                                       : 'bg-white hover:scale-105 shadow-md border-b-4 border-slate-200 active:border-b-0 active:translate-y-1'))
                           }
                         `}
@@ -116,34 +110,22 @@ export const LevelMap: React.FC<LevelMapProps> = ({
                                 </div>
                                 <Play size={32} className="text-white fill-current ml-1" />
                                 <span className="text-xs font-bold text-white/90 mt-1">Nível {levelId}</span>
-                                {/* Pulse Effect */}
                                 <span className="absolute inset-0 rounded-3xl bg-white/30 animate-ping opacity-75"></span>
                               </>
                           ) : (
-                              // Future levels (locked by progression) or standard styling
                               <span className={`text-2xl font-heading ${isProgressionLocked ? 'text-slate-400' : 'text-slate-600'}`}>
                                   {levelId}
                               </span>
                           )}
 
-                          {/* Level Title Tooltip */}
                           <div className={`
                              absolute -bottom-10 opacity-0 group-hover:opacity-100 transition-opacity 
                              bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap z-20 pointer-events-none shadow-xl
                              ${isCurrent ? '-bottom-12' : ''}
                           `}>
                               {level.title}
-                              {/* Seta do tooltip */}
                               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 rotate-45"></div>
                           </div>
-
-                          {/* Connector Line (Visual only, works best in grid) */}
-                          {index < levels.length - 1 && (
-                              <div className={`
-                                hidden md:block absolute -right-8 top-1/2 -translate-y-1/2 w-8 h-2 rounded-full z-[-1]
-                                ${isCompleted && !locked ? 'bg-white/80' : 'bg-black/10'}
-                              `} />
-                          )}
                       </button>
                   );
               })}
@@ -154,48 +136,43 @@ export const LevelMap: React.FC<LevelMapProps> = ({
   return (
     <div className="min-h-screen bg-[#65a30d] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] flex flex-col items-center p-4 relative overflow-y-auto">
       
-      {/* Back Button */}
-      <button 
-        onClick={onBack}
-        className="fixed top-4 left-4 bg-white rounded-full p-3 shadow-lg hover:scale-110 transition z-50 border-4 border-green-700 text-green-700"
-      >
-        <ArrowLeft size={24} strokeWidth={3} />
-      </button>
+      {/* Botão Voltar (Dashboard) */}
+      <div className="fixed top-4 left-4 z-50">
+        <button 
+          onClick={onBack}
+          className="bg-white rounded-2xl px-4 py-3 shadow-xl hover:scale-105 transition border-4 border-green-700 text-green-700 flex items-center gap-2 font-black uppercase text-sm"
+        >
+          <ArrowLeft size={20} strokeWidth={4} />
+          <span className="hidden sm:inline">Painel</span>
+        </button>
+      </div>
+
+      {/* NOVO: Logo Sparky Canto Superior Direito (Voltar ao Hub) */}
+      {onHome && (
+        <div className="fixed top-4 right-4 z-50">
+          <button 
+            onClick={onHome}
+            className="bg-white/90 backdrop-blur-sm rounded-2xl p-2 shadow-xl hover:scale-110 hover:rotate-3 transition-all border-4 border-blue-500 group relative"
+          >
+            <SparkyLogo size="sm" showText={false} />
+            <span className="absolute -bottom-8 right-0 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                VOLTAR AO HUB
+            </span>
+          </button>
+        </div>
+      )}
 
       <div className="w-full max-w-5xl mt-20 pb-20 flex flex-col items-center">
         <h2 className="text-4xl md:text-5xl text-white font-heading text-center mb-4 drop-shadow-md">
            Mapa da Aventura
         </h2>
         <p className="text-green-100 font-bold mb-10 text-center max-w-md bg-green-800/30 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
-            Viaje pelos mundos do conhecimento. Desbloqueie novos desafios evoluindo seu plano!
+            Escolha um nível para começar! Complete os desafios para liberar novos mundos.
         </p>
 
-        {/* FREE WORLD */}
-        {renderLevelGrid(
-            freeLevels, 
-            "Mundo Inicial (Grátis)", 
-            "bg-green-500", 
-            <Star fill="currentColor" />, 
-            false
-        )}
-
-        {/* STARTER WORLD */}
-        {renderLevelGrid(
-            starterLevels, 
-            "Mundo da Floresta (Starter)", 
-            "bg-blue-500", 
-            <Zap fill="currentColor" />, 
-            !hasSubscriptionAccess(SubscriptionTier.STARTER)
-        )}
-
-        {/* PRO WORLD */}
-        {renderLevelGrid(
-            proLevels, 
-            "Mundo Hacker (Pro)", 
-            "bg-purple-600", 
-            <Crown fill="currentColor" />, 
-            !hasSubscriptionAccess(SubscriptionTier.PRO)
-        )}
+        {renderLevelGrid(freeLevels, "Mundo Inicial (Grátis)", "bg-green-500", <Star fill="currentColor" />, false)}
+        {renderLevelGrid(starterLevels, "Mundo da Floresta (Starter)", "bg-blue-500", <Zap fill="currentColor" />, !hasSubscriptionAccess(SubscriptionTier.STARTER))}
+        {renderLevelGrid(proLevels, "Mundo Hacker (Pro)", "bg-purple-600", <Crown fill="currentColor" />, !hasSubscriptionAccess(SubscriptionTier.PRO))}
 
       </div>
     </div>
