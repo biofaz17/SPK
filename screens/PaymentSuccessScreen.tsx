@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Button } from '../components/Button';
-import { CheckCircle, ArrowRight, Mail } from 'lucide-react';
+import { CheckCircle, ArrowRight, Mail, ShieldCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface PaymentSuccessScreenProps {
@@ -20,7 +20,7 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ onCo
         angle: 60,
         spread: 55,
         origin: { x: 0 },
-        colors: ['#22c55e', '#3b82f6'] // Green and Blue
+        colors: ['#22c55e', '#3b82f6']
       });
       confetti({
         particleCount: 2,
@@ -48,30 +48,20 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ onCo
 
         <h1 className="text-3xl font-heading text-slate-800 mb-2">Pagamento Confirmado!</h1>
         <p className="text-slate-500 font-bold mb-8">
-          Parabéns! O plano foi ativado e novos mundos foram desbloqueados para sua aventura.
+          Parabéns! O plano foi ativado e novos mundos foram desbloqueados.
         </p>
 
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8 text-left">
-           <div className="text-xs text-slate-400 font-bold uppercase mb-1">Status do Pedido</div>
-           <div className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-             <span className="w-2 h-2 rounded-full bg-green-500"></span> Aprovado
+        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mb-8 text-left">
+           <div className="flex items-center gap-2 text-indigo-700 font-black text-[10px] uppercase mb-2">
+              <ShieldCheck size={14} /> Passo Final de Segurança
            </div>
-           
-           <div className="bg-white border border-slate-200 p-3 rounded-lg flex items-start gap-3">
-               <div className="bg-blue-100 p-2 rounded-full text-blue-600 shrink-0">
-                  <Mail size={16} />
-               </div>
-               <div>
-                  <div className="text-sm font-bold text-slate-700">Recibo Enviado</div>
-                  <div className="text-xs text-slate-500 leading-tight">
-                      Enviamos a Nota Fiscal e os detalhes da transação para o email do responsável cadastrado.
-                  </div>
-               </div>
-           </div>
+           <p className="text-xs text-indigo-900 leading-tight">
+              Para liberar o acesso da criança, precisamos que você aceite o <strong>Termo de Responsabilidade Parental</strong> na próxima tela.
+           </p>
         </div>
 
         <Button onClick={onContinue} variant="primary" size="lg" className="w-full">
-          Voltar para Aventura <ArrowRight />
+          Ir para os Termos <ArrowRight />
         </Button>
 
       </div>

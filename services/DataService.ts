@@ -2,10 +2,6 @@
 import { UserProfile } from '../types';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-/**
- * CONFIGURAÇÃO SUPABASE REAL
- * Utilizando o ID do projeto e a Chave Anon fornecidos pelo usuário.
- */
 const SUPABASE_URL = 'https://aluzklqouexuruppwumz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsdXprbHFvdWV4dXJ1cHB3dW16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNjIzMDgsImV4cCI6MjA4MTYzODMwOH0.ChAxpI6gi7RX-W9XShu_21-q1diBfFBSsPgCs8S_o3Q';
 
@@ -14,9 +10,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 class DataService {
   private SESSION_KEY = 'sparky_session_token';
 
-  /**
-   * Tenta encontrar um usuário pelo nome e senha no Banco de Dados Real
-   */
   async login(name: string, password?: string): Promise<UserProfile | null> {
     const userId = this.generateId(name);
     
@@ -32,7 +25,6 @@ class DataService {
       throw new Error("Senha incorreta");
     }
 
-    // Mapeia do banco para o nosso tipo UserProfile
     const profile: UserProfile = {
         id: data.id,
         name: data.name,
@@ -43,16 +35,15 @@ class DataService {
         activeSkin: data.active_skin,
         progress: data.progress,
         settings: data.settings,
-        lastActive: new Date(data.last_active).getTime()
+        lastActive: new Date(data.last_active).getTime(),
+        termsAcceptedVersion: data.terms_accepted_version,
+        termsAcceptedAt: data.terms_accepted_at
     };
 
     localStorage.setItem(this.SESSION_KEY, userId);
     return profile;
   }
 
-  /**
-   * Cria um novo usuário no banco de dados real
-   */
   async register(profile: UserProfile): Promise<void> {
     const { error } = await supabase
       .from('profiles')
@@ -77,9 +68,6 @@ class DataService {
     localStorage.setItem(this.SESSION_KEY, profile.id);
   }
 
-  /**
-   * Sincroniza o progresso atual com a nuvem (UPDATE real)
-   */
   async syncProfile(profile: UserProfile): Promise<void> {
     await supabase
       .from('profiles')
@@ -87,19 +75,49 @@ class DataService {
         progress: profile.progress,
         settings: profile.settings,
         active_skin: profile.activeSkin,
+        subscription: profile.subscription, // Adicionado para garantir sync de pagamento
         last_active: new Date().toISOString()
       })
       .eq('id', profile.id);
   }
 
   /**
-   * Verifica se existe uma sessão ativa ao abrir o app e busca dados frescos do banco
+   * Registra o aceite jurídico dos termos
    */
+  async acceptTerms(userId: string, version: string): Promise<{ success: boolean; timestamp: string }> {
+    const timestamp = new Date().toISOString();
+    
+    // Tenta obter o IP do usuário para registro legal
+    let userIp = '0.0.0.0';
+    try {
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipRes.json();
+      userIp = ipData.ip;
+    } catch (e) {
+      console.warn("Não foi possível capturar o IP para o log legal.");
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        terms_accepted_version: version,
+        terms_accepted_at: timestamp,
+        terms_log: {
+            ip: userIp,
+            ua: navigator.userAgent,
+            version: version
+        }
+      })
+      .eq('id', userId);
+
+    if (error) throw error;
+    return { success: true, timestamp };
+  }
+
   async checkSession(): Promise<UserProfile | null> {
     const sessionId = localStorage.getItem(this.SESSION_KEY);
     if (!sessionId) return null;
 
-    // Busca dados atualizados do banco para garantir que a criança continue de onde parou em outro dispositivo
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -118,7 +136,9 @@ class DataService {
         activeSkin: data.active_skin,
         progress: data.progress,
         settings: data.settings,
-        lastActive: new Date(data.last_active).getTime()
+        lastActive: new Date(data.last_active).getTime(),
+        termsAcceptedVersion: data.terms_accepted_version,
+        termsAcceptedAt: data.terms_accepted_at
     };
   }
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AuthScreen } from './screens/AuthScreen';
 import { PlatformHub } from './screens/PlatformHub';
 import { LevelMap } from './screens/LevelMap';
@@ -8,6 +8,7 @@ import { Dashboard } from './screens/Dashboard';
 import { ParentPanel } from './screens/ParentPanel';
 import { CheckoutScreen } from './screens/CheckoutScreen';
 import { PaymentSuccessScreen } from './screens/PaymentSuccessScreen';
+import { TermsScreen } from './screens/TermsScreen';
 import { MathGameScreen } from './screens/MathGameScreen';
 import { WordsGameScreen } from './screens/WordsGameScreen';
 import { ScienceGameScreen } from './screens/ScienceGameScreen';
@@ -19,99 +20,91 @@ import { UserProfile, SubscriptionTier } from './types';
 import { LEVELS } from './constants';
 import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
-import { MarketingModal } from './components/MarketingModal';
 import { SparkyAssistant } from './components/SparkyAssistant';
-import { Mail, Cloud } from 'lucide-react';
+import { StatusIndicator } from './components/StatusIndicator';
+import { Cloud, Loader2 } from 'lucide-react';
 import { audioService } from './services/AudioService';
-
-// Toast Notification corrigido
-const NotificationToast = ({ msg, subMsg, show }: { msg: string, subMsg?: string, show: boolean }) => (
-   <div className={`fixed top-4 right-4 bg-white border-l-4 border-indigo-500 text-slate-800 px-6 py-4 rounded-r-xl shadow-2xl z-[100] transition-all duration-500 ${show ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-      <div className="flex items-start gap-3">
-         <div className="bg-indigo-100 p-2 rounded-full text-indigo-600 animate-pulse">
-            <Cloud size={20} />
-         </div>
-         <div>
-            <div className="font-bold text-sm">{String(msg || '')}</div>
-            {subMsg && <div className="text-xs text-slate-500 mt-1">{String(subMsg)}</div>}
-         </div>
-      </div>
-   </div>
-);
+import { dataService } from './services/DataService';
 
 enum Screen {
-  AUTH,
-  HUB,
-  DASHBOARD, 
-  MAP,
-  GAME,      
-  MATH_GAME, 
-  WORDS_GAME,
-  SCIENCE_GAME,
-  MEMORY_GAME, 
-  RHYTHM_GAME, 
-  GEOMETRY_GAME, 
-  LOGIC_GAME, 
-  PARENTS,
-  CHECKOUT,
-  PAYMENT_SUCCESS
+  AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
+  SCIENCE_GAME, MEMORY_GAME, RHYTHM_GAME, GEOMETRY_GAME, 
+  LOGIC_GAME, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS
 }
+
+const CURRENT_TERMS_VERSION = "v1.0";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>(Screen.AUTH);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState<number | string>(1);
   const [showParentGate, setShowParentGate] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showMarketingModal, setShowMarketingModal] = useState(false); 
   const [gateAction, setGateAction] = useState(''); 
-  const [notification, setNotification] = useState({ title: '', body: '' });
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
 
-  // Efeito de Persistência
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const sessionUser = await dataService.checkSession();
+        if (sessionUser) {
+          setUser(sessionUser);
+          // Se for usuário pago e não aceitou os termos, obriga o aceite
+          if (sessionUser.subscription !== SubscriptionTier.FREE && sessionUser.termsAcceptedVersion !== CURRENT_TERMS_VERSION) {
+              setScreen(Screen.TERMS);
+          } else {
+              setScreen(Screen.HUB);
+          }
+        }
+      } catch (e) {
+        console.error("Falha na inicialização", e);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    init();
+  }, []);
+
   useEffect(() => {
     if (user && !user.isGuest) {
-      const storageKey = `sparky_user_${user.id}`;
-      localStorage.setItem(storageKey, JSON.stringify(user));
-      localStorage.setItem('sparky_last_user_id', user.id);
+      const sync = async () => {
+        setIsSyncing(true);
+        try {
+          await dataService.syncProfile(user);
+        } catch (e) {
+          console.error("Erro ao sincronizar", e);
+        } finally {
+          setTimeout(() => setIsSyncing(false), 1000);
+        }
+      };
+      sync();
     }
   }, [user]);
 
-  // Handler de retorno de pagamento
-  useEffect(() => {
-      const params = new URLSearchParams(window.location.search);
-      const status = params.get('status') || params.get('collection_status');
-      if (status === 'approved' && user) {
-          const updatedUser = { 
-              ...user, 
-              subscription: pendingSubscriptionTier || SubscriptionTier.PRO, 
-              isGuest: false,
-          };
-          setUser(updatedUser);
-          setScreen(Screen.PAYMENT_SUCCESS);
-      }
-  }, [user, pendingSubscriptionTier]);
-
   const handleLogin = (profile: UserProfile) => {
     setUser(profile);
-    setScreen(Screen.HUB);
+    if (profile.subscription !== SubscriptionTier.FREE && profile.termsAcceptedVersion !== CURRENT_TERMS_VERSION) {
+        setScreen(Screen.TERMS);
+    } else {
+        setScreen(Screen.HUB);
+    }
     audioService.playSfx('start');
-    showNotification("Bem-vindo de volta!", "Seu progresso foi carregado com sucesso.");
   };
 
   const handleLogout = () => {
+    dataService.logout();
     setUser(null);
     setScreen(Screen.AUTH);
+    audioService.playSfx('delete');
   };
 
-  const handleGoToHub = () => {
-    setScreen(Screen.HUB);
-    audioService.playSfx('pop');
-  };
-
-  const showNotification = (title: string, body: string = '') => {
-     setNotification({ title, body });
-     setTimeout(() => setNotification({ title: '', body: '' }), 4000);
+  const handleTermsAccepted = (version: string, timestamp: string) => {
+    if (user) {
+        setUser({ ...user, termsAcceptedVersion: version, termsAcceptedAt: timestamp });
+        setScreen(Screen.HUB);
+    }
   };
 
   const handleLevelComplete = (blocksUsed: number) => {
@@ -133,28 +126,10 @@ export default function App() {
           totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed
         };
         
-        const updatedUser = { 
-            ...user, 
-            progress: newProgress,
-            lastActive: Date.now() 
-        };
-        
-        setUser(updatedUser);
+        setUser({ ...user, progress: newProgress, lastActive: Date.now() });
 
-        if (user.progress.stars % 2 === 0) {
-            showNotification(`Progresso Sincronizado`, `Nível ${currentLevelId} salvo com sucesso!`);
-        }
-
-        if (user.subscription === SubscriptionTier.FREE && currentLevelId % 3 === 0) {
-            setShowMarketingModal(true);
-            return; 
-        }
-
-        if (nextLevelId !== currentLevelId) {
-          setScreen(Screen.MAP);
-        } else {
-          setScreen(Screen.DASHBOARD);
-        }
+        if (nextLevelId !== currentLevelId) setScreen(Screen.MAP);
+        else setScreen(Screen.DASHBOARD);
     } else {
         const newProgress = { 
             ...user.progress, 
@@ -166,59 +141,46 @@ export default function App() {
     }
   };
 
-  const handleUpdateSkin = (skinId: string) => {
-    if (!user) return;
-    setUser({ ...user, activeSkin: skinId });
-    showNotification("Visual Atualizado!", "Sparky adorou a nova roupa.");
-  };
-
-  const triggerParentGate = (action: string) => {
-    setGateAction(action);
-    setShowParentGate(true);
-  };
-
-  const handleGateSuccess = () => {
-    setShowParentGate(false);
-    if (gateAction === 'upgrade') setShowSubscriptionModal(true);
-    else if (gateAction === 'parents_area') setScreen(Screen.PARENTS);
-  };
-
-  const handleSelectGame = (gameId: string) => {
-     switch (gameId) {
-        case 'sparky': setScreen(Screen.DASHBOARD); break;
-        case 'math': setScreen(Screen.MATH_GAME); break;
-        case 'words': setScreen(Screen.WORDS_GAME); break;
-        case 'science': setScreen(Screen.SCIENCE_GAME); break;
-        case 'memory': setScreen(Screen.MEMORY_GAME); break;
-        case 'rhythm': setScreen(Screen.RHYTHM_GAME); break;
-        case 'geometry': setScreen(Screen.GEOMETRY_GAME); break;
-        case 'logic': setScreen(Screen.LOGIC_GAME); break;
-        default: showNotification("Em Breve!", "Este jogo está sendo construído.");
-     }
-  };
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-indigo-600 flex flex-col items-center justify-center text-white">
+        <div className="relative">
+            <Loader2 className="animate-spin" size={64} />
+            <Cloud className="absolute inset-0 m-auto text-indigo-300" size={24} />
+        </div>
+        <p className="font-heading text-xl mt-6 animate-pulse uppercase tracking-widest">Sincronizando seu Universo...</p>
+      </div>
+    );
+  }
 
   if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} />;
   if (!user) return null; 
 
   return (
     <div className="antialiased text-slate-800 font-sans selection:bg-indigo-100">
-      <NotificationToast 
-        msg={notification.title || ''} 
-        subMsg={notification.body || ''} 
-        show={!!notification.title} 
-      />
+      <div className="fixed bottom-6 left-6 z-[100] pointer-events-none">
+          <StatusIndicator isSaving={isSyncing} isGuest={user?.isGuest} className="shadow-2xl bg-slate-900/80 text-white p-4" />
+      </div>
       
-      {user && screen !== Screen.GAME && screen !== Screen.MATH_GAME && 
-       screen !== Screen.MEMORY_GAME && screen !== Screen.RHYTHM_GAME && (
+      {user && ![Screen.GAME, Screen.MATH_GAME, Screen.MEMORY_GAME, Screen.RHYTHM_GAME, Screen.TERMS].includes(screen) && (
          <SparkyAssistant user={user} />
       )}
 
       {screen === Screen.HUB && (
         <PlatformHub 
            user={user}
-           onSelectGame={handleSelectGame}
+           onSelectGame={(id) => {
+              if (id === 'sparky') setScreen(Screen.DASHBOARD);
+              else if (id === 'math') setScreen(Screen.MATH_GAME);
+              else if (id === 'words') setScreen(Screen.WORDS_GAME);
+              else if (id === 'science') setScreen(Screen.SCIENCE_GAME);
+              else if (id === 'memory') setScreen(Screen.MEMORY_GAME);
+              else if (id === 'rhythm') setScreen(Screen.RHYTHM_GAME);
+              else if (id === 'geometry') setScreen(Screen.GEOMETRY_GAME);
+              else if (id === 'logic') setScreen(Screen.LOGIC_GAME);
+           }}
            onLogout={handleLogout}
-           onOpenParents={() => triggerParentGate('parents_area')}
+           onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }}
         />
       )}
 
@@ -226,12 +188,9 @@ export default function App() {
         <Dashboard 
            progress={user.progress}
            onPlayMission={() => setScreen(Screen.MAP)}
-           onCreativeMode={() => {
-              setCurrentLevelId('creative');
-              setScreen(Screen.GAME);
-           }}
-           onOpenParents={() => triggerParentGate('parents_area')}
-           onBackToHub={handleGoToHub}
+           onCreativeMode={() => { setCurrentLevelId('creative'); setScreen(Screen.GAME); }}
+           onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }}
+           onBackToHub={() => setScreen(Screen.HUB)}
         />
       )}
       
@@ -239,49 +198,39 @@ export default function App() {
         <LevelMap 
           unlockedLevels={user.progress.unlockedLevels}
           userSubscription={user.subscription}
-          onSelectLevel={(id) => {
-             setCurrentLevelId(id);
-             setScreen(Screen.GAME);
-          }}
+          onSelectLevel={(id) => { setCurrentLevelId(id); setScreen(Screen.GAME); }}
           onBack={() => setScreen(Screen.DASHBOARD)}
-          onHome={handleGoToHub}
-          onRequestUpgrade={() => triggerParentGate('upgrade')}
+          onHome={() => setScreen(Screen.HUB)}
+          onRequestUpgrade={() => { setGateAction('upgrade'); setShowParentGate(true); }}
         />
       )}
 
       {screen === Screen.GAME && (
         <GameScreen 
           levelId={currentLevelId}
-          onBack={() => {
-             // Se for criativo volta pro Dashboard, se for nível volta pro Mapa
-             if (currentLevelId === 'creative') setScreen(Screen.DASHBOARD);
-             else setScreen(Screen.MAP);
-          }}
-          onHome={handleGoToHub}
+          onBack={() => currentLevelId === 'creative' ? setScreen(Screen.DASHBOARD) : setScreen(Screen.MAP)}
+          onHome={() => setScreen(Screen.HUB)}
           onNextLevel={handleLevelComplete}
           user={user}
-          onUpdateSkin={handleUpdateSkin}
+          onUpdateSkin={(skinId) => setUser({ ...user, activeSkin: skinId })}
         />
       )}
 
-      {screen === Screen.MATH_GAME && <MathGameScreen onBack={handleGoToHub} />}
-      {screen === Screen.WORDS_GAME && <WordsGameScreen onBack={handleGoToHub} />}
-      {screen === Screen.SCIENCE_GAME && <ScienceGameScreen onBack={handleGoToHub} />}
-      {screen === Screen.MEMORY_GAME && <MemoryGameScreen onBack={handleGoToHub} />}
-      {screen === Screen.RHYTHM_GAME && <RhythmGameScreen onBack={handleGoToHub} />}
-      {screen === Screen.GEOMETRY_GAME && <GeometryGameScreen onBack={handleGoToHub} />}
-      {screen === Screen.LOGIC_GAME && <LogicGameScreen onBack={handleGoToHub} />}
+      {screen === Screen.MATH_GAME && <MathGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.WORDS_GAME && <WordsGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.SCIENCE_GAME && <ScienceGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.MEMORY_GAME && <MemoryGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.RHYTHM_GAME && <RhythmGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.GEOMETRY_GAME && <GeometryGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.LOGIC_GAME && <LogicGameScreen onBack={() => setScreen(Screen.HUB)} />}
 
       {screen === Screen.PARENTS && (
          <ParentPanel 
             user={user}
             onUpdateUser={setUser}
             onLogout={handleLogout}
-            onBack={handleGoToHub}
-            onRequestUpgrade={() => {
-              setScreen(Screen.DASHBOARD);
-              setTimeout(() => setShowSubscriptionModal(true), 100);
-            }}
+            onBack={() => setScreen(Screen.HUB)}
+            onRequestUpgrade={() => { setScreen(Screen.DASHBOARD); setTimeout(() => setShowSubscriptionModal(true), 100); }}
          />
       )}
 
@@ -289,18 +238,22 @@ export default function App() {
          <CheckoutScreen 
             user={user}
             tier={pendingSubscriptionTier}
-            onConfirm={() => {
-                setUser({...user, subscription: pendingSubscriptionTier});
-                setScreen(Screen.PAYMENT_SUCCESS);
-            }}
+            onConfirm={() => { setUser({...user, subscription: pendingSubscriptionTier}); setScreen(Screen.PAYMENT_SUCCESS); }}
             onCancel={() => setScreen(Screen.DASHBOARD)}
          />
       )}
 
-      {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.DASHBOARD)} />}
+      {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.TERMS)} />}
 
-      {showMarketingModal && <MarketingModal onUpgrade={() => { setShowMarketingModal(false); setShowSubscriptionModal(true); }} onClose={() => { setShowMarketingModal(false); setScreen(Screen.MAP); }} />}
-      {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras' : 'acessar área dos pais'} onSuccess={handleGateSuccess} onCancel={() => setShowParentGate(false)} />}
+      {screen === Screen.TERMS && (
+         <TermsScreen 
+           userId={user.id} 
+           onAccept={handleTermsAccepted} 
+           onReject={handleLogout} 
+         />
+      )}
+
+      {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras' : 'acessar área dos pais'} onSuccess={() => { setShowParentGate(false); if (gateAction === 'upgrade') setShowSubscriptionModal(true); else setScreen(Screen.PARENTS); }} onCancel={() => setShowParentGate(false)} />}
       {showSubscriptionModal && <SubscriptionModal onCheckoutStart={(tier) => { setPendingSubscriptionTier(tier); setShowSubscriptionModal(false); setScreen(Screen.CHECKOUT); }} onClose={() => setShowSubscriptionModal(false)} />}
     </div>
   );

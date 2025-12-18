@@ -16,12 +16,12 @@ export enum BlockType {
   MOVE_RIGHT = 'MOVE_RIGHT',
   REPEAT_2 = 'REPEAT_2',
   REPEAT_3 = 'REPEAT_3',
-  REPEAT_UNTIL = 'REPEAT_UNTIL', // Novo: Repetir até o Objetivo
+  REPEAT_UNTIL = 'REPEAT_UNTIL',
   PAINT = 'PAINT',
   START = 'START',
   IF_OBSTACLE = 'IF_OBSTACLE',
-  IF_PATH = 'IF_PATH', // Novo: Se Caminho Livre
-  ELSE_IF = 'ELSE_IF', // Novo: Senão Se
+  IF_PATH = 'IF_PATH',
+  ELSE_IF = 'ELSE_IF',
   ELSE = 'ELSE',
 }
 
@@ -29,8 +29,8 @@ export type AgeGroup = '5-7' | '8-10' | '11-14';
 
 export enum SubscriptionTier {
   FREE = 'FREE',
-  STARTER = 'STARTER', // R$ 19,99
-  PRO = 'PRO',         // R$ 49,99
+  STARTER = 'STARTER',
+  PRO = 'PRO',
 }
 
 export interface GridPosition {
@@ -41,7 +41,7 @@ export interface GridPosition {
 export interface LevelConfig {
   id: number | string;
   title: string;
-  mission?: string; // NOVO: Descrição persistente do problema a resolver
+  mission?: string;
   gridSize: number;
   startPos: GridPosition;
   goalPos?: GridPosition;
@@ -51,10 +51,10 @@ export interface LevelConfig {
   tutorialMessage?: string;
   explanation?: string;
   isCreative?: boolean;
-  ageGroup: AgeGroup; // BNCC Alignment
+  ageGroup: AgeGroup;
   requiredSubscription: SubscriptionTier;
-  bnccCode?: string; // e.g., EF01MA04
-  timeLimit?: number; // Tempo em segundos (opcional, para níveis pagos)
+  bnccCode?: string;
+  timeLimit?: number;
   introData?: {
     title: string;
     description: string;
@@ -70,15 +70,18 @@ export interface UserSettings {
 export interface UserProfile {
   id: string;
   name: string;
-  password?: string; // NOVO: Senha para login
+  password?: string;
   parentEmail: string;
   age: number;
   subscription: SubscriptionTier;
   progress: UserProgress;
   settings: UserSettings;
-  activeSkin?: string; // NOVO: Skin selecionada (default, ninja, fairy, dino)
+  activeSkin?: string;
   isGuest?: boolean;
   lastActive?: number;
+  // Campos Jurídicos
+  termsAcceptedVersion?: string;
+  termsAcceptedAt?: string;
 }
 
 export interface UserProgress {
