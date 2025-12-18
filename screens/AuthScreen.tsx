@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { UserProfile, SubscriptionTier } from '../types';
-import { User, Lock, Gamepad2, PlayCircle, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Gamepad2, PlayCircle, LogIn, UserPlus } from 'lucide-react';
 import { SparkyLogo } from '../components/SparkyLogo';
 import toast from 'react-hot-toast';
 
@@ -18,7 +18,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   // Form States
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [age, setAge] = useState('');
   const [parentEmail, setParentEmail] = useState('');
   
@@ -38,7 +37,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     const storedData = localStorage.getItem(storageKey);
 
     if (!storedData) {
-        setError('Usuário não encontrado. Crie uma conta primeiro!');
+        setError('Usuário não encontrado. Verifique o nome ou crie uma conta.');
         return;
     }
 
@@ -47,7 +46,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         
         // Verificação de Senha (Simples para Demo)
         if (user.password && user.password !== password) {
-            setError('Senha incorreta. Tente novamente.');
+            setError('Senha incorreta.');
             return;
         }
 
@@ -133,7 +132,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       setAuthMode(mode);
       setError('');
       setPassword('');
-      setName('');
   };
 
   return (
@@ -176,7 +174,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                  onChange={e => setName(e.target.value)}
                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition"
                  placeholder="Ex: supermario"
-                 autoComplete="username"
                  required
                />
             </div>
@@ -187,25 +184,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             <div className="relative">
                <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
                <input 
-                 type={showPassword ? "text" : "password"} 
+                 type="password" 
                  value={password}
                  onChange={e => setPassword(e.target.value)}
-                 className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 pl-12 pr-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition"
+                 className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition"
                  placeholder="****"
-                 autoComplete="current-password"
                  required
                />
-               <button 
-                 type="button" 
-                 onClick={() => setShowPassword(!showPassword)}
-                 className="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 focus:outline-none"
-               >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-               </button>
             </div>
-            {authMode === 'register' && (
-                <p className="text-[10px] text-slate-400 mt-1 ml-2">Lembre-se desta senha para voltar depois!</p>
-            )}
           </div>
 
           {authMode === 'register' && (
