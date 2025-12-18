@@ -16,6 +16,7 @@ import { MemoryGameScreen } from './screens/MemoryGameScreen';
 import { RhythmGameScreen } from './screens/RhythmGameScreen';
 import { GeometryGameScreen } from './screens/GeometryGameScreen';
 import { LogicGameScreen } from './screens/LogicGameScreen';
+import { CodeGameScreen } from './screens/CodeGameScreen';
 import { UserProfile, SubscriptionTier } from './types';
 import { LEVELS } from './constants';
 import { ParentGate } from './components/ParentGate';
@@ -29,7 +30,7 @@ import { dataService } from './services/DataService';
 enum Screen {
   AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
   SCIENCE_GAME, MEMORY_GAME, RHYTHM_GAME, GEOMETRY_GAME, 
-  LOGIC_GAME, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS
+  LOGIC_GAME, CODE_GAME, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS
 }
 
 const CURRENT_TERMS_VERSION = "v1.0";
@@ -51,7 +52,6 @@ export default function App() {
         const sessionUser = await dataService.checkSession();
         if (sessionUser) {
           setUser(sessionUser);
-          // Se for usuário pago e não aceitou os termos, obriga o aceite
           if (sessionUser.subscription !== SubscriptionTier.FREE && sessionUser.termsAcceptedVersion !== CURRENT_TERMS_VERSION) {
               setScreen(Screen.TERMS);
           } else {
@@ -115,21 +115,47 @@ export default function App() {
         const currentIndex = sortedLevels.findIndex(l => l.id === currentLevelId);
         
         let nextLevelId = currentLevelId; 
+        let hasNext = false;
+
         if (currentIndex !== -1 && currentIndex < sortedLevels.length - 1) {
-            nextLevelId = sortedLevels[currentIndex + 1].id as number;
+            const nextLevel = sortedLevels[currentIndex + 1];
+
+            // TRAVA OBRIGATÓRIA NÍVEL 15 -> 16
+            if (currentLevelId === 15 && user.subscription === SubscriptionTier.FREE) {
+                // Salva o progresso do 15 mas não libera o 16 ainda no objeto de usuário
+                const newProgress = {
+                  ...user.progress,
+                  stars: user.progress.stars + 1,
+                  totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed
+                };
+                setUser({ ...user, progress: newProgress, lastActive: Date.now() });
+                
+                // Redireciona para o mapa e dispara o modal de compra
+                setScreen(Screen.MAP);
+                setGateAction('upgrade');
+                setShowParentGate(true);
+                return;
+            }
+
+            nextLevelId = nextLevel.id as number;
+            hasNext = true;
         }
 
         const newProgress = {
           ...user.progress,
-          unlockedLevels: Math.max(user.progress.unlockedLevels, nextLevelId),
+          unlockedLevels: Math.max(user.progress.unlockedLevels, hasNext ? nextLevelId : currentLevelId),
           stars: user.progress.stars + 1,
           totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed
         };
         
         setUser({ ...user, progress: newProgress, lastActive: Date.now() });
 
-        if (nextLevelId !== currentLevelId) setScreen(Screen.MAP);
-        else setScreen(Screen.DASHBOARD);
+        if (hasNext) {
+            setCurrentLevelId(nextLevelId);
+            setScreen(Screen.GAME);
+        } else {
+            setScreen(Screen.DASHBOARD);
+        }
     } else {
         const newProgress = { 
             ...user.progress, 
@@ -162,7 +188,7 @@ export default function App() {
           <StatusIndicator isSaving={isSyncing} isGuest={user?.isGuest} className="shadow-2xl bg-slate-900/80 text-white p-4" />
       </div>
       
-      {user && ![Screen.GAME, Screen.MATH_GAME, Screen.MEMORY_GAME, Screen.RHYTHM_GAME, Screen.TERMS].includes(screen) && (
+      {user && ![Screen.GAME, Screen.MATH_GAME, Screen.MEMORY_GAME, Screen.RHYTHM_GAME, Screen.TERMS, Screen.CODE_GAME].includes(screen) && (
          <SparkyAssistant user={user} />
       )}
 
@@ -178,6 +204,7 @@ export default function App() {
               else if (id === 'rhythm') setScreen(Screen.RHYTHM_GAME);
               else if (id === 'geometry') setScreen(Screen.GEOMETRY_GAME);
               else if (id === 'logic') setScreen(Screen.LOGIC_GAME);
+              else if (id === 'code') setScreen(Screen.CODE_GAME);
            }}
            onLogout={handleLogout}
            onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }}
@@ -223,6 +250,7 @@ export default function App() {
       {screen === Screen.RHYTHM_GAME && <RhythmGameScreen onBack={() => setScreen(Screen.HUB)} />}
       {screen === Screen.GEOMETRY_GAME && <GeometryGameScreen onBack={() => setScreen(Screen.HUB)} />}
       {screen === Screen.LOGIC_GAME && <LogicGameScreen onBack={() => setScreen(Screen.HUB)} />}
+      {screen === Screen.CODE_GAME && <CodeGameScreen onBack={() => setScreen(Screen.HUB)} />}
 
       {screen === Screen.PARENTS && (
          <ParentPanel 
@@ -253,7 +281,7 @@ export default function App() {
          />
       )}
 
-      {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras' : 'acessar área dos pais'} onSuccess={() => { setShowParentGate(false); if (gateAction === 'upgrade') setShowSubscriptionModal(true); else setScreen(Screen.PARENTS); }} onCancel={() => setShowParentGate(false)} />}
+      {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras e liberar novos mundos' : 'acessar área dos pais'} onSuccess={() => { setShowParentGate(false); if (gateAction === 'upgrade') setShowSubscriptionModal(true); else setScreen(Screen.PARENTS); }} onCancel={() => setShowParentGate(false)} />}
       {showSubscriptionModal && <SubscriptionModal onCheckoutStart={(tier) => { setPendingSubscriptionTier(tier); setShowSubscriptionModal(false); setScreen(Screen.CHECKOUT); }} onClose={() => setShowSubscriptionModal(false)} />}
     </div>
   );

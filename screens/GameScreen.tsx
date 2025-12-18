@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves, Sparkles, Wand2, X, Map as MapIcon, LogOut, Maximize2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves, Sparkles, Wand2, X, Map as MapIcon, LogOut, Maximize2, MessageSquare, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LevelConfig, BlockType, BlockCategory, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier } from '../types';
 import { LEVELS, CREATIVE_LEVEL } from '../constants';
@@ -22,48 +22,86 @@ interface GameScreenProps {
   onUpdateSkin?: (skinId: string) => void;
 }
 
-const TutorialDemo: React.FC = () => {
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => { setStep((prev) => (prev + 1) % 4); }, 1200);
-    return () => clearInterval(interval);
-  }, []);
+const EndLevelModal: React.FC<{
+  status: 'won' | 'lost';
+  level: LevelConfig;
+  blocksUsed: number;
+  onRetry: () => void;
+  onNext: () => void;
+  explanation?: string | null;
+  isAnalyzing?: boolean;
+}> = ({ status, level, blocksUsed, onRetry, onNext, explanation, isAnalyzing }) => {
+  const isWon = status === 'won';
+  
   return (
-    <div className="bg-slate-50 rounded-xl p-6 mb-6 border-2 border-slate-200">
-         <div className="flex flex-col md:flex-row items-center justify-around gap-6">
-             <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Seu Código</span>
-                <div className="relative transform transition-all duration-300">
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white bg-orange-500 border-b-4 border-orange-700 transition-all duration-300 ${step > 0 ? 'scale-105 ring-4 ring-orange-200 shadow-lg' : 'scale-100'}`}>
-                        <Repeat size={18} /> <span>Repetir 3x</span>
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-indigo-950/80 backdrop-blur-md flex items-center justify-center p-4"
+    >
+      <motion.div 
+        initial={{ scale: 0.8, y: 50, rotate: -2 }}
+        animate={{ scale: 1, y: 0, rotate: 0 }}
+        className={`bg-white rounded-[3.5rem] p-8 md:p-12 text-center max-w-lg w-full shadow-2xl border-b-[16px] ${isWon ? 'border-green-500' : 'border-red-500'} relative overflow-hidden`}
+      >
+        <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-20 ${isWon ? 'bg-green-400' : 'bg-red-400'}`} />
+        <div className={`absolute -bottom-24 -left-24 w-48 h-48 rounded-full blur-3xl opacity-20 ${isWon ? 'bg-blue-400' : 'bg-orange-400'}`} />
+
+        <div className="relative z-10">
+          <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 shadow-lg ${isWon ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600 animate-bounce'}`}>
+            {isWon ? <CheckCircle size={60} strokeWidth={3} /> : <XCircle size={60} strokeWidth={3} />}
+          </div>
+
+          <h2 className="text-4xl md:text-5xl font-heading mb-2 text-slate-800 uppercase tracking-tighter">
+            {isWon ? 'Missão Cumprida!' : 'Ops! Bati!'}
+          </h2>
+          
+          <p className="text-slate-500 font-bold text-lg mb-8">
+            {isWon ? `Nível ${level.id} Desbloqueado!` : 'Vamos revisar seu código?'}
+          </p>
+
+          {isWon && (
+            <div className="flex justify-center gap-4 mb-8">
+               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2 }}><Star size={48} className="text-yellow-400 fill-yellow-400 drop-shadow-md" /></motion.div>
+               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4 }}><Star size={56} className="text-yellow-400 fill-yellow-400 drop-shadow-md -mt-2" /></motion.div>
+               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.6 }}><Star size={48} className="text-yellow-400 fill-yellow-400 drop-shadow-md" /></motion.div>
+            </div>
+          )}
+
+          <div className="bg-slate-50 rounded-2xl p-6 border-2 border-slate-100 mb-8 text-left">
+            <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
+                <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Estatísticas</span>
+                <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black">{blocksUsed} blocos usados</span>
+            </div>
+            
+            <div className="flex items-start gap-4">
+               <div className="bg-indigo-500 p-2 rounded-xl text-white shrink-0">
+                  <MessageSquare size={20} />
+               </div>
+               <div className="text-sm text-slate-700 font-bold leading-relaxed min-h-[60px]">
+                  {isAnalyzing ? (
+                    <div className="flex items-center gap-2 animate-pulse text-indigo-500">
+                       <Sparkles size={16} /> Analisando sua lógica...
                     </div>
-                    <div className="ml-6 -mt-1 pt-2">
-                         <div className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold text-white bg-blue-500 border-b-4 border-blue-700 shadow-sm transition-all duration-200 ${step > 0 ? 'translate-x-1 opacity-100' : 'opacity-80'}`}>
-                            <ArrowRight size={16} /> <span>Andar</span>
-                         </div>
-                    </div>
-                    {step > 0 && (
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-2 -right-2 bg-white text-orange-600 font-black text-xs w-6 h-6 rounded-full flex items-center justify-center border-2 border-orange-500 z-10 shadow">
-                            {step}
-                        </motion.div>
-                    )}
-                </div>
-             </div>
-             <div className="hidden md:block text-slate-300"><ArrowRight size={24} /></div>
-             <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">O que acontece</span>
-                <div className="bg-white p-2 rounded-xl border border-slate-200 w-48 h-20 relative overflow-hidden shadow-inner flex items-center">
-                    <div className="absolute inset-0 grid grid-cols-4 gap-1 p-2 opacity-20 pointer-events-none">
-                        {[1,2,3,4].map(i => <div key={i} className="border border-slate-400 rounded bg-slate-100 h-full"></div>)}
-                    </div>
-                    <motion.div className="w-10 h-10 bg-blue-500 rounded-lg border-2 border-blue-700 absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center text-white shadow-md" animate={{ left: (step * 35) + 10 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
-                        <div className="w-6 h-4 bg-white rounded border border-blue-300"></div>
-                    </motion.div>
-                </div>
-                <div className="mt-3 text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">{step === 0 ? "Aguardando..." : `Executando vez ${step} de 3`}</div>
-             </div>
-         </div>
-    </div>
+                  ) : explanation || level.explanation || (isWon ? 'Você foi incrível! Seu robô seguiu cada comando perfeitamente.' : 'Quase lá! Tente mudar a ordem dos blocos ou remover o que não precisa.')}
+               </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button onClick={onRetry} className="flex-1 py-4 text-xl font-heading bg-slate-100 text-slate-600 rounded-3xl border-b-4 border-slate-300 active:border-b-0 flex items-center justify-center gap-2">
+               <RotateCcw size={24} /> {isWon ? 'Tentar de Novo' : 'Revisar Código'}
+            </button>
+            {isWon && (
+              <button onClick={onNext} className="flex-1 py-4 text-xl font-heading bg-green-500 text-white rounded-3xl border-b-4 border-green-700 active:border-b-0 flex items-center justify-center gap-2 shadow-lg shadow-green-200">
+                 Próxima Missão <ArrowRight size={24} />
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -75,7 +113,7 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
     { id: 'dino', name: 'Dino Dados', desc: 'Forte e destemido.', locked: userTier === SubscriptionTier.FREE },
   ];
   return (
-    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
        <div className="bg-white rounded-[2rem] p-6 max-w-2xl w-full border-4 border-indigo-200 relative animate-popIn shadow-2xl">
           <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200"><XCircle /></button>
           <div className="text-center mb-6">
@@ -97,7 +135,7 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
                       )}
                    </div>
                    <div className="text-center">
-                      <h3 className="font-heading text-sm text-slate-800 leading-tight">{skin.name}</h3>
+                      <h3 className="font-heading text-xs text-slate-800 leading-tight">{skin.name}</h3>
                       {skin.locked ? <div className="text-[10px] font-bold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full mt-1 inline-flex items-center gap-1"><Crown size={10} /> VIP</div> : <span className="text-[10px] text-slate-400">{skin.desc}</span>}
                    </div>
                 </button>
@@ -112,7 +150,6 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
 export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome, onNextLevel, user, onUpdateSkin }) => {
   const level = levelId === 'creative' ? CREATIVE_LEVEL : (LEVELS.find(l => l.id === levelId) || LEVELS[0]);
   const isHackerMode = level.id === 45 || level.id === 'creative'; 
-  const isWaterLevel = level.id === 16; 
 
   const [program, setProgram] = useState<BlockType[]>([]);
   const [robotState, setRobotState] = useState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' as 'left' | 'right' | 'up' | 'down' });
@@ -120,22 +157,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
   const [currentBlockIndex, setCurrentBlockIndex] = useState<number | null>(null);
   const [gameStatus, setGameStatus] = useState<'idle' | 'running' | 'won' | 'lost'>('idle');
   const [paintedCells, setPaintedCells] = useState<GridPosition[]>([]);
-  const [tutorialOpen, setTutorialOpen] = useState(true);
   
   const [activeObstacles, setActiveObstacles] = useState<GridPosition[]>(level.obstacles);
-  const [aiGenCount, setAiGenCount] = useState(0);
-  const [showAiModal, setShowAiModal] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [showSkinSelector, setShowSkinSelector] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [draggingBlock, setDraggingBlock] = useState<BlockType | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number | null>(level.timeLimit || null);
-  const [showControlGuide, setShowControlGuide] = useState(false);
-  const [hasSeenControlGuide, setHasSeenControlGuide] = useState(false);
+  const [showSkinSelector, setShowSkinSelector] = useState(false);
 
-  // IA Explicação State
   const [logicExplanation, setLogicExplanation] = useState<string | null>(null);
   const [isAnalyzingLogic, setIsAnalyzingLogic] = useState(false);
 
@@ -147,6 +174,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
   }, [isMuted]);
 
   useEffect(() => {
+    setProgram([]);
     resetGame();
     setActiveObstacles(level.obstacles);
     if (level.mission && !isMuted) {
@@ -164,46 +192,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     };
   }, [levelId]);
 
-  const handleAiGeneration = async () => {
-    if (!process.env.API_KEY) return;
-    if (aiGenCount >= 3) return;
-    if (!aiPrompt.trim()) return;
-    setIsGenerating(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Create obstacles for a ${level.gridSize}x${level.gridSize} grid. Request: "${aiPrompt}". Return ONLY a JSON array of objects with x and y. No start position (${level.startPos.x},${level.startPos.y}). Example: [{"x":1,"y":1}]`,
-        config: { responseMimeType: 'application/json' }
-      });
-      const jsonText = response.text || "[]";
-      const newObstacles = JSON.parse(jsonText);
-      if (Array.isArray(newObstacles)) {
-        setActiveObstacles(newObstacles);
-        setAiGenCount(prev => prev + 1);
-        setShowAiModal(false);
-        setAiPrompt('');
-        audioService.playSfx('success');
-        confetti({ particleCount: 50, spread: 60 });
-      }
-    } catch (e) { console.error(e); } finally { setIsGenerating(false); }
-  };
-
   const handleExplainLogic = async () => {
     if (!process.env.API_KEY || program.length === 0) return;
     setIsAnalyzingLogic(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const blocksLabels = program.map(b => BLOCK_DEFINITIONS[b].label).join(', ');
-      const aiContribution = aiGenCount > 0 ? "O cenário foi criado com ajuda da Inteligência Artificial do Arquiteto." : "O cenário é o padrão do nível.";
-      
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Você é o Sparky, robô tutor. O aluno usou: [${blocksLabels}]. ${aiContribution}. Explique a LÓGICA por trás desse código para uma criança. Seja encorajador, use emojis. Curto (max 2 parágrafos).`,
+        contents: `Você é o Sparky, robô tutor. O aluno usou: [${blocksLabels}] para vencer o nível ${level.id}. Explique por que essa lógica é boa para uma criança de 7 anos. Seja muito lúdico e encorajador. Use emojis. Curto (max 2 parágrafos).`,
       });
       setLogicExplanation(response.text || "Uau! Sua lógica funcionou!");
     } catch (e) {
-      setLogicExplanation("Sua lógica é única! Continue explorando.");
+      setLogicExplanation("Sua lógica é única! Você usou os comandos certos na hora certa.");
     } finally { setIsAnalyzingLogic(false); }
   };
 
@@ -213,7 +214,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
        setTimeout(() => {
            audioService.speak("Conseguimos! Você é incrível!", 'happy', () => setIsSpeaking(true), () => setIsSpeaking(false));
        }, 500);
-       setTimeout(handleExplainLogic, 1500);
+       handleExplainLogic();
     } else if (gameStatus === 'lost') {
        audioService.playSfx('error');
        setTimeout(() => {
@@ -222,20 +223,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     }
   }, [gameStatus]);
 
-  useEffect(() => {
-    if (!level.timeLimit || gameStatus !== 'running') return;
-    if (timeLeft !== null && timeLeft <= 0) {
-       setGameStatus('lost');
-       setIsPlaying(false);
-       if (abortController.current) abortController.current.abort();
-       return;
-    }
-    const timer = setInterval(() => {
-        setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, gameStatus]);
-
   const resetGame = () => {
     if (abortController.current) abortController.current.abort();
     setRobotState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' });
@@ -243,7 +230,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     setGameStatus('idle');
     setIsPlaying(false);
     setCurrentBlockIndex(null);
-    setTimeLeft(level.timeLimit || null);
     setLogicExplanation(null);
     audioService.stop();
   };
@@ -281,25 +267,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     if (type) addBlock(type);
   };
 
-  const runProgram = async (skipGuideCheck = false) => {
+  const runProgram = async () => {
     if (program.length === 0 || isPlaying) return;
     
-    // Mostra guia de controle se for a primeira vez, mas não bloqueia a execução no modo história
-    const hasControlBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.CONTROL);
-    if (hasControlBlock && !hasSeenControlGuide && !skipGuideCheck && !isHackerMode) {
-        setShowControlGuide(true);
-        setHasSeenControlGuide(true);
-    }
-
+    // Forçar reset para o início antes de começar
     resetGame();
-    setIsPlaying(true);
+    setRobotState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' });
     setGameStatus('running');
+    setIsPlaying(true);
     audioService.playSfx('start');
 
     abortController.current = new AbortController();
     const signal = abortController.current.signal;
 
-    // VELOCIDADE AJUSTADA: 1000ms para história (antes 400), 1200ms para criativo (antes 800)
     const STEP_DURATION = level.isCreative ? 1200 : (isHackerMode ? 150 : 1000); 
     const PAINT_DURATION = level.isCreative ? 1000 : (isHackerMode ? 100 : 800);
 
@@ -312,36 +292,24 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     let currentY = level.startPos.y;
     let currentDir = 'right' as any;
     let localPainted = [] as GridPosition[];
+    let hasFailed = false;
 
     const getBlockSize = (idx: number): number => {
       if (idx >= program.length) return 0;
       const type = program[idx];
       if (type === BlockType.REPEAT_2 || type === BlockType.REPEAT_3 || type === BlockType.REPEAT_UNTIL) return 1 + getBlockSize(idx + 1);
-      if (type === BlockType.IF_OBSTACLE || type === BlockType.IF_PATH) {
-        let size = 1 + getBlockSize(idx + 1); 
-        let checkIdx = idx + size;
-        while (checkIdx < program.length) {
-            const nextType = program[checkIdx];
-            if (nextType === BlockType.ELSE || nextType === BlockType.ELSE_IF) {
-                const branchSize = 1 + getBlockSize(checkIdx + 1);
-                size += branchSize;
-                checkIdx += branchSize;
-            } else break;
-        }
-        return size;
-      }
       return 1;
     }
 
     const executeBlock = async (idx: number): Promise<void> => {
-        if (idx >= program.length || signal.aborted) return;
+        if (idx >= program.length || signal.aborted || hasFailed) return;
         setCurrentBlockIndex(idx);
         const type = program[idx];
 
         if (type === BlockType.REPEAT_2 || type === BlockType.REPEAT_3) {
             const count = type === BlockType.REPEAT_2 ? 2 : 3;
             for (let i = 0; i < count; i++) {
-                if (signal.aborted) return;
+                if (signal.aborted || hasFailed) return;
                 await executeBlock(idx + 1); 
             }
             return;
@@ -349,7 +317,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
 
         if (type === BlockType.PAINT) {
             localPainted = [...localPainted, {x: currentX, y: currentY}];
-            setPaintedCells(localPainted);
+            setPaintedCells([...localPainted]);
             await wait(PAINT_DURATION);
             return;
         }
@@ -363,11 +331,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
         if (dx !== 0 || dy !== 0) {
             const nx = currentX + dx, ny = currentY + dy;
             const isObs = activeObstacles.some(o => o.x === nx && o.y === ny) || nx < 0 || nx >= level.gridSize || ny < 0 || ny >= level.gridSize;
+            
             if (isObs) {
+                hasFailed = true;
                 setRobotState({ x: currentX, y: currentY, dir: currentDir });
-                setGameStatus('lost');
-                throw new Error('Hit');
+                await wait(800);
+                if (!signal.aborted) setGameStatus('lost');
+                return;
             }
+            
             currentX = nx; currentY = ny;
             setRobotState({ x: currentX, y: currentY, dir: currentDir });
             audioService.playSfx('click');
@@ -377,32 +349,46 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
 
     try {
         let pc = 0;
-        while (pc < program.length) {
+        while (pc < program.length && !hasFailed) {
             if (signal.aborted) break;
             await executeBlock(pc);
             pc += getBlockSize(pc);
         }
-        if (!signal.aborted && gameStatus === 'running') {
-            if (level.goalPos && (currentX !== level.goalPos.x || currentY !== level.goalPos.y)) {
+        
+        if (!signal.aborted) {
+            // Aguardar exatamente 1 segundo após o último comando para confirmar sucesso/erro
+            await wait(1000);
+            if (signal.aborted) return;
+
+            if (hasFailed) {
                 setGameStatus('lost');
             } else {
-                setGameStatus('won');
-                confetti({ particleCount: 150, spread: 70 });
+                const isAtGoal = level.goalPos ? (currentX === level.goalPos.x && currentY === level.goalPos.y) : true;
+                const hasActuallyExecuted = program.length > 0;
+
+                if (isAtGoal && hasActuallyExecuted) {
+                    setGameStatus('won');
+                    confetti({ particleCount: 150, spread: 70 });
+                } else {
+                    setGameStatus('lost');
+                }
             }
         }
-    } catch (e) { setIsPlaying(false); }
-    setIsPlaying(false);
-    setCurrentBlockIndex(null);
+    } catch (e) { 
+        console.error(e);
+    } finally {
+        setIsPlaying(false);
+        setCurrentBlockIndex(null);
+    }
   };
 
   const availableBlocks = level.availableBlocks || [];
-  const blocksByCategory = Array.from(new Set(availableBlocks.map(b => BLOCK_DEFINITIONS[b].category)));
+  const blocksByCategory = Array.from(new Set(availableBlocks.map(b => BLOCK_DEFINITIONS[b].category))) as BlockCategory[];
   const workspaceClass = isHackerMode ? 'bg-slate-900' : 'bg-slate-100';
 
   return (
     <div className={`flex flex-col md:flex-row md:h-screen md:overflow-hidden min-h-screen ${isHackerMode ? 'bg-slate-900 text-green-400' : 'bg-slate-50 text-slate-800'}`}>
       
-      {/* 1. PALETA (ESQUERDA) */}
       <div className="w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 bg-white">
          <div className="p-4 border-b flex items-center justify-between">
             <button onClick={onBack} className="flex items-center gap-1 font-bold text-indigo-600"><ArrowLeft size={18}/> Mapa</button>
@@ -424,7 +410,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
          </div>
       </div>
 
-      {/* 2. PALCO (CENTRO) */}
       <div className="flex-1 flex flex-col relative shrink-0 bg-slate-200 h-[45vh] md:h-auto border-x border-slate-300">
           <div className="p-3 bg-white/80 border-b flex items-center justify-between">
              <div className="flex items-center gap-2 text-xs font-bold text-slate-600"><Target size={16}/> {level.mission}</div>
@@ -439,28 +424,49 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
                   {level.goalPos && <div className="absolute flex items-center justify-center animate-pulse" style={{ left: level.goalPos.x * 60, top: level.goalPos.y * 60, width: 60, height: 60 }}><div className="w-8 h-8 rounded-full border-4 border-green-400 bg-green-100" /></div>}
                   {activeObstacles.map((obs, i) => <div key={i} className="absolute rounded-xl bg-slate-700 border-b-4 border-slate-900" style={{ left: obs.x * 60 + 5, top: obs.y * 60 + 5, width: 50, height: 50 }} />)}
                   {paintedCells.map((cell, i) => <div key={i} className="absolute bg-purple-400/50" style={{ left: cell.x * 60, top: cell.y * 60, width: 60, height: 60 }} />)}
+                  
+                  {/* Alerta de Colisão Visual (Shockwave) */}
+                  <AnimatePresence>
+                      {gameStatus === 'lost' && (
+                        <motion.div 
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 3, opacity: 0.2 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute bg-red-500 rounded-full z-10"
+                          style={{ left: robotState.x * 60 - 60, top: robotState.y * 60 - 60, width: 180, height: 180 }}
+                        />
+                      )}
+                  </AnimatePresence>
+
                   <Robot x={robotState.x} y={robotState.y} cellSize={60} direction={robotState.dir} isHappy={gameStatus === 'won'} isSad={gameStatus === 'lost'} skinId={user?.activeSkin} />
               </div>
+
+              {/* Botão de Skins - Ícone de Camiseta */}
+              <button 
+                onClick={() => setShowSkinSelector(true)}
+                className="absolute bottom-6 left-6 p-4 bg-white rounded-full shadow-2xl border-4 border-indigo-100 text-indigo-600 hover:scale-110 active:scale-95 transition-all z-30 group"
+                title="Trocar de Roupa"
+              >
+                <Shirt size={32} />
+                <div className="absolute -top-1 -right-1 bg-yellow-400 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white"><Sparkles size={12} className="text-yellow-800" /></div>
+              </button>
           </div>
 
           <AnimatePresence>
             {(gameStatus === 'won' || gameStatus === 'lost') && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-40">
-                    <div className="bg-white rounded-[2rem] p-8 text-center max-w-sm shadow-2xl">
-                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${gameStatus === 'won' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{gameStatus === 'won' ? <CheckCircle size={40}/> : <XCircle size={40}/>}</div>
-                        <h2 className="text-2xl font-heading mb-2">{gameStatus === 'won' ? 'Incrível!' : 'Ops, bati!'}</h2>
-                        <p className="text-slate-500 text-sm mb-6 font-bold">{gameStatus === 'won' ? level.explanation : 'Vamos revisar seu código?'}</p>
-                        <div className="flex gap-2">
-                            <Button onClick={resetGame} variant="secondary" size="sm" className="flex-1"><RotateCcw size={16}/> Tentar</Button>
-                            {gameStatus === 'won' && <Button onClick={() => onNextLevel(program.length)} variant="primary" size="sm" className="flex-1">Próximo</Button>}
-                        </div>
-                    </div>
-                </motion.div>
+              <EndLevelModal 
+                status={gameStatus === 'won' ? 'won' : 'lost'}
+                level={level}
+                blocksUsed={program.length}
+                onRetry={resetGame}
+                onNext={() => onNextLevel(program.length)}
+                explanation={logicExplanation}
+                isAnalyzing={isAnalyzingLogic}
+              />
             )}
           </AnimatePresence>
       </div>
 
-      {/* 3. WORKSPACE (DIREITA) */}
       <div className={`w-full md:w-72 flex flex-col relative ${workspaceClass} shadow-2xl z-10`}>
           <div className="p-4 border-b flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
               <span>Lógica de Comandos</span>
@@ -479,45 +485,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
           <div className="p-4 bg-white border-t flex flex-col gap-2">
               <div className="flex gap-2">
                   <button onClick={clearWorkspace} disabled={isPlaying} className="bg-red-100 text-red-600 p-3 rounded-xl disabled:opacity-50"><Trash2 size={20}/></button>
-                  <Button onClick={() => runProgram(false)} variant={isPlaying ? 'secondary' : 'success'} size="md" className="flex-1" disabled={program.length === 0 || gameStatus === 'won'}>
+                  <Button onClick={runProgram} variant={isPlaying ? 'secondary' : 'success'} size="md" className="flex-1" disabled={program.length === 0 || gameStatus === 'won'}>
                       {isPlaying ? <><Pause size={18}/> Parar</> : <><Play size={18} fill="currentColor"/> Executar</>}
                   </Button>
               </div>
           </div>
       </div>
 
-      {/* MODAL EXPLICAÇÃO IA */}
-      <AnimatePresence>
-        {logicExplanation && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-                <motion.div initial={{ scale: 0.9 }} className="bg-white rounded-[2rem] p-8 max-w-lg w-full border-4 border-indigo-200 shadow-2xl text-center">
-                    <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600"><SparkyLogo size="sm" showText={false} /></div>
-                    <h3 className="text-xl font-heading text-indigo-900 mb-2">Análise do Sparky</h3>
-                    <div className="bg-indigo-50 p-5 rounded-2xl text-slate-700 font-bold text-sm leading-relaxed mb-6">{logicExplanation}</div>
-                    <Button onClick={() => setLogicExplanation(null)} variant="primary" className="w-full">Entendi, Sparky!</Button>
-                </motion.div>
-            </motion.div>
-        )}
-      </AnimatePresence>
-
-      {isAnalyzingLogic && (
-        <div className="fixed inset-0 z-[80] bg-indigo-900/40 flex items-center justify-center">
-            <div className="bg-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3"><div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div><span className="font-bold text-indigo-900">Sparky está pensando...</span></div>
-        </div>
+      {showSkinSelector && user && onUpdateSkin && (
+        <SkinSelector 
+          currentSkin={user.activeSkin || 'default'} 
+          userTier={user.subscription} 
+          onClose={() => setShowSkinSelector(false)} 
+          onSelect={(id) => { onUpdateSkin(id); setShowSkinSelector(false); }} 
+        />
       )}
-
-      {showAiModal && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
-           <div className="bg-white rounded-3xl p-6 max-w-md w-full relative">
-               <button onClick={() => setShowAiModal(false)} className="absolute top-4 right-4 text-slate-400"><X size={20}/></button>
-               <h2 className="text-xl font-heading text-purple-900 mb-4">Arquiteto IA</h2>
-               <input type="text" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="Ex: Um labirinto gigante" className="w-full border-2 border-slate-200 rounded-xl p-3 mb-4 outline-none focus:border-purple-500" autoFocus />
-               <Button onClick={handleAiGeneration} disabled={isGenerating || !aiPrompt.trim()} variant="secondary" className="w-full">Gerar Agora ✨</Button>
-           </div>
-        </div>
-      )}
-
-      {showSkinSelector && user && onUpdateSkin && <SkinSelector currentSkin={user.activeSkin || 'default'} userTier={user.subscription} onClose={() => setShowSkinSelector(false)} onSelect={(id) => { onUpdateSkin(id); setShowSkinSelector(false); }} />}
     </div>
   );
 };

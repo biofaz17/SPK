@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { UserProfile } from '../types';
 import { SparkyLogo } from '../components/SparkyLogo';
-import { Play, Lock, Star, Calculator, BookOpen, FlaskConical, Globe2, Settings, LogOut, ArrowRight, UserCircle, Instagram, ShieldCheck, Mail, Brain, Music, Shapes, Puzzle } from 'lucide-react';
+import { Play, Lock, Star, Calculator, BookOpen, FlaskConical, Globe2, Settings, LogOut, ArrowRight, UserCircle, Instagram, ShieldCheck, Mail, Brain, Music, Shapes, Puzzle, Code } from 'lucide-react';
 import { Button } from '../components/Button';
 import { StatusIndicator } from '../components/StatusIndicator';
 
@@ -169,7 +169,18 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
           initial="hidden"
           animate="visible"
         >
-           {/* GAME 2: MATH */}
+           {/* GAME: CODE (NOVO) */}
+           <GameCard 
+              id="code"
+              title="Mestre do Código"
+              description="Conserte o algoritmo."
+              icon={<Code size={28} />}
+              color="from-indigo-600 to-emerald-600"
+              tags={['Lógica', 'Debug']}
+              onSelect={() => onSelectGame('code')}
+           />
+
+           {/* GAME: MATH */}
            <GameCard 
               id="math"
               title="Matemática"
@@ -180,18 +191,18 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
               onSelect={() => onSelectGame('math')}
            />
 
-           {/* GAME 3: LANGUAGE */}
+           {/* GAME: LANGUAGE */}
            <GameCard 
               id="words"
               title="Palavras"
-              description="Complete frases."
+              description="Alfabetização estelar."
               icon={<BookOpen size={28} />}
               color="from-orange-500 to-red-500"
-              tags={['Leitura']}
+              tags={['Leitura', 'Escrita']}
               onSelect={() => onSelectGame('words')}
            />
 
-           {/* GAME 4: SCIENCE */}
+           {/* GAME: SCIENCE */}
            <GameCard 
               id="science"
               title="Ciências"
@@ -202,7 +213,7 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
               onSelect={() => onSelectGame('science')}
            />
 
-           {/* GAME 5: MEMORY */}
+           {/* GAME: MEMORY */}
            <GameCard 
               id="memory"
               title="Memória"
@@ -213,7 +224,7 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
               onSelect={() => onSelectGame('memory')}
            />
 
-           {/* GAME 6: RHYTHM */}
+           {/* GAME: RHYTHM */}
            <GameCard 
               id="rhythm"
               title="Ritmo"
@@ -224,7 +235,7 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
               onSelect={() => onSelectGame('rhythm')}
            />
 
-           {/* GAME 7: GEOMETRY */}
+           {/* GAME: GEOMETRY */}
            <GameCard 
               id="geometry"
               title="Geometria"
@@ -235,7 +246,7 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
               onSelect={() => onSelectGame('geometry')}
            />
 
-           {/* GAME 8: LOGIC */}
+           {/* GAME: LOGIC */}
            <GameCard 
               id="logic"
               title="Lógica"
@@ -252,45 +263,15 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
       {/* Footer */}
       <footer className="w-full py-6 bg-slate-900 text-slate-400 text-center z-10 border-t border-white/10 relative">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-y-3 gap-x-6 text-[10px] md:text-xs font-bold px-4">
-           
-           <div className="flex items-center gap-1">
-             <span>© {currentYear} TekTok TI.</span>
-           </div>
-           
+           <div className="flex items-center gap-1"><span>© {currentYear} TekTok TI.</span></div>
            <span className="hidden md:inline text-slate-700">|</span>
-
-           <div className="flex items-center gap-1">
-             <span>Criado por: Prof. Fabio Gouvêa Cabral T.</span>
-           </div>
-
+           <div className="flex items-center gap-1"><span>Criado por: Prof. Fabio Gouvêa Cabral T.</span></div>
            <span className="hidden md:inline text-slate-700">|</span>
-           
-           <a 
-             href="https://instagram.com/sparky.aventura" 
-             target="_blank" 
-             rel="noreferrer"
-             className="flex items-center gap-1.5 hover:text-white transition cursor-pointer"
-           >
-             <Instagram size={14} className="text-pink-500" />
-             <span>@sparky.aventura</span>
-           </a>
-
+           <a href="https://instagram.com/sparky.aventura" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-white transition cursor-pointer"><Instagram size={14} className="text-pink-500" /><span>@sparky.aventura</span></a>
            <span className="hidden md:inline text-slate-700">|</span>
-
-           <div className="flex items-center gap-1.5">
-             <ShieldCheck size={14} className="text-blue-500" />
-             <span>CNPJ 14.773.860/0001-72</span>
-           </div>
-           
+           <div className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-blue-500" /><span>CNPJ 14.773.860/0001-72</span></div>
            <span className="hidden md:inline text-slate-700">|</span>
-           
-           <a 
-             href="mailto:robotix28@gmail.com?subject=Suporte%20Sparky" 
-             className="flex items-center gap-1.5 hover:text-white transition cursor-pointer"
-           >
-             <Mail size={14} className="text-indigo-400" />
-             <span>Suporte</span>
-           </a>
+           <a href="mailto:robotix28@gmail.com?subject=Suporte%20Sparky" className="flex items-center gap-1.5 hover:text-white transition cursor-pointer"><Mail size={14} className="text-indigo-400" /><span>Suporte</span></a>
         </div>
       </footer>
     </div>
