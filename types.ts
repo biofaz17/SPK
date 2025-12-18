@@ -16,12 +16,12 @@ export enum BlockType {
   MOVE_RIGHT = 'MOVE_RIGHT',
   REPEAT_2 = 'REPEAT_2',
   REPEAT_3 = 'REPEAT_3',
-  REPEAT_UNTIL = 'REPEAT_UNTIL', // Novo: Repetir até o Objetivo
+  REPEAT_UNTIL = 'REPEAT_UNTIL',
   PAINT = 'PAINT',
   START = 'START',
   IF_OBSTACLE = 'IF_OBSTACLE',
-  IF_PATH = 'IF_PATH', // Novo: Se Caminho Livre
-  ELSE_IF = 'ELSE_IF', // Novo: Senão Se
+  IF_PATH = 'IF_PATH',
+  ELSE_IF = 'ELSE_IF',
   ELSE = 'ELSE',
 }
 
@@ -29,8 +29,8 @@ export type AgeGroup = '5-7' | '8-10' | '11-14';
 
 export enum SubscriptionTier {
   FREE = 'FREE',
-  STARTER = 'STARTER', // R$ 19,99
-  PRO = 'PRO',         // R$ 49,99
+  STARTER = 'STARTER', 
+  PRO = 'PRO',         
 }
 
 export interface GridPosition {
@@ -41,7 +41,7 @@ export interface GridPosition {
 export interface LevelConfig {
   id: number | string;
   title: string;
-  mission?: string; // NOVO: Descrição persistente do problema a resolver
+  mission?: string;
   gridSize: number;
   startPos: GridPosition;
   goalPos?: GridPosition;
@@ -51,10 +51,10 @@ export interface LevelConfig {
   tutorialMessage?: string;
   explanation?: string;
   isCreative?: boolean;
-  ageGroup: AgeGroup; // BNCC Alignment
+  ageGroup: AgeGroup;
   requiredSubscription: SubscriptionTier;
-  bnccCode?: string; // e.g., EF01MA04
-  timeLimit?: number; // Tempo em segundos (opcional, para níveis pagos)
+  bnccCode?: string;
+  timeLimit?: number;
   introData?: {
     title: string;
     description: string;
@@ -70,13 +70,13 @@ export interface UserSettings {
 export interface UserProfile {
   id: string;
   name: string;
-  password?: string; // NOVO: Senha para login
+  password?: string;
   parentEmail: string;
   age: number;
   subscription: SubscriptionTier;
   progress: UserProgress;
   settings: UserSettings;
-  activeSkin?: string; // NOVO: Skin selecionada (default, ninja, fairy, dino)
+  activeSkin?: string;
   isGuest?: boolean;
   lastActive?: number;
 }
@@ -89,31 +89,31 @@ export interface UserProgress {
   secretsFound: number;
 }
 
-export interface CodeBlock {
-  id: string; 
-  type: BlockType;
-  category: BlockCategory;
+// --- NOVOS TIPOS PARA ADMIN ---
+export interface AppStats {
+  totalLogins: number;
+  totalRegisters: number;
+  totalRevenue: number;
+  registrationsByDate: Record<string, number>;
+  revenueByDate: Record<string, number>;
+  mostPlayedLevels: Record<string, number>;
+  activeUsersToday: number;
+  lastUpdate: number;
 }
 
-export interface SavedProject {
-  id: string;
-  name: string;
-  createdAt: number;
-  blocks: CodeBlock[];
-}
-
-export const BLOCK_DEFINITIONS: Record<BlockType, { category: BlockCategory, label: string, icon: string }> = {
-  [BlockType.MOVE_UP]: { category: BlockCategory.MOTION, label: 'Andar Cima', icon: 'arrow-up' },
-  [BlockType.MOVE_DOWN]: { category: BlockCategory.MOTION, label: 'Andar Baixo', icon: 'arrow-down' },
-  [BlockType.MOVE_LEFT]: { category: BlockCategory.MOTION, label: 'Andar Esq.', icon: 'arrow-left' },
-  [BlockType.MOVE_RIGHT]: { category: BlockCategory.MOTION, label: 'Andar Dir.', icon: 'arrow-right' },
-  [BlockType.REPEAT_2]: { category: BlockCategory.CONTROL, label: 'Repetir 2x', icon: 'repeat' },
-  [BlockType.REPEAT_3]: { category: BlockCategory.CONTROL, label: 'Repetir 3x', icon: 'repeat' },
-  [BlockType.REPEAT_UNTIL]: { category: BlockCategory.CONTROL, label: 'Até Chegar', icon: 'infinity' },
-  [BlockType.PAINT]: { category: BlockCategory.ACTION, label: 'Pintar Chão', icon: 'brush' },
-  [BlockType.START]: { category: BlockCategory.EVENT, label: 'Ao Iniciar', icon: 'play' },
-  [BlockType.IF_OBSTACLE]: { category: BlockCategory.DECISION, label: 'Se Obstáculo', icon: 'split' },
-  [BlockType.IF_PATH]: { category: BlockCategory.DECISION, label: 'Se Caminho', icon: 'git-branch' },
-  [BlockType.ELSE_IF]: { category: BlockCategory.DECISION, label: 'Senão Se', icon: 'git-merge' },
-  [BlockType.ELSE]: { category: BlockCategory.DECISION, label: 'Senão', icon: 'corner-down-right' },
+// Added BLOCK_DEFINITIONS to fix import errors in BlockIcon.tsx and GameScreen.tsx
+export const BLOCK_DEFINITIONS: Record<BlockType, { label: string; category: BlockCategory }> = {
+  [BlockType.MOVE_UP]: { label: 'Andar Cima', category: BlockCategory.MOTION },
+  [BlockType.MOVE_DOWN]: { label: 'Andar Baixo', category: BlockCategory.MOTION },
+  [BlockType.MOVE_LEFT]: { label: 'Andar Esq.', category: BlockCategory.MOTION },
+  [BlockType.MOVE_RIGHT]: { label: 'Andar Dir.', category: BlockCategory.MOTION },
+  [BlockType.REPEAT_2]: { label: 'Repetir 2x', category: BlockCategory.CONTROL },
+  [BlockType.REPEAT_3]: { label: 'Repetir 3x', category: BlockCategory.CONTROL },
+  [BlockType.REPEAT_UNTIL]: { label: 'Até Chegar', category: BlockCategory.CONTROL },
+  [BlockType.PAINT]: { label: 'Pintar', category: BlockCategory.ACTION },
+  [BlockType.START]: { label: 'Iniciar', category: BlockCategory.EVENT },
+  [BlockType.IF_OBSTACLE]: { label: 'Se Obstáculo', category: BlockCategory.DECISION },
+  [BlockType.IF_PATH]: { label: 'Se Caminho', category: BlockCategory.DECISION },
+  [BlockType.ELSE_IF]: { label: 'Senão Se', category: BlockCategory.DECISION },
+  [BlockType.ELSE]: { label: 'Senão', category: BlockCategory.DECISION },
 };
