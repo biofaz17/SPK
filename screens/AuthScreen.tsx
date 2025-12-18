@@ -1,9 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/Button';
 import { UserProfile, SubscriptionTier } from '../types';
-import { User, Lock, Gamepad2, LogIn, UserPlus, KeyRound, Mail } from 'lucide-react';
+import { User, LogIn, UserPlus, KeyRound, Mail, Gamepad2, Loader2, Sparkles } from 'lucide-react';
 import { SparkyLogo } from '../components/SparkyLogo';
+import { audioService } from '../services/AudioService';
+import { dataService } from '../services/DataService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuthScreenProps {
   onLogin: (user: UserProfile) => void;
@@ -12,224 +15,199 @@ interface AuthScreenProps {
 type AuthMode = 'login' | 'register';
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
-  const [authMode, setAuthMode] = useState<AuthMode>('register');
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [age, setAge] = useState('');
   const [parentEmail, setParentEmail] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Normaliza o ID para busca consistente
-  const generateUserId = (userName: string) => `user_${userName.trim().toLowerCase().replace(/\s/g, '_')}`;
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setIsLoading(true);
 
-    const userId = generateUserId(name);
-    const savedData = localStorage.getItem(`sparky_user_${userId}`);
-
-    if (savedData) {
-        try {
-            const user: UserProfile = JSON.parse(savedData);
-            if (user.password === password) {
-                onLogin({ ...user, lastActive: Date.now() });
-            } else {
-                setErrorMsg('Senha incorreta! Peça ajuda aos seus pais se esqueceu.');
-            }
-        } catch (err) {
-            setErrorMsg('Erro ao carregar dados. Tente criar uma nova conta.');
-        }
-    } else {
-        setErrorMsg('Usuário não encontrado. Verifique o nome ou crie uma conta nova!');
+    try {
+      const user = await dataService.login(name, password);
+      if (user) {
+        audioService.playSfx('success');
+        onLogin(user);
+      } else {
+        setErrorMsg('Explorador não encontrado. Verifique o nome ou crie uma conta!');
+        audioService.playSfx('error');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Erro ao entrar.');
+      audioService.playSfx('error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-
-    if (name.length < 3) {
-        setErrorMsg('O nome deve ter pelo menos 3 letras.');
-        return;
-    }
-
-    if (password.length < 4) {
-        setErrorMsg('Crie uma senha de pelo menos 4 números ou letras.');
-        return;
-    }
-
-    const userId = generateUserId(name);
     
-    // Verifica duplicidade
-    if (localStorage.getItem(`sparky_user_${userId}`)) {
-        setErrorMsg('Este nome já está em uso! Tente fazer login ou use outro nome.');
-        return;
-    }
+    if (name.length < 3) { setErrorMsg('Seu nome precisa de pelo menos 3 letras!'); return; }
+    if (password.length < 4) { setErrorMsg('Crie uma senha de pelo menos 4 caracteres.'); return; }
+
+    setIsLoading(true);
 
     const newUser: UserProfile = {
-      id: userId,
+      id: name.trim().toLowerCase().replace(/\s/g, '_'),
       name: name.trim(),
       password: password,
       parentEmail: parentEmail,
       age: parseInt(age) || 7,
       subscription: SubscriptionTier.FREE, 
-      progress: {
-        unlockedLevels: 1, 
-        stars: 0,          
-        creativeProjects: 0,
-        totalBlocksUsed: 0, 
-        secretsFound: 0
-      },
-      settings: {
-        soundEnabled: true,
-        musicEnabled: true
-      },
+      progress: { unlockedLevels: 1, stars: 0, creativeProjects: 0, totalBlocksUsed: 0, secretsFound: 0 },
+      settings: { soundEnabled: true, musicEnabled: true },
       activeSkin: 'default',
       isGuest: false,
       lastActive: Date.now()
     };
-    
-    // Persistência imediata
-    localStorage.setItem(`sparky_user_${userId}`, JSON.stringify(newUser));
-    localStorage.setItem('sparky_last_user_id', userId);
-    
-    onLogin(newUser);
+
+    try {
+      await dataService.register(newUser);
+      audioService.playSfx('start');
+      onLogin(newUser);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Erro ao criar conta.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGuestPlay = () => {
+  const handleGuestLogin = () => {
+    audioService.playSfx('pop');
     const guestUser: UserProfile = {
       id: 'guest_' + Math.random().toString(36).substr(2, 9),
-      name: 'Explorador Convidado',
+      name: 'Visitante',
       parentEmail: '',
-      age: 7, 
+      age: 7,
       subscription: SubscriptionTier.FREE,
-      progress: {
-        unlockedLevels: 1,
-        stars: 0,
-        creativeProjects: 0,
-        totalBlocksUsed: 0,
-        secretsFound: 0
-      },
-      settings: {
-        soundEnabled: true,
-        musicEnabled: true
-      },
-      isGuest: true
+      progress: { unlockedLevels: 1, stars: 0, creativeProjects: 0, totalBlocksUsed: 0, secretsFound: 0 },
+      settings: { soundEnabled: true, musicEnabled: true },
+      activeSkin: 'default',
+      isGuest: true,
+      lastActive: Date.now()
     };
     onLogin(guestUser);
   };
 
   return (
-    <div className="min-h-screen bg-indigo-600 flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-      <div className="bg-white rounded-[2.5rem] p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden border-4 border-indigo-400">
+    <div className="min-h-screen bg-indigo-700 flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] overflow-y-auto">
+      <div className="bg-white rounded-[3rem] p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden border-b-[12px] border-indigo-900">
         
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"></div>
+
         <div className="flex flex-col items-center mb-8">
            <SparkyLogo size="lg" />
-           <p className="text-slate-400 text-sm font-bold mt-2">Sua aventura começa aqui!</p>
+           <div className="bg-indigo-50 px-4 py-1 rounded-full mt-4 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-indigo-900 font-black text-[10px] uppercase tracking-widest">Plataforma Sparky Ativa</span>
+           </div>
         </div>
 
-        <div className="flex bg-slate-100 p-1 rounded-2xl mb-8">
+        <div className="flex bg-slate-100 p-1.5 rounded-[1.5rem] mb-8 border border-slate-200 shadow-inner">
             <button 
                 onClick={() => { setAuthMode('login'); setErrorMsg(''); }}
-                className={`flex-1 py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-400'}`}
+                className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-800'}`}
             >
                 <LogIn size={18} /> ENTRAR
             </button>
             <button 
                 onClick={() => { setAuthMode('register'); setErrorMsg(''); }}
-                className={`flex-1 py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-400'}`}
+                className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-800'}`}
             >
                 <UserPlus size={18} /> CRIAR CONTA
             </button>
         </div>
 
-        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister} className="space-y-5">
-          <div>
-            <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Nome do Explorador</label>
-            <div className="relative">
-               <User className="absolute left-4 top-3.5 text-indigo-300" size={20} />
+        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister} className="space-y-6">
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome de Explorador</label>
+            <div className="relative group">
+               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={20} />
                <input 
-                 type="text" 
-                 value={name}
-                 onChange={e => setName(e.target.value)}
-                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 pl-12 font-bold text-slate-700 focus:border-indigo-400 focus:bg-white outline-none transition-all shadow-inner"
-                 placeholder="Como quer ser chamado?"
-                 required
+                 type="text" value={name} onChange={e => setName(e.target.value)}
+                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition-all shadow-inner"
+                 placeholder="Ex: Pedro123" required
                />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Código Secreto (Senha)</label>
-            <div className="relative">
-               <KeyRound className="absolute left-4 top-3.5 text-indigo-300" size={20} />
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Secreta</label>
+            <div className="relative group">
+               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={20} />
                <input 
-                 type="password" 
-                 value={password}
-                 onChange={e => setPassword(e.target.value)}
-                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 pl-12 font-bold text-slate-700 focus:border-indigo-400 focus:bg-white outline-none transition-all shadow-inner"
-                 placeholder="Sua senha secreta"
-                 required
+                 type="password" value={password} onChange={e => setPassword(e.target.value)}
+                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition-all shadow-inner"
+                 placeholder="Seu código de acesso" required
                />
             </div>
           </div>
 
-          {authMode === 'register' && (
-            <div className="animate-fadeIn space-y-5">
-                <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Idade</label>
-                  <input 
-                    type="number" 
-                    value={age}
-                    onChange={e => setAge(e.target.value)}
-                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 font-bold text-slate-700 focus:border-indigo-400 outline-none transition shadow-inner"
-                    placeholder="Ex: 8"
-                    min="5" max="15" required
-                  />
-                </div>
-
-                <div>
-                    <label className="block text-xs font-black text-slate-500 uppercase mb-2 ml-1">Email do Responsável (Para salvar o progresso)</label>
-                    <div className="relative">
-                       <Mail className="absolute left-4 top-3.5 text-indigo-300" size={20} />
-                       <input 
-                         type="email" 
-                         value={parentEmail}
-                         onChange={e => setParentEmail(e.target.value)}
-                         className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3.5 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition shadow-inner"
-                         placeholder="email@dopapai.com"
-                         required
-                       />
+          <AnimatePresence>
+            {authMode === 'register' && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-6 overflow-hidden">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Idade</label>
+                        <input 
+                            type="number" value={age} onChange={e => setAge(e.target.value)}
+                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-700 focus:border-indigo-400 outline-none transition shadow-inner"
+                            placeholder="Ex: 8" min="5" max="15" required
+                        />
                     </div>
-                </div>
-            </div>
-          )}
+                    <div className="flex items-center justify-center pt-6 text-[10px] font-bold text-indigo-400 leading-tight">Personaliza seus desafios!</div>
+                  </div>
+                  <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email do Responsável</label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={20} />
+                        <input 
+                          type="email" value={parentEmail} onChange={e => setParentEmail(e.target.value)}
+                          className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition shadow-inner"
+                          placeholder="Para salvar seu progresso" required
+                        />
+                      </div>
+                  </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {errorMsg && (
-              <div className="bg-red-50 text-red-500 text-xs font-bold p-4 rounded-2xl border border-red-100 animate-shake text-center">
+              <motion.div initial={{ x: -10 }} animate={{ x: [10, -10, 10, 0] }} className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-200 text-center">
                   {errorMsg}
-              </div>
+              </motion.div>
           )}
 
-          <Button variant="primary" size="lg" className="w-full py-4 text-xl shadow-indigo-200">
-             {authMode === 'login' ? 'ENTRAR AGORA' : 'VAMOS NESSA!'}
-          </Button>
+          <div className="space-y-4">
+            <Button variant="primary" size="lg" className={`w-full py-5 text-xl shadow-indigo-200 transition-all ${isLoading ? 'opacity-70 pointer-events-none' : ''}`} disabled={isLoading}>
+               {isLoading ? <Loader2 className="animate-spin mx-auto" /> : (authMode === 'login' ? 'ENTRAR AGORA' : 'CRIAR MINHA CONTA')}
+            </Button>
+            
+            <div className="relative py-2 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                <span className="relative bg-white px-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">Ou</span>
+            </div>
+
+            <button 
+                type="button"
+                onClick={handleGuestLogin}
+                className="w-full py-4 rounded-2xl border-2 border-slate-100 text-slate-500 font-bold text-sm hover:bg-slate-50 hover:border-indigo-200 transition-all flex items-center justify-center gap-2"
+            >
+                <Sparkles size={18} className="text-yellow-400" /> JOGAR SEM SALVAR
+            </button>
+          </div>
         </form>
 
-        <div className="my-8 flex items-center gap-4">
-           <div className="h-px bg-slate-100 flex-1" />
-           <span className="text-slate-300 text-[10px] font-black uppercase tracking-widest">OU</span>
-           <div className="h-px bg-slate-100 flex-1" />
-        </div>
-
-        <button 
-          onClick={handleGuestPlay}
-          className="w-full bg-slate-50 hover:bg-slate-100 text-slate-400 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm border-2 border-transparent hover:border-slate-200"
-        >
-           <Gamepad2 size={18} /> Entrar como visitante (não salva)
-        </button>
-
+        <p className="mt-8 text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+            Contas salvas são sincronizadas em tempo real.<br/>Visitantes salvam apenas neste navegador.
+        </p>
       </div>
     </div>
   );

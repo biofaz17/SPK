@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves, Sparkles, Wand2, X, Map as MapIcon, LogOut } from 'lucide-react';
+import { ArrowLeft, Play, RotateCcw, Trash2, HelpCircle, Pause, CheckCircle, XCircle, ArrowRight, Repeat, Code, Terminal, Move, Clock, Battery, BatteryWarning, Target, Brush, Volume2, VolumeX, Shirt, Lock, Crown, Waves, Sparkles, Wand2, X, Map as MapIcon, LogOut, Maximize2, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LevelConfig, BlockType, BlockCategory, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier } from '../types';
 import { LEVELS, CREATIVE_LEVEL } from '../constants';
@@ -16,13 +16,11 @@ import { GoogleGenAI } from "@google/genai";
 interface GameScreenProps {
   levelId: number | string;
   onBack: () => void;
-  onHome?: () => void; // NOVO: Voltar ao Hub
+  onHome?: () => void;
   onNextLevel: (blocksUsed: number) => void;
   user?: UserProfile | null;
   onUpdateSkin?: (skinId: string) => void;
 }
-
-// Fix: Removed global ai initialization to follow guidelines (should be inside function)
 
 const MotionTutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
@@ -222,6 +220,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
   const [showActionGuide, setShowActionGuide] = useState(false);
   const [hasSeenActionGuide, setHasSeenActionGuide] = useState(false);
 
+  // IA Explicação State
+  const [logicExplanation, setLogicExplanation] = useState<string | null>(null);
+  const [isAnalyzingLogic, setIsAnalyzingLogic] = useState(false);
+
   const abortController = useRef<AbortController | null>(null);
   const programListRef = useRef<HTMLDivElement>(null);
 
@@ -247,7 +249,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     };
   }, [levelId]);
 
-  // Fix: moved ai generation to follow guidelines (instantiate inside function)
   const handleAiGeneration = async () => {
     if (!process.env.API_KEY) {
         alert("A IA não está disponível neste momento. Verifique sua conexão ou chave de API.");
@@ -290,6 +291,33 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     }
   };
 
+  const handleExplainLogic = async () => {
+    if (!process.env.API_KEY || program.length === 0) return;
+    setIsAnalyzingLogic(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const blocksLabels = program.map(b => BLOCK_DEFINITIONS[b].label).join(', ');
+      const aiContribution = aiGenCount > 0 ? "O cenário foi criado com ajuda da Inteligência Artificial do Arquiteto." : "O cenário foi criado manualmente ou é o padrão.";
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Você é o Sparky, um robô tutor de programação.
+                   O aluno criou esta sequência de blocos: [${blocksLabels}].
+                   ${aiContribution}
+                   Explique para uma criança de 8 anos a LÓGICA por trás desse código e como ele interage com o cenário.
+                   Seja muito encorajador, use emojis e mencione que errar faz parte do aprendizado.
+                   Mantenha o texto curto (máximo 3 parágrafos).`,
+      });
+      setLogicExplanation(response.text || "Uau! Que código interessante você criou!");
+      audioService.speak("Olha só o que eu aprendi com o seu código!", 'happy');
+    } catch (e) {
+      console.error(e);
+      setLogicExplanation("Sua lógica é única! Continue explorando novos caminhos.");
+    } finally {
+      setIsAnalyzingLogic(false);
+    }
+  };
+
   useEffect(() => {
     if (gameStatus === 'won') {
        audioService.playSfx('success');
@@ -298,10 +326,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
        setTimeout(() => {
            audioService.speak(phrase, 'happy', () => setIsSpeaking(true), () => setIsSpeaking(false));
        }, 500);
+       
+       if (levelId === 'creative') {
+           setTimeout(handleExplainLogic, 1500);
+       }
     } else if (gameStatus === 'lost') {
        audioService.playSfx('error');
        const failPhrases = ["Ops, batemos! Tente novamente.", "Quase lá. Vamos revisar o código?", "Minha bateria acabou ou bati. Preciso da sua ajuda!"];
-       // Fix: use failPhrases.length instead of non-existent winPhrases
        const phrase = failPhrases[Math.floor(Math.random() * failPhrases.length)];
        setTimeout(() => {
            audioService.speak(phrase, 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
@@ -338,7 +369,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     setIsPlaying(false);
     setCurrentBlockIndex(null);
     setTimeLeft(level.timeLimit || null);
+    setLogicExplanation(null);
     audioService.stop();
+  };
+
+  const clearWorkspace = () => {
+    if (isPlaying) return;
+    setProgram([]);
+    resetGame();
+    audioService.playSfx('delete');
   };
 
   const addBlock = (type: BlockType) => {
@@ -423,8 +462,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     abortController.current = new AbortController();
     const signal = abortController.current.signal;
 
-    const STEP_DURATION = isHackerMode ? 120 : 400; 
-    const PAINT_DURATION = isHackerMode ? 80 : 250;
+    // AUMENTADO: Tempo maior para animação ser mais clara e didática no modo criativo
+    const STEP_DURATION = level.isCreative ? 800 : (isHackerMode ? 120 : 400); 
+    const PAINT_DURATION = level.isCreative ? 600 : (isHackerMode ? 80 : 250);
 
     const wait = (ms: number) => new Promise(resolve => {
         if (signal.aborted) return;
@@ -662,6 +702,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
   return (
     <div className={`flex flex-col md:flex-row md:h-screen md:overflow-hidden min-h-screen ${bgClass} ${textClass}`}>
       
+      {/* HEADER MOBILE */}
       <div className={`md:hidden p-4 flex justify-between items-center z-20 shadow-md shrink-0 sticky top-0 ${isHackerMode ? 'bg-green-900 text-green-100' : 'bg-indigo-600 text-white'}`}>
          <button onClick={onBack} className="flex items-center gap-1 font-bold"><ArrowLeft /> <span>Mapa</span></button>
          <div className="flex flex-col items-center">
@@ -677,146 +718,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
          )}
       </div>
 
+      {/* 1. PALETA DE BLOCOS (ESQUERDA NO PC) */}
       <div className={`
-          w-full md:w-[400px] flex flex-col border-l relative shrink-0 
-          ${isHackerMode ? 'bg-black border-green-900' : 'bg-slate-200 border-slate-300'} 
-          h-[40vh] md:h-auto min-h-[300px] md:min-h-0 order-1 md:order-3
-      `}>
-          
-          <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4 md:p-8">
-              <div 
-                className={`
-                    relative shadow-2xl rounded-xl overflow-hidden transition-all duration-300 origin-center
-                    ${isHackerMode ? 'shadow-green-500/20' : ''}
-                    ${gameStatus === 'lost' ? 'ring-4 ring-red-400 border-red-500 animate-shake' : ''}
-                    scale-[0.6] md:scale-100 lg:scale-100
-                `}
-                style={{
-                    width: level.gridSize * 60,
-                    height: level.gridSize * 60,
-                    backgroundColor: isHackerMode ? '#000' : '#fff',
-                    backgroundSize: '60px 60px',
-                    backgroundImage: isHackerMode 
-                      ? 'linear-gradient(to right, #003300 1px, transparent 1px), linear-gradient(to bottom, #003300 1px, transparent 1px)'
-                      : 'linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)'
-                }}
-              >
-                  {level.goalPos && (
-                      <div 
-                        className="absolute flex items-center justify-center animate-pulse"
-                        style={{ left: level.goalPos.x * 60, top: level.goalPos.y * 60, width: 60, height: 60 }}
-                      >
-                          <div className={`w-10 h-10 rounded-full border-4 flex items-center justify-center ${isHackerMode ? 'bg-green-900 border-green-500' : 'bg-green-200 border-green-400'}`}>
-                              <div className={`w-4 h-4 rounded-full ${isHackerMode ? 'bg-green-400' : 'bg-green-500'}`} />
-                          </div>
-                      </div>
-                  )}
-
-                  {activeObstacles.map((obs, i) => (
-                      <div 
-                        key={i}
-                        className={`absolute rounded-lg shadow-lg border-b-4 
-                          ${isWaterLevel 
-                             ? 'bg-blue-400 border-blue-600' 
-                             : (isHackerMode ? 'bg-green-950 border-green-800' : 'bg-slate-700 border-slate-900')
-                          }
-                        `}
-                        style={{ left: obs.x * 60 + 5, top: obs.y * 60 + 5, width: 50, height: 50 }}
-                      >
-                          <div className={`w-full h-full opacity-50 flex items-center justify-center ${isHackerMode ? '' : (isWaterLevel ? '' : "bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]")}`}>
-                             {isHackerMode && <span className="text-[10px] text-green-800 font-mono p-1">ERR</span>}
-                             {isWaterLevel && <Waves size={24} className="text-blue-100 animate-pulse" />}
-                          </div>
-                      </div>
-                  ))}
-
-                  {paintedCells.map((cell, i) => (
-                       <div 
-                         key={`paint-${i}`}
-                         className={`absolute 
-                            ${isWaterLevel 
-                                ? 'bg-amber-600/90 border-2 border-amber-800 bg-[url("https://www.transparenttextures.com/patterns/wood-pattern.png")]' 
-                                : (isHackerMode ? 'bg-green-500/30' : 'bg-purple-400/50')
-                            }
-                         `}
-                         style={{ left: cell.x * 60, top: cell.y * 60, width: 60, height: 60 }}
-                       />
-                  ))}
-
-                  <Robot 
-                    x={robotState.x} 
-                    y={robotState.y} 
-                    cellSize={60} 
-                    direction={robotState.dir}
-                    isHappy={gameStatus === 'won'}
-                    isSad={gameStatus === 'lost'}
-                    isTalking={isSpeaking || tutorialOpen}
-                    skinId={user?.activeSkin}
-                  />
-              </div>
-          </div>
-
-          {(gameStatus === 'won' || gameStatus === 'lost') && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-30">
-                  <div className={`rounded-3xl p-8 text-center max-w-sm shadow-2xl animate-bounce-subtle ${isHackerMode ? 'bg-slate-900 border border-green-500' : 'bg-white'}`}>
-                      <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 ${
-                          gameStatus === 'won' 
-                            ? (isHackerMode ? 'bg-green-900 text-green-400' : 'bg-green-100 text-green-600')
-                            : (isHackerMode ? 'bg-red-900 text-red-500' : 'bg-red-100 text-red-600')
-                      }`}>
-                          {gameStatus === 'won' ? <CheckCircle size={48} /> : <XCircle size={48} />}
-                      </div>
-                      <h2 className={`text-2xl font-heading mb-2 ${isHackerMode ? 'text-green-400' : 'text-slate-800'}`}>
-                          {gameStatus === 'won' ? (isHackerMode ? 'SISTEMA HACKEADO' : 'Incrível!') : (isHackerMode ? 'FALHA CRÍTICA' : 'Ai, bati!')}
-                      </h2>
-                      <p className={`font-bold mb-6 ${isHackerMode ? 'text-green-700' : 'text-slate-500'}`}>
-                          {gameStatus === 'won' 
-                            ? level.explanation 
-                            : (timeLeft !== null && timeLeft <= 0 ? 'Minha bateria acabou! 🔋 Precisamos ser mais rápidos!' : 'Ops! Bati no muro. Vamos tentar de novo? 🤕')
-                          }
-                      </p>
-                      
-                      <div className="flex gap-3 justify-center">
-                          <Button onClick={resetGame} variant="secondary" size="sm">
-                             <RotateCcw size={18} className="mr-2" /> Tentar
-                          </Button>
-                          {gameStatus === 'won' && (
-                              <Button onClick={() => onNextLevel(program.length)} variant="primary" size="sm">
-                                 Próximo <ArrowLeft className="rotate-180 ml-2" size={18} />
-                              </Button>
-                          )}
-                      </div>
-                  </div>
-              </div>
-          )}
-      </div>
-
-      <div className={`
-          w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 ${toolboxClass} 
+          w-full md:w-56 lg:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 ${toolboxClass} 
           h-auto md:h-full order-2 md:order-1
       `}>
          <div className={`hidden md:flex p-4 border-b items-center gap-3 ${isHackerMode ? 'bg-slate-900 border-slate-700' : 'bg-indigo-50 border-slate-100'}`}>
-            <button 
-                onClick={onBack} 
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl transition font-black text-xs uppercase border-b-4 active:border-b-0 active:translate-y-1 ${isHackerMode ? 'bg-green-900 border-green-700 text-green-400 hover:bg-green-800' : 'bg-white border-slate-200 text-indigo-900 hover:bg-slate-50'}`}
-                title="Voltar para o Mapa"
-            >
-                <MapIcon size={18} /> <span>Mapa</span>
-            </button>
             <div className="flex-1 overflow-hidden">
                 <h2 className={`font-bold text-sm truncate ${isHackerMode ? 'text-green-400' : 'text-slate-800'}`}>{level.title}</h2>
                 <div className="flex items-center gap-2">
                     <div className={`text-[10px] uppercase font-bold tracking-wider ${isHackerMode ? 'text-green-700' : 'text-slate-400'}`}>Nível {level.id}</div>
-                    <StatusIndicator className="scale-[0.6] origin-left border-none bg-transparent px-0" />
                 </div>
             </div>
-            
             {!isHackerMode && (
-              <button onClick={() => setShowSkinSelector(true)} className="p-2 rounded-full hover:bg-black/5 mr-1 text-purple-500 relative group">
+              <button onClick={() => setShowSkinSelector(true)} className="p-2 rounded-full hover:bg-black/5 mr-1 text-purple-500">
                   <Shirt size={18} />
               </button>
             )}
-
             <button onClick={toggleMute} className="p-2 rounded-full hover:bg-black/5">
                 {isMuted ? <VolumeX size={18} className="text-red-500" /> : <Volume2 size={18} className="text-blue-500" />}
             </button>
@@ -824,26 +742,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
          
          {timeLeft !== null && (
             <div className={`p-4 border-b ${isLowTime ? 'bg-red-50' : ''} ${isHackerMode ? 'border-green-800' : 'border-slate-100'}`}>
-               <div className={`flex items-center justify-between px-4 py-2 rounded-xl font-bold border-2 transition-all ${isLowTime ? 'bg-red-100 text-red-600 border-red-300 animate-pulse' : (isHackerMode ? 'bg-green-900/30 text-green-400 border-green-700' : 'bg-slate-100 text-slate-600 border-slate-200')}`}>
-                  <div className="flex items-center gap-2">
-                     {isLowTime ? <BatteryWarning size={18} /> : <Clock size={18} />}
-                     <span className="text-xs uppercase tracking-wide">Bateria</span>
-                  </div>
-                  <div className="font-mono text-xl">{formatTime(timeLeft)}</div>
+               <div className={`flex items-center justify-between px-3 py-2 rounded-xl font-bold border-2 transition-all ${isLowTime ? 'bg-red-100 text-red-600 border-red-300 animate-pulse' : (isHackerMode ? 'bg-green-900/30 text-green-400 border-green-700' : 'bg-slate-100 text-slate-600 border-slate-200')}`}>
+                  <Clock size={16} />
+                  <div className="font-mono text-lg">{formatTime(timeLeft)}</div>
                </div>
             </div>
          )}
          
-         <div className="flex-1 overflow-y-auto p-4 md:overflow-x-hidden overflow-x-auto">
-             <div className="flex flex-row md:flex-col gap-4 md:gap-6">
+         <div className="flex-1 overflow-y-auto p-4 md:overflow-x-hidden overflow-x-auto no-scrollbar">
+             <div className="flex flex-row md:flex-col gap-4">
                 {blocksByCategory.map(cat => (
-                   <div key={cat} className="min-w-max">
-                       <h3 className={`text-xs font-bold uppercase mb-2 pl-1 hidden md:block ${isHackerMode ? 'text-green-700' : 'text-slate-400'}`}>{cat}</h3>
-                       <div className="flex md:grid md:grid-cols-1 gap-2">
+                   <div key={cat} className="min-w-max md:min-w-0">
+                       <h3 className={`text-[10px] font-black uppercase mb-2 pl-1 hidden md:block tracking-widest ${isHackerMode ? 'text-green-700' : 'text-slate-400'}`}>{cat}</h3>
+                       <div className="flex md:flex-col gap-2">
                            {availableBlocks.filter(b => BLOCK_DEFINITIONS[b].category === cat).map(type => (
-                               <div key={type} draggable={!isPlaying} onDragStart={(e) => handleDragStart(e, type)} onDragEnd={handleDragEnd} className={`touch-none relative transition-all duration-200 ${draggingBlock === type ? 'z-50' : 'cursor-grab active:cursor-grabbing'}`}>
-                                  <button onClick={() => addBlock(type)} disabled={isPlaying} className={`w-full transition-all duration-300 ease-out ${draggingBlock === type ? 'scale-105 shadow-xl -translate-y-2 opacity-90 rotate-3 ring-2 ring-indigo-300 rounded-lg' : 'hover:scale-105 hover:shadow-md active:scale-95 active:bg-blue-50'}`} aria-label={`Adicionar bloco ${BLOCK_DEFINITIONS[type].label}`}>
-                                      <BlockIcon type={type} className={`${isHackerMode ? 'font-mono' : ''} ${draggingBlock === type ? 'border-yellow-400 ring-2 ring-yellow-400/50' : ''}`}/>
+                               <div key={type} draggable={!isPlaying} onDragStart={(e) => handleDragStart(e, type)} onDragEnd={handleDragEnd} className="touch-none cursor-grab active:cursor-grabbing">
+                                  <button onClick={() => addBlock(type)} disabled={isPlaying} className="w-full text-left">
+                                      <BlockIcon type={type} showLabel={true} className="text-[11px] md:py-2 md:px-2" />
                                   </button>
                                </div>
                            ))}
@@ -854,98 +769,237 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
          </div>
       </div>
 
-      <div className={`flex-1 flex flex-col relative ${workspaceClass} min-h-[300px] md:min-h-0 order-3 md:order-2`}>
-          
-          <div className={`p-3 border-b shadow-sm z-30 flex items-start justify-between gap-3 ${isHackerMode ? 'bg-slate-800 border-slate-700 text-green-400' : 'bg-yellow-50 border-yellow-100 text-yellow-900'}`}>
-             <div className="flex gap-3 overflow-hidden">
-                <div className={`mt-0.5 shrink-0 ${isHackerMode ? 'text-green-500' : 'text-yellow-600'}`}>
-                    <Target size={18} />
-                </div>
-                <div className="overflow-hidden">
-                    <div className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-0.5 ${isHackerMode ? 'text-green-600' : 'text-yellow-700'}`}>Missão</div>
-                    <div className="text-sm font-bold leading-tight truncate">
-                        {level.mission || level.tutorialMessage || "Chegue ao objetivo!"}
-                    </div>
+      {/* 2. PALCO / STAGE (CENTRO NO PC) */}
+      <div className={`
+          flex-1 flex flex-col relative shrink-0 
+          ${isHackerMode ? 'bg-black border-x border-green-900' : 'bg-slate-200 border-x border-slate-300'} 
+          h-[50vh] md:h-auto order-1 md:order-2
+      `}>
+          {/* Header do Palco com Missão */}
+          <div className={`p-3 border-b shadow-sm z-30 flex items-center justify-between gap-3 ${isHackerMode ? 'bg-slate-800 border-slate-700 text-green-400' : 'bg-yellow-50 border-yellow-100 text-yellow-900'}`}>
+             <div className="flex gap-3 overflow-hidden items-center">
+                <Target size={18} className={`${isHackerMode ? 'text-green-500' : 'text-yellow-600'}`} />
+                <div className="text-xs font-bold leading-tight truncate max-w-xs md:max-w-md">
+                    {level.mission || "Chegue ao objetivo!"}
                 </div>
              </div>
-             
-             <div className="flex items-center gap-2 shrink-0">
-                 {/* NOVO: Logo Sparky Canto Superior Direito (Voltar ao Hub) no Desktop */}
+             <div className="flex items-center gap-2">
+                 <StatusIndicator isSaving={false} isGuest={user?.isGuest} className="scale-75 hidden lg:flex" />
                  {onHome && (
-                    <button 
-                        onClick={onHome}
-                        className={`hidden md:flex flex-col items-center p-2 rounded-lg border transition shadow-sm group relative ${isHackerMode ? 'bg-slate-800 border-green-700 text-green-400 hover:bg-green-900' : 'bg-white border-blue-200 text-blue-600 hover:bg-blue-50'}`}
-                        title="Voltar ao Hub do Universo"
-                    >
+                    <button onClick={onHome} className={`p-2 rounded-lg border transition shadow-sm ${isHackerMode ? 'bg-slate-800 border-green-700 text-green-400 hover:bg-green-900' : 'bg-white border-blue-200 text-blue-600 hover:bg-blue-50'}`}>
                         <SparkyLogo size="sm" showText={false} />
-                        <span className="absolute -bottom-10 right-0 bg-black/80 text-white text-[9px] font-black uppercase px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none z-50">HUB PRINCIPAL</span>
                     </button>
-                 )}
-
-                 <button 
-                    onClick={onBack}
-                    className={`flex flex-col items-center p-2 rounded-lg border transition shadow-sm ${isHackerMode ? 'bg-slate-800 border-green-700 text-green-400 hover:bg-green-900' : 'bg-white border-blue-200 text-blue-600 hover:bg-blue-50'}`}
-                    title="Voltar ao Mapa"
-                 >
-                    <LogOut size={20} className="rotate-180" />
-                    <span className="text-[9px] font-bold uppercase mt-1">SAIR</span>
-                 </button>
-
-                 {level.isCreative && (
-                     <button 
-                        onClick={() => setShowAiModal(true)}
-                        className="flex flex-col items-center bg-white/50 hover:bg-white/80 p-2 rounded-lg border border-yellow-200 transition"
-                        title="IA Criativa"
-                     >
-                        <Sparkles className="text-purple-500" size={20} />
-                        <span className="text-[9px] font-bold text-purple-700 uppercase mt-1">{aiGenCount}/3</span>
-                     </button>
                  )}
              </div>
           </div>
 
-          <div ref={programListRef} className="flex-1 p-4 overflow-y-auto content-start flex flex-wrap content-start gap-2 scroll-smooth" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
+          <div className="flex-1 relative overflow-auto flex items-center justify-center p-4 lg:p-12 no-scrollbar">
+              <div 
+                className={`
+                    relative shadow-2xl rounded-2xl overflow-hidden transition-all duration-300 origin-center flex-shrink-0
+                    ${isHackerMode ? 'shadow-green-500/30 border-2 border-green-500/50' : 'border-4 border-white shadow-indigo-200/50'}
+                    ${gameStatus === 'lost' ? 'ring-8 ring-red-400 border-red-500 animate-shake' : ''}
+                `}
+                style={{
+                    width: level.gridSize * 60,
+                    height: level.gridSize * 60,
+                    backgroundColor: isHackerMode ? '#0a0f0a' : '#ffffff',
+                    backgroundSize: '60px 60px',
+                    backgroundImage: isHackerMode 
+                      ? 'linear-gradient(to right, #003300 1px, transparent 1px), linear-gradient(to bottom, #003300 1px, transparent 1px)'
+                      : 'linear-gradient(to right, #f1f5f9 2px, transparent 2px), linear-gradient(to bottom, #f1f5f9 2px, transparent 2px)'
+                }}
+              >
+                  {/* Coordenadas Auxiliares (Opcional - ajuda no tracing) */}
+                  <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
+                      {Array.from({length: level.gridSize}).map((_, i) => (
+                          <React.Fragment key={i}>
+                             <span className="absolute text-[10px] font-bold" style={{ left: i*60 + 25, top: 2 }}>{String.fromCharCode(65+i)}</span>
+                             <span className="absolute text-[10px] font-bold" style={{ left: 2, top: i*60 + 25 }}>{i+1}</span>
+                          </React.Fragment>
+                      ))}
+                  </div>
+
+                  {level.goalPos && (
+                      <div className="absolute flex items-center justify-center animate-pulse" style={{ left: level.goalPos.x * 60, top: level.goalPos.y * 60, width: 60, height: 60 }}>
+                          <div className={`w-10 h-10 rounded-full border-4 flex items-center justify-center ${isHackerMode ? 'bg-green-900 border-green-500' : 'bg-green-100 border-green-400'}`}>
+                              <div className={`w-4 h-4 rounded-full ${isHackerMode ? 'bg-green-400' : 'bg-green-500'}`} />
+                          </div>
+                      </div>
+                  )}
+
+                  {activeObstacles.map((obs, i) => (
+                      <div key={i} className={`absolute rounded-xl shadow-lg border-b-4 ${isWaterLevel ? 'bg-blue-400 border-blue-600' : (isHackerMode ? 'bg-green-950 border-green-800' : 'bg-slate-700 border-slate-900')}`} style={{ left: obs.x * 60 + 5, top: obs.y * 60 + 5, width: 50, height: 50 }}>
+                          <div className={`w-full h-full opacity-50 flex items-center justify-center ${isHackerMode ? '' : (isWaterLevel ? '' : "bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]")}`}>
+                             {isHackerMode && <span className="text-[10px] text-green-800 font-mono p-1">ERR</span>}
+                             {isWaterLevel && <Waves size={24} className="text-blue-100 animate-pulse" />}
+                          </div>
+                      </div>
+                  ))}
+
+                  {paintedCells.map((cell, i) => (
+                       <div key={`paint-${i}`} className={`absolute ${isWaterLevel ? 'bg-amber-600/90 border-2 border-amber-800 bg-[url("https://www.transparenttextures.com/patterns/wood-pattern.png")]' : (isHackerMode ? 'bg-green-500/40' : 'bg-purple-400/50')}`} style={{ left: cell.x * 60, top: cell.y * 60, width: 60, height: 60 }} />
+                  ))}
+
+                  <Robot x={robotState.x} y={robotState.y} cellSize={60} direction={robotState.dir} isHappy={gameStatus === 'won'} isSad={gameStatus === 'lost'} isTalking={isSpeaking || tutorialOpen} skinId={user?.activeSkin} />
+              </div>
+          </div>
+
+          <AnimatePresence>
+            {(gameStatus === 'won' || gameStatus === 'lost') && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-40">
+                    <div className={`rounded-3xl p-8 text-center max-w-sm shadow-2xl ${isHackerMode ? 'bg-slate-900 border border-green-500' : 'bg-white'}`}>
+                        <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 ${gameStatus === 'won' ? (isHackerMode ? 'bg-green-900 text-green-400' : 'bg-green-100 text-green-600') : (isHackerMode ? 'bg-red-900 text-red-500' : 'bg-red-100 text-red-600')}`}>
+                            {gameStatus === 'won' ? <CheckCircle size={48} /> : <XCircle size={48} />}
+                        </div>
+                        <h2 className={`text-2xl font-heading mb-2 ${isHackerMode ? 'text-green-400' : 'text-slate-800'}`}>
+                            {gameStatus === 'won' ? (isHackerMode ? 'SISTEMA HACKEADO' : 'Incrível!') : (isHackerMode ? 'FALHA CRÍTICA' : 'Ai, bati!')}
+                        </h2>
+                        <p className={`font-bold mb-6 text-sm ${isHackerMode ? 'text-green-700' : 'text-slate-500'}`}>
+                            {gameStatus === 'won' ? level.explanation : 'Ops! Bati no muro. Vamos tentar de novo? 🤕'}
+                        </p>
+                        
+                        {/* Botão para forçar explicação manual se desejar */}
+                        {level.isCreative && !logicExplanation && !isAnalyzingLogic && (
+                            <button onClick={handleExplainLogic} className="mb-4 text-xs font-bold text-indigo-500 hover:text-indigo-700 flex items-center justify-center gap-1 mx-auto">
+                                <MessageSquare size={14} /> Analisar minha lógica
+                            </button>
+                        )}
+
+                        <div className="flex gap-3 justify-center">
+                            <Button onClick={resetGame} variant="secondary" size="sm"><RotateCcw size={18} className="mr-2" /> Tentar</Button>
+                            {gameStatus === 'won' && <Button onClick={() => onNextLevel(program.length)} variant="primary" size="sm">Próximo</Button>}
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+          </AnimatePresence>
+      </div>
+
+      {/* 3. ESPAÇO DE TRABALHO / WORKSPACE (DIREITA NO PC) */}
+      <div className={`
+          w-full md:w-64 lg:w-80 flex flex-col relative ${workspaceClass} 
+          min-h-[300px] md:min-h-0 order-3 md:order-3 shadow-2xl z-10
+      `}>
+          <div className={`p-4 border-b flex items-center justify-between font-black uppercase text-[10px] tracking-widest ${isHackerMode ? 'bg-slate-800 text-green-500' : 'bg-white text-slate-400'}`}>
+              <span>Sequência de Lógica</span>
+              <span className={program.length >= level.maxBlocks ? 'text-red-500' : ''}>{program.length}/{level.maxBlocks}</span>
+          </div>
+
+          <div 
+            ref={programListRef} 
+            className="flex-1 p-4 overflow-y-auto flex flex-col gap-0.5 scroll-smooth no-scrollbar relative" 
+            onDragOver={(e) => e.preventDefault()} 
+            onDrop={handleDrop}
+          >
               {program.length === 0 && (
-                  <div className={`w-full h-full flex items-center justify-center flex-col border-4 border-dashed rounded-xl ${isHackerMode ? 'border-green-900 text-green-700' : 'border-slate-200 text-slate-400'}`}>
-                      {isHackerMode ? <Terminal size={48} className="mb-2 opacity-50" /> : <Code size={48} className="mb-2 opacity-50" />}
-                      <p className="font-bold">{isHackerMode ? '> INSERIR_MODULOS' : 'Arraste os blocos aqui'}</p>
+                  <div className={`absolute inset-0 flex items-center justify-center flex-col opacity-30 pointer-events-none p-6 text-center`}>
+                      <Code size={40} className="mb-2" />
+                      <p className="font-bold text-xs">Arraste seus blocos aqui na ordem que deseja executar</p>
                   </div>
               )}
               
               <AnimatePresence mode="popLayout">
                 {program.map((block, idx) => (
-                    <motion.div key={`${idx}-${block}`} layout initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: "spring", stiffness: 300, damping: 25 }} className={`relative group transition-all duration-300 ${currentBlockIndex === idx ? 'scale-110 z-10 ring-4 ring-yellow-400 rounded-lg shadow-xl' : ''}`}>
-                        <BlockIcon type={block} showLabel={false} className="w-12 h-12 justify-center" />
-                        {!isPlaying && (
-                            <button onClick={() => removeBlock(idx)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow-sm scale-75 hover:scale-100" aria-label="Remover bloco">
-                              <Trash2 size={12} />
-                            </button>
-                        )}
-                        <div className={`absolute -bottom-2 -right-2 text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border ${isHackerMode ? 'bg-green-900 text-green-400 border-green-700' : 'bg-slate-200 text-slate-500 border-white'}`}>
-                          {idx + 1}
+                    <motion.div 
+                        key={`${idx}-${block}`} 
+                        layout 
+                        initial={{ x: 20, opacity: 0 }} 
+                        animate={{ x: 0, opacity: 1 }} 
+                        exit={{ x: -20, opacity: 0 }} 
+                        className={`relative w-full transition-all duration-300 ${currentBlockIndex === idx ? 'scale-105 z-20 brightness-110 shadow-xl' : ''}`}
+                    >
+                        <div className="flex items-center group">
+                            <div className={`w-6 h-6 flex items-center justify-center rounded-l-lg text-[9px] font-black border-y-2 border-l-2 ${isHackerMode ? 'bg-green-900 border-green-800 text-green-400' : 'bg-slate-200 border-slate-300 text-slate-500'}`}>
+                                {idx + 1}
+                            </div>
+                            <div className="flex-1">
+                                <BlockIcon type={block} showLabel={true} className="rounded-l-none border-b-2 active:translate-y-0 text-xs py-1.5" />
+                            </div>
+                            {!isPlaying && (
+                                <button onClick={() => removeBlock(idx)} className="ml-1 p-1.5 bg-red-100 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100">
+                                    <Trash2 size={14} />
+                                </button>
+                            )}
                         </div>
+                        {/* Conector Visual (Puzzle Notch) */}
+                        {idx < program.length - 1 && (
+                            <div className="h-0.5 w-4 bg-white/20 mx-auto rounded-full mt-[-2px] mb-[-2px] z-10" />
+                        )}
                     </motion.div>
                 ))}
               </AnimatePresence>
           </div>
 
-          <div className={`p-4 border-t flex items-center justify-between shadow-lg z-20 sticky bottom-0 md:static ${isHackerMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
-              <div className={`text-xs font-bold ${isHackerMode ? 'text-green-600' : 'text-slate-400'}`}>
-                 {program.length} / {level.maxBlocks} {isHackerMode ? 'CMDS' : 'Blocos'}
-              </div>
+          {/* RODAPÉ DO WORKSPACE COM CONTROLES */}
+          <div className={`p-4 border-t flex flex-col gap-3 shadow-lg sticky bottom-0 ${isHackerMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
               <div className="flex gap-2">
-                  <button onClick={resetGame} disabled={program.length === 0 || isPlaying} className="bg-red-500 text-white p-3 rounded-xl disabled:opacity-50">
+                  {/* Botão de Limpar Workspace (Apaga tudo) */}
+                  <button onClick={clearWorkspace} disabled={program.length === 0 || isPlaying} className="bg-red-100 text-red-600 p-3 rounded-xl disabled:opacity-50 hover:bg-red-500 hover:text-white transition group relative">
                      <Trash2 size={20} />
+                     <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[9px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">LIMPAR CÓDIGO</span>
                   </button>
-                  <Button onClick={() => runProgram(false)} variant={gameStatus === 'running' ? 'secondary' : 'success'} size="md" className={`min-w-[140px] ${isHackerMode ? 'font-mono tracking-widest' : ''}`} disabled={program.length === 0 || gameStatus === 'won'}>
-                      {gameStatus === 'running' ? <><Pause size={20} /> {isHackerMode ? 'ABORT' : 'Parar'}</> : <><Play size={20} fill="currentColor" /> {isHackerMode ? 'EXEC' : 'Executar'}</>}
+                  <Button onClick={() => runProgram(false)} variant={gameStatus === 'running' ? 'secondary' : 'success'} size="md" className="flex-1" disabled={program.length === 0 || gameStatus === 'won'}>
+                      {gameStatus === 'running' ? <><Pause size={20} /> Parar</> : <><Play size={20} fill="currentColor" /> Executar</>}
                   </Button>
               </div>
+              
+              <button 
+                onClick={onBack}
+                className={`w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase rounded-lg border-2 ${isHackerMode ? 'border-green-900 text-green-700' : 'border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+              >
+                  <LogOut size={14} /> Sair do Nível
+              </button>
           </div>
       </div>
 
+      {/* COMPONENTES FLUTUANTES (MODAIS) */}
       {showSkinSelector && user && onUpdateSkin && (
         <SkinSelector currentSkin={user.activeSkin || 'default'} userTier={user.subscription} onClose={() => setShowSkinSelector(false)} onSelect={(id) => { onUpdateSkin(id); setShowSkinSelector(false); }} />
+      )}
+
+      {/* Modal de Explicação da IA */}
+      <AnimatePresence>
+        {logicExplanation && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-[2.5rem] p-8 max-w-lg w-full border-4 border-indigo-200 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
+                    <button onClick={() => setLogicExplanation(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"><XCircle size={24} /></button>
+                    
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shrink-0">
+                            <SparkyLogo size="sm" showText={false} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-heading text-indigo-900">Análise do Sparky</h3>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">IA Educativa Ativa</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 mb-6 max-h-[40vh] overflow-y-auto no-scrollbar">
+                        <p className="text-slate-700 leading-relaxed font-bold whitespace-pre-wrap">
+                            {logicExplanation}
+                        </p>
+                    </div>
+
+                    <Button onClick={() => setLogicExplanation(null)} variant="primary" className="w-full">Valeu, Sparky!</Button>
+                    
+                    <div className="mt-4 text-center">
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">Essa explicação foi gerada pensando no seu aprendizado.</p>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Loading de Análise de Lógica */}
+      {isAnalyzingLogic && (
+        <div className="fixed inset-0 z-[80] bg-indigo-900/40 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-white px-8 py-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <span className="font-heading text-indigo-900">Analisando sua lógica...</span>
+            </div>
+        </div>
       )}
 
       {showAiModal && (
@@ -957,20 +1011,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
                        <Wand2 size={32} />
                    </div>
                    <h2 className="text-2xl font-heading text-purple-900">Arquiteto IA</h2>
-                   <p className="text-slate-500 text-sm">Descreva um cenário e a IA criará os obstáculos para você! ({3 - aiGenCount} restantes)</p>
+                   <p className="text-slate-500 text-sm">Crie obstáculos mágicos! ({3 - aiGenCount} restantes)</p>
                </div>
                <div className="space-y-4">
-                   <input 
-                     type="text" 
-                     value={aiPrompt}
-                     onChange={(e) => setAiPrompt(e.target.value)}
-                     placeholder="Ex: Um labirinto em espiral, ou um rosto feliz"
-                     className="w-full border-2 border-slate-200 rounded-xl p-4 text-lg focus:border-purple-500 outline-none"
-                     autoFocus
-                   />
-                   <Button onClick={handleAiGeneration} disabled={isGenerating || !aiPrompt.trim()} variant="secondary" className="w-full bg-purple-600 border-purple-800">
-                      {isGenerating ? 'Criando...' : 'Gerar Cenário ✨'}
-                   </Button>
+                   <input type="text" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="Ex: Um labirinto em caracol" className="w-full border-2 border-slate-200 rounded-xl p-4 text-lg focus:border-purple-500 outline-none" autoFocus />
+                   <Button onClick={handleAiGeneration} disabled={isGenerating || !aiPrompt.trim()} variant="secondary" className="w-full">Gerar ✨</Button>
                </div>
            </div>
         </div>
@@ -981,9 +1026,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
              <div className={`pointer-events-auto p-6 rounded-2xl shadow-2xl border-4 max-w-sm animate-slide-up relative ${isHackerMode ? 'bg-slate-900 border-green-600' : 'bg-white border-yellow-400'}`}>
                  <button onClick={() => setTutorialOpen(false)} className={`absolute top-2 right-2 hover:opacity-75 ${isHackerMode ? 'text-green-500' : 'text-slate-300'}`}><XCircle /></button>
                  <div className="flex gap-4">
-                     <div className="text-4xl">{isHackerMode ? '💾' : '💡'}</div>
+                     <div className="text-4xl">💡</div>
                      <div>
-                         <h4 className={`font-bold uppercase text-xs mb-1 ${isHackerMode ? 'text-green-500' : 'text-yellow-600'}`}>{isHackerMode ? 'LOG DO SISTEMA' : 'Dica do Sparky'}</h4>
+                         <h4 className={`font-bold uppercase text-xs mb-1 ${isHackerMode ? 'text-green-500' : 'text-yellow-600'}`}>Dica do Sparky</h4>
                          <p className={`text-lg leading-tight font-bold ${isHackerMode ? 'text-green-100 font-mono' : 'text-slate-800'}`}>{level.tutorialMessage}</p>
                      </div>
                  </div>
@@ -991,56 +1036,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
              </div>
          </div>
       )}
+      
+      {/* Guias Educativos Animados */}
       <AnimatePresence>
         {showControlGuide && !isHackerMode && (
            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-             <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-3xl p-8 max-w-lg w-full border-4 border-orange-300 relative overflow-hidden shadow-2xl">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full translate-x-10 -translate-y-10" />
-                 <div className="relative z-10 text-center">
-                     <div className="w-16 h-16 bg-orange-500 text-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg rotate-12">
-                         <Repeat size={32} strokeWidth={3} />
-                     </div>
-                     <h2 className="text-2xl font-heading text-slate-800 mb-2">Poder da Repetição!</h2>
-                     <p className="text-slate-500 mb-6 font-bold">Loops (Repetição) são mágicos! Em vez de usar 3 blocos de andar, usamos apenas 1 bloco de repetição. É assim que os programadores economizam tempo.</p>
-                     <TutorialDemo />
-                     <Button onClick={handleConfirmControlGuide} variant="primary" size="lg" className="w-full">Entendi, vamos rodar!</Button>
-                 </div>
-             </motion.div>
-           </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showMotionGuide && !isHackerMode && (
-           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-             <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-3xl p-8 max-w-lg w-full border-4 border-blue-300 relative overflow-hidden shadow-2xl">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full translate-x-10 -translate-y-10" />
-                 <div className="relative z-10 text-center">
-                     <div className="w-16 h-16 bg-blue-500 text-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg -rotate-12">
-                         <Move size={32} strokeWidth={3} />
-                     </div>
-                     <h2 className="text-2xl font-heading text-slate-800 mb-2">Mova o Sparky!</h2>
-                     <p className="text-slate-500 mb-6 font-bold">Os blocos azuis dão vida ao robô. Use-os para me guiar pelo mapa.</p>
-                     <MotionTutorialDemo />
-                     <Button onClick={handleConfirmMotionGuide} variant="primary" size="lg" className="w-full">Entendi!</Button>
-                 </div>
-             </motion.div>
-           </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showActionGuide && !isHackerMode && (
-           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-             <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-3xl p-8 max-w-lg w-full border-4 border-purple-300 relative overflow-hidden shadow-2xl">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-full translate-x-10 -translate-y-10" />
-                 <div className="relative z-10 text-center">
-                     <div className="w-16 h-16 bg-purple-500 text-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg rotate-6">
-                         <Brush size={32} strokeWidth={3} />
-                     </div>
-                     <h2 className="text-2xl font-heading text-slate-800 mb-2">Pinte o Mundo!</h2>
-                     <p className="text-slate-500 mb-6 font-bold">Use o bloco roxo para pintar o chão ou marcar seu caminho.</p>
-                     <ActionTutorialDemo />
-                     <Button onClick={handleConfirmActionGuide} variant="primary" size="lg" className="w-full">Entendi, vamos pintar!</Button>
-                 </div>
+             <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-white rounded-3xl p-8 max-w-lg w-full border-4 border-orange-300 relative overflow-hidden shadow-2xl text-center">
+                 <div className="w-16 h-16 bg-orange-500 text-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg rotate-12"><Repeat size={32} strokeWidth={3} /></div>
+                 <h2 className="text-2xl font-heading text-slate-800 mb-2">Poder da Repetição!</h2>
+                 <p className="text-slate-500 mb-6 font-bold">Loops economizam blocos e tempo!</p>
+                 <TutorialDemo />
+                 <Button onClick={handleConfirmControlGuide} variant="primary" size="lg" className="w-full">Entendi!</Button>
              </motion.div>
            </motion.div>
         )}

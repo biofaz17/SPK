@@ -6,7 +6,7 @@ import { PLANS } from '../constants';
 import { 
   BarChart3, Clock, Brain, ArrowLeft, User, CreditCard, 
   Settings, LogOut, ShieldCheck, CheckCircle, AlertCircle, Volume2, Music,
-  Building2, Mail, FileText, Download, TrendingUp, Target, Award
+  Building2, Mail, FileText, Download, TrendingUp, Target, Award, Globe
 } from 'lucide-react';
 
 interface ParentPanelProps {
@@ -65,7 +65,6 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
 
   const getEfficiency = () => {
       if (user.progress.unlockedLevels <= 1) return 0;
-      // Média de blocos por nível (estimativa)
       const avgBlocks = user.progress.totalBlocksUsed / (user.progress.unlockedLevels - 1);
       return Math.max(20, Math.min(100, 100 - (avgBlocks / 2)));
   };
@@ -95,7 +94,7 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
              active={activeTab === 'evolution'} 
              onClick={() => setActiveTab('evolution')} 
              icon={<TrendingUp size={20} />} 
-             label="Evolução Detalhada" 
+             label="Evolução" 
            />
            <NavButton 
              active={activeTab === 'profile'} 
@@ -124,7 +123,7 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
               </div>
               <div className="overflow-hidden">
                  <p className="text-sm font-bold text-indigo-900 truncate">{user.name}</p>
-                 <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">Sincronizado via LocalStorage</p>
+                 <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">Sessão Ativa</p>
               </div>
            </div>
            <button 
@@ -140,16 +139,19 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
           
-          {/* TAB: VISÃO GERAL */}
           {activeTab === 'overview' && (
             <div className="space-y-8 animate-fadeIn">
-               <div className="flex justify-between items-end">
+               <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                  <div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Relatório de Desempenho</h2>
-                    <p className="text-slate-500">Dados salvos e sincronizados para {user.name}.</p>
+                    <p className="text-slate-500">Sincronizado com a conta de {user.name}.</p>
                  </div>
-                 <div className="text-right text-[10px] font-bold text-slate-400 uppercase">
-                    ID de Segurança: <span className="text-indigo-400">{user.id}</span>
+                 <div className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg">
+                    <Globe size={18} />
+                    <div className="text-left">
+                        <div className="text-[8px] font-black uppercase opacity-60">Acesso Universal</div>
+                        <div className="text-[10px] font-bold">Disponível em qualquer dispositivo</div>
+                    </div>
                  </div>
                </div>
 
@@ -186,24 +188,23 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                         <ShieldCheck className="text-indigo-600" /> Desenvolvimento de Habilidades (BNCC)
                       </h3>
                       <button className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline">
-                         <Download size={14} /> Baixar Relatório PDF
+                         <Download size={14} /> Exportar Relatório
                       </button>
                   </div>
                   <div className="space-y-6">
-                     <SkillBar label="Pensamento Algorítmico" sub="Capacidade de criar sequências lógicas." percentage={calculateProgress()} color="bg-blue-500" />
-                     <SkillBar label="Raciocínio Matemático" sub="Operações e lógica espacial aplicada." percentage={Math.min(100, user.progress.stars * 2)} color="bg-emerald-500" />
-                     <SkillBar label="Autonomia e Resolução de Problemas" sub="Independência no uso dos blocos." percentage={getEfficiency()} color="bg-orange-500" />
+                     <SkillBar label="Pensamento Algorítmico" sub="Criação de sequências lógicas." percentage={calculateProgress()} color="bg-blue-500" />
+                     <SkillBar label="Raciocínio Matemático" sub="Operações e lógica espacial." percentage={Math.min(100, user.progress.stars * 2)} color="bg-emerald-500" />
+                     <SkillBar label="Autonomia Digital" sub="Uso independente da interface." percentage={getEfficiency()} color="bg-orange-500" />
                   </div>
                </div>
             </div>
           )}
 
-          {/* TAB: EVOLUÇÃO DETALHADA */}
           {activeTab === 'evolution' && (
             <div className="space-y-8 animate-fadeIn">
                <div>
-                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Linha do Tempo de Aprendizado</h2>
-                  <p className="text-slate-500">Veja como {user.name} está evoluindo nos últimos desafios.</p>
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Evolução do Aluno</h2>
+                  <p className="text-slate-500">Linha do tempo de conquistas em tempo real.</p>
                </div>
 
                <div className="grid md:grid-cols-2 gap-6">
@@ -219,49 +220,36 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
 
                   <div className="bg-indigo-600 rounded-2xl p-6 text-white flex flex-col justify-between">
                      <div>
-                        <h4 className="font-bold mb-2">Dica Pedagógica</h4>
-                        <p className="text-indigo-100 text-sm leading-relaxed">
+                        <h4 className="font-bold mb-2">Orientações do Sparky</h4>
+                        <p className="text-indigo-100 text-sm leading-relaxed italic">
                            {user.progress.unlockedLevels < 10 
-                              ? "Nesta fase, estimule seu filho a falar em voz alta os passos do Sparky antes de colocar os blocos. Isso ajuda na abstração!"
-                              : "Excelente progresso! A criança agora está lidando com repetições. Pergunte a ela: 'Existe um jeito mais curto de fazer isso?' para estimular a otimização."
+                              ? "Estamos focando em Sequenciamento. Peça para o aluno explicar por que escolheu cada bloco!"
+                              : "O aluno já está dominando a Otimização. Incentive o uso de loops para diminuir o código."
                            }
                         </p>
                      </div>
                      <div className="mt-6 pt-6 border-t border-white/20">
-                        <div className="flex justify-between text-xs font-bold uppercase opacity-80 mb-2">
-                           <span>Uso Total da Plataforma</span>
-                        </div>
-                        <div className="text-2xl font-heading">{user.progress.totalBlocksUsed} blocos empilhados</div>
+                        <div className="text-2xl font-heading">{user.progress.totalBlocksUsed} blocos processados</div>
+                        <div className="text-[10px] uppercase font-bold opacity-60">Histórico de comandos</div>
                      </div>
                   </div>
-               </div>
-
-               <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center">
-                  <FileText className="mx-auto text-slate-300 mb-4" size={48} />
-                  <h4 className="font-bold text-slate-800 mb-2">Relatório Completo para Professores</h4>
-                  <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">
-                     Gere um documento formatado com as métricas de aprendizado para compartilhar com a escola ou professores particulares.
-                  </p>
-                  <Button variant="secondary" size="md">
-                     <Download size={18} className="mr-2" /> Gerar PDF de Evolução
-                  </Button>
                </div>
             </div>
           )}
 
-          {/* TAB: PERFIL */}
           {activeTab === 'profile' && (
              <div className="max-w-lg animate-fadeIn">
-                <h2 className="text-2xl font-bold text-slate-800 mb-6">Configurações do Aluno</h2>
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">Dados do Aluno</h2>
+                <p className="text-slate-500 mb-6">Mantenha os dados atualizados para uma experiência personalizada.</p>
                 
-                <form onSubmit={handleSaveProfile} className="space-y-6 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                <form onSubmit={handleSaveProfile} className="space-y-6 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
                    <div className="flex items-center gap-4 mb-6">
                       <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-2xl font-black">
                          {user.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                          <h4 className="font-bold text-slate-800">{user.name}</h4>
-                         <p className="text-xs text-slate-400">Dados persistentes protegidos</p>
+                         <p className="text-xs text-slate-400">Conta: {user.id}</p>
                       </div>
                    </div>
 
@@ -271,28 +259,27 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                         type="text" 
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-indigo-500 outline-none transition font-medium"
+                        className="w-full border-2 border-slate-200 rounded-xl p-4 focus:border-indigo-500 outline-none transition font-medium"
                       />
                    </div>
                    
                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Idade</label>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Idade Recomendada</label>
                       <input 
                         type="number" 
                         value={editAge}
                         onChange={(e) => setEditAge(e.target.value)}
                         min="5" max="16"
-                        className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-indigo-500 outline-none transition font-medium"
+                        className="w-full border-2 border-slate-200 rounded-xl p-4 focus:border-indigo-500 outline-none transition font-medium"
                       />
-                      <p className="text-xs text-slate-400 mt-2">A idade ajusta algumas sugestões de tutoriais do Sparky.</p>
                    </div>
 
                    <div className="pt-4">
-                      <Button type="submit" variant="primary" className="w-full">Salvar e Sincronizar</Button>
+                      <Button type="submit" variant="primary" className="w-full">Salvar Alterações</Button>
                    </div>
                    
                    {saveMessage && (
-                      <div className="bg-green-100 text-green-700 p-3 rounded-lg text-center text-sm font-bold animate-pulse">
+                      <div className="bg-green-100 text-green-700 p-3 rounded-lg text-center text-sm font-bold">
                          {saveMessage}
                       </div>
                    )}
@@ -300,27 +287,22 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
              </div>
           )}
 
-          {/* TAB: ASSINATURA */}
           {activeTab === 'subscription' && (
              <div className="space-y-6 animate-fadeIn">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800 mb-2">Gerenciar Assinatura</h2>
-                  <p className="text-slate-500">Sua conta e o acesso vitalício à educação.</p>
-                </div>
+                <h2 className="text-2xl font-bold text-slate-800">Minha Assinatura</h2>
 
                 <div className={`
-                   rounded-2xl p-8 border-2 relative overflow-hidden
+                   rounded-[2rem] p-8 border-2 relative overflow-hidden
                    ${isFree ? 'bg-slate-100 border-slate-200' : 
                      'bg-gradient-to-br from-indigo-600 to-purple-600 border-indigo-500 text-white shadow-xl shadow-indigo-100'}
                 `}>
                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                       <div>
-                         <div className="uppercase tracking-wider text-xs font-bold opacity-70 mb-1">Status da Jornada</div>
-                         <h3 className="text-3xl font-heading mb-2">{isFree ? 'Explorador (Grátis)' : `Mestre ${plan.title}`}</h3>
+                         <h3 className="text-3xl font-heading mb-2">{isFree ? 'Grátis' : `Mestre ${plan.title}`}</h3>
                          <p className={`text-sm ${isFree ? 'text-slate-500' : 'text-indigo-100'}`}>
                             {isFree 
-                               ? 'Níveis básicos liberados. Progresso é salvo localmente.' 
-                               : 'Acesso Vitalício Ativo. Todos os mundos e skins desbloqueados.'
+                               ? 'Acesso limitado ao Mundo Inicial. Atualize para desbloquear tudo!' 
+                               : 'Acesso vitalício desbloqueado. O Universo é seu!'
                             }
                          </p>
                       </div>
@@ -330,49 +312,40 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                             Liberar Conteúdo Pro
                          </Button>
                       ) : (
-                         <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/30 text-sm font-bold">
-                            Assinatura Vitalícia
+                         <div className="bg-white/20 backdrop-blur-sm px-6 py-2 rounded-xl border border-white/30 text-sm font-bold">
+                            VITALÍCIO ATIVO
                          </div>
                       )}
                    </div>
                 </div>
-
-                {!isFree && (
-                   <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                      <h4 className="font-bold text-slate-800 mb-4">Registro de Licença</h4>
-                      <div className="flex items-center gap-4 text-slate-600 bg-green-50 p-4 rounded-xl border border-green-100">
-                         <CheckCircle className="text-green-500" size={24} />
-                         <div className="flex-1">
-                             <div className="font-bold text-slate-800">Pagamento Único Confirmado</div>
-                             <div className="text-[10px] text-green-600 font-bold uppercase">Uso ilimitado garantido para TekTok TI</div>
-                         </div>
-                         <span className="text-xs font-bold bg-green-200 text-green-800 px-2 py-1 rounded">PRO ATIVO</span>
-                      </div>
-                   </div>
-                )}
              </div>
           )}
 
-          {/* TAB: CONFIGURAÇÕES */}
           {activeTab === 'settings' && (
              <div className="max-w-xl animate-fadeIn">
-                <h2 className="text-2xl font-bold text-slate-800 mb-6">Preferências do App</h2>
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">Acesso em Qualquer Dispositivo</h2>
                 
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 flex items-start gap-4">
+                    <div className="bg-blue-100 p-3 rounded-xl text-blue-600">
+                        <Globe size={24} />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Conta Universal</h4>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                            Seus alunos podem usar o mesmo <strong>Nome de Explorador</strong> e <strong>Senha</strong> em qualquer computador, tablet ou celular para continuar a aventura de onde pararam.
+                        </p>
+                    </div>
+                </div>
+
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
                    <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                          <div className="bg-indigo-100 p-2 rounded-full text-indigo-600">
                             <Volume2 size={24} />
                          </div>
-                         <div>
-                            <h4 className="font-bold text-slate-800">Efeitos Sonoros</h4>
-                            <p className="text-xs text-slate-500">Ativa vozes e feedbacks do Sparky.</p>
-                         </div>
+                         <h4 className="font-bold text-slate-800">Efeitos Sonoros</h4>
                       </div>
-                      <Toggle 
-                        active={user.settings.soundEnabled} 
-                        onToggle={() => toggleSetting('soundEnabled')} 
-                      />
+                      <Toggle active={user.settings.soundEnabled} onToggle={() => toggleSetting('soundEnabled')} />
                    </div>
 
                    <div className="p-6 flex items-center justify-between">
@@ -380,46 +353,20 @@ export const ParentPanel: React.FC<ParentPanelProps> = ({
                          <div className="bg-purple-100 p-2 rounded-full text-purple-600">
                             <Music size={24} />
                          </div>
-                         <div>
-                            <h4 className="font-bold text-slate-800">Música de Fundo</h4>
-                            <p className="text-xs text-slate-500">Música ambiente de foco e relaxamento.</p>
-                         </div>
+                         <h4 className="font-bold text-slate-800">Música</h4>
                       </div>
-                      <Toggle 
-                        active={user.settings.musicEnabled} 
-                        onToggle={() => toggleSetting('musicEnabled')} 
-                      />
+                      <Toggle active={user.settings.musicEnabled} onToggle={() => toggleSetting('musicEnabled')} />
                    </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Sobre o Desenvolvedor</h3>
-                    <div className="flex items-start gap-4">
-                        <div className="bg-slate-100 p-3 rounded-full">
-                            <Building2 className="text-slate-600" size={24} />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-slate-800">TekTok TI</h4>
-                            <p className="text-xs text-slate-500 mb-1">CNPJ: 14.773.860/0001-72</p>
-                            <a 
-                                href="mailto:robotix28@gmail.com?subject=Suporte%20Sparky" 
-                                className="inline-flex items-center gap-1.5 text-sm text-indigo-600 font-bold hover:underline mt-2 bg-indigo-50 px-3 py-1.5 rounded-lg transition"
-                            >
-                                <Mail size={14} /> Fale com nosso Suporte
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="mt-8">
-                   <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Zona de Segurança</h3>
-                   <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-center justify-between">
+                   <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex items-center justify-between">
                       <div>
-                         <h4 className="font-bold text-red-700">Apagar Todo o Progresso</h4>
-                         <p className="text-xs text-red-600 mt-1">Isso resetará níveis e estrelas localmente. Esta ação é irreversível.</p>
+                         <h4 className="font-bold text-red-700">Apagar Dados Locais</h4>
+                         <p className="text-xs text-red-600 mt-1">Isso limpa apenas o cache deste dispositivo.</p>
                       </div>
-                      <button className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100 transition shadow-sm">
-                         Resetar Tudo
+                      <button onClick={onLogout} className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100 transition shadow-sm">
+                         Sair da Conta
                       </button>
                    </div>
                 </div>
