@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { SubscriptionTier, UserProfile } from '../types';
 import { MERCADO_PAGO_CONFIG, PLANS } from '../constants';
@@ -165,7 +166,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
     } catch (error: any) {
       console.error(error);
       
-      const isCors = error.message.includes('Failed to fetch') || error.name === 'TypeError';
+      const isCors = error.message && (error.message.includes('Failed to fetch') || error.name === 'TypeError');
       
       if (isCors) {
           // MODO DE COMPATIBILIDADE (FALLBACK PARA DEMO SEM BACKEND)
@@ -175,7 +176,9 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
               onConfirm();
           }, 2000);
       } else {
-          setErrorMessage(error.message || 'Falha na conexão.');
+          // SAFETY: Ensure error message is a string
+          const msg = typeof error?.message === 'string' ? error.message : 'Falha desconhecida na conexão.';
+          setErrorMessage(msg);
           setStatus('error');
       }
     }
@@ -194,7 +197,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
          
          {errorMessage && (
              <p className="mt-4 text-xs text-green-600 font-bold bg-green-50 p-2 rounded">
-                 {errorMessage} <br/> Ativando plano automaticamente...
+                 {/* Safeguard rendering */}
+                 {typeof errorMessage === 'string' ? errorMessage : 'Processando...'} <br/> Ativando plano automaticamente...
              </p>
          )}
       </div>
@@ -208,7 +212,9 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
             <AlertTriangle size={40} className="text-red-600" />
          </div>
          <h2 className="text-xl font-bold mb-2 text-red-800">Erro na Conexão</h2>
-         <p className="text-red-700 text-sm max-w-md text-center mb-6 bg-red-100 p-3 rounded-lg border border-red-200">{errorMessage}</p>
+         <p className="text-red-700 text-sm max-w-md text-center mb-6 bg-red-100 p-3 rounded-lg border border-red-200">
+            {typeof errorMessage === 'string' ? errorMessage : 'Erro desconhecido.'}
+         </p>
          <button onClick={() => setStatus('idle')} className="bg-white border border-red-200 text-red-600 px-6 py-2 rounded-lg font-bold hover:bg-red-50 transition">
              Tentar Novamente
          </button>

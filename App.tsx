@@ -14,20 +14,29 @@ import { SubscriptionModal } from './components/SubscriptionModal';
 import { MarketingModal } from './components/MarketingModal';
 import { Mail } from 'lucide-react';
 
-// Enhanced Toast Notification
-const NotificationToast = ({ msg, subMsg, show }: { msg: string, subMsg?: string, show: boolean }) => (
-   <div className={`fixed top-4 right-4 bg-white border-l-4 border-green-500 text-slate-800 px-6 py-4 rounded-r-xl shadow-2xl z-[100] transition-transform duration-500 ${show ? 'translate-x-0' : 'translate-x-full'}`}>
-      <div className="flex items-start gap-3">
-         <div className="bg-green-100 p-2 rounded-full text-green-600">
-            <Mail size={20} />
-         </div>
-         <div>
-            <div className="font-bold text-sm">{typeof msg === 'string' ? msg : ''}</div>
-            {subMsg && typeof subMsg === 'string' && <div className="text-xs text-slate-500 mt-1">{subMsg}</div>}
-         </div>
-      </div>
-   </div>
-);
+// Enhanced Toast Notification com Proteção contra Objetos (React #31 Fix)
+const NotificationToast = ({ msg, subMsg, show }: { msg: any, subMsg?: any, show: boolean }) => {
+   // Helper para garantir que não renderizamos objetos puros
+   const safeRender = (content: any) => {
+      if (typeof content === 'string' || typeof content === 'number') return content;
+      if (React.isValidElement(content)) return content;
+      return ''; // Retorna vazio se for objeto inválido
+   };
+
+   return (
+    <div className={`fixed top-4 right-4 bg-white border-l-4 border-green-500 text-slate-800 px-6 py-4 rounded-r-xl shadow-2xl z-[100] transition-transform duration-500 ${show ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="flex items-start gap-3">
+            <div className="bg-green-100 p-2 rounded-full text-green-600">
+                <Mail size={20} />
+            </div>
+            <div>
+                <div className="font-bold text-sm">{safeRender(msg)}</div>
+                {subMsg && <div className="text-xs text-slate-500 mt-1">{safeRender(subMsg)}</div>}
+            </div>
+        </div>
+    </div>
+   );
+};
 
 enum Screen {
   AUTH,
@@ -41,6 +50,7 @@ enum Screen {
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>(Screen.AUTH);
+  const [isLoading, setIsLoading] = useState(true); // Loading state for auto-login
   
   // User State
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -49,8 +59,8 @@ export default function App() {
   const [currentLevelId, setCurrentLevelId] = useState<number | string>(1);
   const [showParentGate, setShowParentGate] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showMarketingModal, setShowMarketingModal] = useState(false); // New Marketing Modal State
-  const [gateAction, setGateAction] = useState(''); // What triggered the gate?
+  const [showMarketingModal, setShowMarketingModal] = useState(false); 
+  const [gateAction, setGateAction] = useState(''); 
   const [notification, setNotification] = useState({ title: '', body: '' });
   
   // Payment Flow State
@@ -64,11 +74,40 @@ export default function App() {
     }, 4000);
   };
 
+  // --- AUTO-LOGIN LOGIC ---
+  useEffect(() => {
+    const checkSession = () => {
+        try {
+            const lastUserId = localStorage.getItem('sparky_last_active_id');
+            if (lastUserId) {
+                const storageKey = `sparky_user_${lastUserId}`;
+                const storedData = localStorage.getItem(storageKey);
+                if (storedData) {
+                    const savedUser = JSON.parse(storedData);
+                    setUser(savedUser);
+                    // Restaurar nível desbloqueado mais alto ou último jogado (lógica simples aqui)
+                    setScreen(Screen.DASHBOARD);
+                }
+            }
+        } catch (e) {
+            console.error("Erro ao restaurar sessão:", e);
+            localStorage.removeItem('sparky_last_active_id');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    checkSession();
+  }, []);
+
   // PERSISTENCE LOGIC: Save user state whenever it changes
   useEffect(() => {
     if (user && !user.isGuest) {
       const storageKey = `sparky_user_${user.id}`;
       localStorage.setItem(storageKey, JSON.stringify(user));
+      
+      // Salva ID como último ativo para auto-login
+      localStorage.setItem('sparky_last_active_id', user.id);
     }
   }, [user]);
 
@@ -94,7 +133,7 @@ export default function App() {
            window.history.replaceState({}, document.title, window.location.pathname);
            alert("O pagamento não foi concluído ou foi cancelado.");
       }
-  }, [user]); // Depende do user estar carregado (poderia precisar de logica melhor de re-hydrate se fosse reload real da pagina)
+  }, [user]); 
 
   const handleLogin = (profile: UserProfile) => {
     setUser(profile);
@@ -102,6 +141,8 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    // Limpa a sessão automática
+    localStorage.removeItem('sparky_last_active_id');
     setUser(null);
     setScreen(Screen.AUTH);
   };
@@ -123,16 +164,13 @@ export default function App() {
     if (!user) return;
 
     if (typeof currentLevelId === 'number') {
-        // Find current level index in the sorted levels list
         const sortedLevels = [...LEVELS].sort((a,b) => (a.id as number) - (b.id as number));
         const currentIndex = sortedLevels.findIndex(l => l.id === currentLevelId);
         
-        let nextLevelId = currentLevelId; // Default fallback
+        let nextLevelId = currentLevelId; 
         
         if (currentIndex !== -1 && currentIndex < sortedLevels.length - 1) {
-            // Avança para o próximo nível na lista ordenada, independente da faixa etária
-            // Isso corrige o bug de travamento no nível 7 (fim da faixa 5-7) para o 8
-            nextLevelId = sortedLevels[currentIndex + 1].id as number;
+             nextLevelId = sortedLevels[currentIndex + 1].id as number;
         }
 
         const newProgress = {
@@ -142,7 +180,6 @@ export default function App() {
           totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed
         };
         
-        // Update user state and Last Active timestamp
         const updatedUser = { 
             ...user, 
             progress: newProgress,
@@ -150,10 +187,8 @@ export default function App() {
         };
         setUser(updatedUser);
 
-        // --- PARENT NOTIFICATION LOGIC ---
         if (!user.isGuest) {
             console.log(`[SERVICE] Sending progress report to ${user.parentEmail}...`);
-            // Only show toast occasionally or for big milestones to not annoy
             if (user.progress.stars % 5 === 0) {
                 showNotification(
                     `Progresso Salvo!`, 
@@ -164,30 +199,22 @@ export default function App() {
 
         const justFinishedLevel = typeof currentLevelId === 'number' ? currentLevelId : 0;
         
-        // PREPARA O PRÓXIMO NÍVEL
-        // Atualizamos o state do ID para que, ao fechar o modal ou navegar, já estejamos no próximo.
         if (nextLevelId !== currentLevelId) {
             setCurrentLevelId(nextLevelId);
         }
 
-        // --- MARKETING TRIGGER (FREE USERS) ---
-        // Se o usuário for Grátis, mostra o modal de marketing APENAS a cada 3 níveis (3, 6, 9...)
         if (user.subscription === SubscriptionTier.FREE && justFinishedLevel > 0 && justFinishedLevel % 3 === 0) {
            setShowMarketingModal(true);
-           // Interrompe o fluxo aqui. O modal cuidará da navegação ao fechar.
            return; 
         }
 
-        // FLUXO PADRÃO (Sem Marketing)
         if (nextLevelId !== currentLevelId) {
-          // O fluxo padrão leva ao Mapa para mostrar o progresso visual
           setScreen(Screen.MAP);
         } else {
           setScreen(Screen.DASHBOARD);
           alert("Você completou esta etapa! Confira os próximos desafios no mapa.");
         }
     } else {
-        // Creative mode done
         const newProgress = { 
             ...user.progress, 
             creativeProjects: user.progress.creativeProjects + 1,
@@ -200,8 +227,6 @@ export default function App() {
 
   const closeMarketingModal = () => {
      setShowMarketingModal(false);
-     // Redireciona DIRETAMENTE para o próximo nível (Screen.GAME), conforme solicitado.
-     // O currentLevelId já foi atualizado em handleLevelComplete antes do modal abrir.
      setScreen(Screen.GAME);
   };
 
@@ -210,7 +235,6 @@ export default function App() {
     setShowSubscriptionModal(true);
   };
 
-  // --- Parent Gate Logic ---
   const triggerParentGate = (action: string) => {
     setGateAction(action);
     setShowParentGate(true);
@@ -225,17 +249,14 @@ export default function App() {
     }
   };
 
-  // --- Payment Flow Logic ---
   const handleCheckoutStart = (tier: SubscriptionTier) => {
      setPendingSubscriptionTier(tier);
      setShowSubscriptionModal(false);
      setScreen(Screen.CHECKOUT);
   };
 
-  // Callback manual (usado pelo modo demo fallback no checkout screen)
   const handlePaymentComplete = () => {
      if (user && pendingSubscriptionTier) {
-        // Update user: remove guest status if successful (assuming data collection in checkout handles implicit registration logic for this demo)
         const updatedUser = { 
             ...user, 
             subscription: pendingSubscriptionTier,
@@ -251,6 +272,12 @@ export default function App() {
      setScreen(Screen.DASHBOARD);
   };
 
+  // --- RENDER ---
+
+  if (isLoading) {
+      return <div className="h-full w-full flex items-center justify-center bg-indigo-500 text-white font-bold">Carregando aventura...</div>;
+  }
+
   if (screen === Screen.AUTH) {
     return (
       <div className="h-full w-full scrollable-y bg-indigo-500">
@@ -259,7 +286,6 @@ export default function App() {
     );
   }
 
-  // Ensure user exists for other screens
   if (!user) return null; 
 
   return (
@@ -324,7 +350,6 @@ export default function App() {
          </div>
       )}
 
-      {/* Payment Screens */}
       {screen === Screen.CHECKOUT && pendingSubscriptionTier && (
          <div className="h-full w-full scrollable-y">
             <CheckoutScreen 
@@ -344,7 +369,6 @@ export default function App() {
          </div>
       )}
 
-      {/* Modals */}
       {showMarketingModal && (
         <MarketingModal 
            onUpgrade={handleMarketingUpgrade}

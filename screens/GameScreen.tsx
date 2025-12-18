@@ -176,6 +176,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   const handleClear = () => {
       setProgram([]);
       resetGame();
+      audioService.playSfx('delete');
   };
 
   const addBlock = (type: BlockType) => {
@@ -473,6 +474,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                              <button 
                                 key={type}
                                 onClick={() => addBlock(type)}
+                                onMouseEnter={() => !isPlaying && audioService.playSfx('hover')}
                                 disabled={isPlaying}
                                 className={`
                                   active:scale-90 transition-transform duration-100 touch-manipulation
@@ -509,6 +511,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0, opacity: 0 }}
                           onClick={() => removeBlock(idx)}
+                          onMouseEnter={() => !isPlaying && audioService.playSfx('hover')}
                           className={`
                             relative group transition-all duration-200 active:scale-95 touch-manipulation
                             ${currentBlockIndex === idx ? 'ring-4 ring-yellow-400 rounded-lg scale-105 z-10 shadow-xl' : ''}
