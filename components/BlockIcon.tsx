@@ -47,17 +47,15 @@ export const BlockIcon: React.FC<BlockIconProps> = ({ type, className = "", show
   return (
     <div className={`
       relative flex items-center gap-2 px-3 py-2 rounded-lg font-bold select-none
-      border-b-4 active:border-b-0 transition-all
+      border-b-4 active:border-b-0 active:translate-y-1 transition-all
       ${colorClass} ${textColor} ${className}
     `}>
-      {/* Visual de Encaixe de Cima (Macho) */}
-      <div className="absolute top-[-5px] left-6 w-5 h-2.5 bg-inherit rounded-t-full md:block hidden opacity-80" />
-      
-      {/* Visual de Encaixe de Baixo (Fêmea) */}
-      <div className="absolute bottom-[-5px] left-6 w-5 h-2.5 bg-black/20 rounded-t-full md:block hidden" />
+      {/* Puzzle piece notch visual trick (CSS) */}
+      <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-3 bg-inherit rounded-r-full md:block hidden" />
+      <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-3 bg-white/20 rounded-l-full md:block hidden" />
 
       <span className="shrink-0">{renderIcon()}</span>
-      {showLabel && <span className="text-[10px] md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">{def.label}</span>}
+      {showLabel && <span className="text-sm whitespace-nowrap">{def.label}</span>}
     </div>
   );
 };
