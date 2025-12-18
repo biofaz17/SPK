@@ -20,10 +20,16 @@ interface GameScreenProps {
   onUpdateSkin?: (skinId: string) => void;
 }
 
-// Inicializa a IA (Assumindo que process.env.API_KEY está configurado no build)
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Inicialização segura da IA
+let ai: any = null;
+try {
+  if (process.env.API_KEY) {
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  }
+} catch (e) {
+  console.warn("AI não inicializada: Chave ausente ou erro no ambiente.");
+}
 
-// ... (Manter subcomponentes inalterados)
 const MotionTutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -60,6 +66,7 @@ const MotionTutorialDemo: React.FC = () => {
     </div>
   );
 };
+
 const ActionTutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -98,6 +105,7 @@ const ActionTutorialDemo: React.FC = () => {
     </div>
   );
 };
+
 const TutorialDemo: React.FC = () => {
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -147,6 +155,7 @@ const TutorialDemo: React.FC = () => {
     </div>
   );
 };
+
 const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => void, onClose: () => void, userTier: SubscriptionTier }> = ({ currentSkin, onSelect, onClose, userTier }) => {
   const skins = [
     { id: 'default', name: 'Sparky Clássico', desc: 'O original.', locked: false },
@@ -244,8 +253,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
     };
   }, [levelId]);
 
-  // AI Generation Logic
   const handleAiGeneration = async () => {
+    if (!ai) {
+        alert("A IA não está disponível neste momento. Verifique sua conexão ou chave de API.");
+        return;
+    }
     if (aiGenCount >= 3) {
       alert("Você já usou a IA 3 vezes nesta sessão!");
       return;
@@ -381,7 +393,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   const runProgram = async (skipGuideCheck = false) => {
     if (program.length === 0) return;
     
-    // Tutorial Checks
     const hasMotionBlock = program.some(b => BLOCK_DEFINITIONS[b].category === BlockCategory.MOTION);
     if (hasMotionBlock && !hasSeenMotionGuide && !skipGuideCheck && !isHackerMode) {
         setShowMotionGuide(true);
@@ -654,7 +665,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
   return (
     <div className={`flex flex-col md:flex-row md:h-screen md:overflow-hidden min-h-screen ${bgClass} ${textClass}`}>
       
-      {/* HEADER (Mobile) */}
       <div className={`md:hidden p-4 flex justify-between items-center z-20 shadow-md shrink-0 sticky top-0 ${isHackerMode ? 'bg-green-900 text-green-100' : 'bg-indigo-600 text-white'}`}>
          <button onClick={onBack}><ArrowLeft /></button>
          <div className="flex flex-col items-center">
@@ -664,7 +674,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
          <button onClick={() => setTutorialOpen(true)}><HelpCircle /></button>
       </div>
 
-      {/* RIGHT: PREVIEW */}
       <div className={`
           w-full md:w-[400px] flex flex-col border-l relative shrink-0 
           ${isHackerMode ? 'bg-black border-green-900' : 'bg-slate-200 border-slate-300'} 
@@ -779,7 +788,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
           )}
       </div>
 
-      {/* LEFT: TOOLBOX */}
       <div className={`
           w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 ${toolboxClass} 
           h-auto md:h-full order-2 md:order-1
@@ -841,7 +849,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
          </div>
       </div>
 
-      {/* MIDDLE: WORKSPACE */}
       <div className={`flex-1 flex flex-col relative ${workspaceClass} min-h-[300px] md:min-h-0 order-3 md:order-2`}>
           
           <div className={`p-3 border-b shadow-sm z-30 flex items-start justify-between gap-3 ${isHackerMode ? 'bg-slate-800 border-slate-700 text-green-400' : 'bg-yellow-50 border-yellow-100 text-yellow-900'}`}>
@@ -857,7 +864,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                 </div>
              </div>
              
-             {/* BOTÃO IA CRIATIVA (APENAS MODO CRIATIVO) */}
              {level.isCreative && (
                  <button 
                     onClick={() => setShowAiModal(true)}
@@ -900,9 +906,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onNextL
                  {program.length} / {level.maxBlocks} {isHackerMode ? 'CMDS' : 'Blocos'}
               </div>
               <div className="flex gap-2">
-                  <Button onClick={resetGame} variant="danger" size="sm" disabled={program.length === 0 || isPlaying} className="aspect-square p-0 w-12 flex items-center justify-center">
+                  <button onClick={resetGame} disabled={program.length === 0 || isPlaying} className="bg-red-500 text-white p-3 rounded-xl disabled:opacity-50">
                      <Trash2 size={20} />
-                  </Button>
+                  </button>
                   <Button onClick={() => runProgram(false)} variant={gameStatus === 'running' ? 'secondary' : 'success'} size="md" className={`min-w-[140px] ${isHackerMode ? 'font-mono tracking-widest' : ''}`} disabled={program.length === 0 || gameStatus === 'won'}>
                       {gameStatus === 'running' ? <><Pause size={20} /> {isHackerMode ? 'ABORT' : 'Parar'}</> : <><Play size={20} fill="currentColor" /> {isHackerMode ? 'EXEC' : 'Executar'}</>}
                   </Button>

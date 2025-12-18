@@ -24,7 +24,7 @@ import { SparkyAssistant } from './components/SparkyAssistant';
 import { Mail, Cloud } from 'lucide-react';
 import { audioService } from './services/AudioService';
 
-// Toast Notification aprimorado com ícone de sincronização
+// Toast Notification corrigido
 const NotificationToast = ({ msg, subMsg, show }: { msg: string, subMsg?: string, show: boolean }) => (
    <div className={`fixed top-4 right-4 bg-white border-l-4 border-indigo-500 text-slate-800 px-6 py-4 rounded-r-xl shadow-2xl z-[100] transition-all duration-500 ${show ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
       <div className="flex items-start gap-3">
@@ -68,12 +68,11 @@ export default function App() {
   const [notification, setNotification] = useState({ title: '', body: '' });
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
 
-  // Efeito de Persistência: Sempre que o usuário mudar (progresso, skin, etc), salvamos.
+  // Efeito de Persistência
   useEffect(() => {
     if (user && !user.isGuest) {
       const storageKey = `sparky_user_${user.id}`;
       localStorage.setItem(storageKey, JSON.stringify(user));
-      // Sincronização global para múltiplos abas ou recarregamento
       localStorage.setItem('sparky_last_user_id', user.id);
     }
   }, [user]);
@@ -135,15 +134,12 @@ export default function App() {
             lastActive: Date.now() 
         };
         
-        // Atualiza estado e consequentemente o localStorage via useEffect
         setUser(updatedUser);
 
-        // Feedback de salvamento para os pais/criança
         if (user.progress.stars % 2 === 0) {
             showNotification(`Progresso Sincronizado`, `Nível ${currentLevelId} salvo com sucesso!`);
         }
 
-        // Lógica de Marketing (Níveis 3, 6, 9...)
         if (user.subscription === SubscriptionTier.FREE && currentLevelId % 3 === 0) {
             setShowMarketingModal(true);
             return; 
@@ -155,7 +151,6 @@ export default function App() {
           setScreen(Screen.DASHBOARD);
         }
     } else {
-        // Modo Criativo
         const newProgress = { 
             ...user.progress, 
             creativeProjects: user.progress.creativeProjects + 1,
@@ -172,7 +167,6 @@ export default function App() {
     showNotification("Visual Atualizado!", "Sparky adorou a nova roupa.");
   };
 
-  // --- Parent Gate & Modal Handlers ---
   const triggerParentGate = (action: string) => {
     setGateAction(action);
     setShowParentGate(true);
@@ -209,8 +203,7 @@ export default function App() {
         show={!!notification.title} 
       />
       
-      {/* Assistente aparece fora de gameplay intenso */}
-      {screen !== Screen.GAME && screen !== Screen.MATH_GAME && 
+      {user && screen !== Screen.GAME && screen !== Screen.MATH_GAME && 
        screen !== Screen.MEMORY_GAME && screen !== Screen.RHYTHM_GAME && (
          <SparkyAssistant user={user} />
       )}
@@ -260,7 +253,6 @@ export default function App() {
         />
       )}
 
-      {/* Mini-Games */}
       {screen === Screen.MATH_GAME && <MathGameScreen onBack={() => setScreen(Screen.HUB)} />}
       {screen === Screen.WORDS_GAME && <WordsGameScreen onBack={() => setScreen(Screen.HUB)} />}
       {screen === Screen.SCIENCE_GAME && <ScienceGameScreen onBack={() => setScreen(Screen.HUB)} />}
@@ -296,7 +288,6 @@ export default function App() {
 
       {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.DASHBOARD)} />}
 
-      {/* Modais */}
       {showMarketingModal && <MarketingModal onUpgrade={() => { setShowMarketingModal(false); setShowSubscriptionModal(true); }} onClose={() => { setShowMarketingModal(false); setScreen(Screen.MAP); }} />}
       {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras' : 'acessar área dos pais'} onSuccess={handleGateSuccess} onCancel={() => setShowParentGate(false)} />}
       {showSubscriptionModal && <SubscriptionModal onCheckoutStart={(tier) => { setPendingSubscriptionTier(tier); setShowSubscriptionModal(false); setScreen(Screen.CHECKOUT); }} onClose={() => setShowSubscriptionModal(false)} />}
