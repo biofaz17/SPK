@@ -96,7 +96,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger 
     audioService.playSfx('pop');
     const guestUser: UserProfile = {
       id: 'guest_' + Math.random().toString(36).substr(2, 9),
-      name: 'Visitante',
+      name: 'Explorador',
       parentEmail: '',
       age: 7,
       subscription: SubscriptionTier.FREE,
@@ -215,7 +215,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger 
                 onClick={handleGuestLogin}
                 className="w-full py-4 rounded-2xl border-2 border-slate-100 text-slate-500 font-bold text-sm hover:bg-slate-50 hover:border-indigo-200 transition-all flex items-center justify-center gap-2"
             >
-                <Sparkles size={18} className="text-yellow-400" /> JOGAR SEM SALVAR
+                <Sparkles size={18} className="text-yellow-400" /> JOGAR AGORA
             </button>
           </div>
         </form>
@@ -229,7 +229,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger 
         )}
 
         <p className="mt-8 text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-            Contas salvas são sincronizadas em tempo real.<br/>Visitantes salvam apenas neste navegador.
+            Progresso sincronizado automaticamente.
         </p>
       </div>
     </div>
