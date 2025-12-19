@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/Button';
 import { UserProfile, SubscriptionTier } from '../types';
-import { User, LogIn, UserPlus, KeyRound, Mail, Gamepad2, Loader2, Sparkles } from 'lucide-react';
+import { User, LogIn, UserPlus, KeyRound, Mail, Gamepad2, Loader2, Sparkles, ShieldAlert } from 'lucide-react';
 import { SparkyLogo } from '../components/SparkyLogo';
 import { audioService } from '../services/AudioService';
 import { dataService } from '../services/DataService';
@@ -10,11 +10,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuthScreenProps {
   onLogin: (user: UserProfile) => void;
+  onAdminTrigger?: () => void;
 }
 
 type AuthMode = 'login' | 'register';
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +23,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [parentEmail, setParentEmail] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Lógica secreta para Admin
+  const [logoClicks, setLogoClicks] = useState(0);
+  const handleLogoClick = () => {
+    const newCount = logoClicks + 1;
+    setLogoClicks(newCount);
+    if (newCount >= 5) {
+      audioService.playSfx('success');
+      onAdminTrigger?.();
+      setLogoClicks(0);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +74,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       parentEmail: parentEmail,
       age: parseInt(age) || 7,
       subscription: SubscriptionTier.FREE, 
-      progress: { unlockedLevels: 5, stars: 12, creativeProjects: 0, totalBlocksUsed: 0, secretsFound: 0 },
+      progress: { unlockedLevels: 1, stars: 0, creativeProjects: 0, totalBlocksUsed: 0, secretsFound: 0 },
       settings: { soundEnabled: true, musicEnabled: true },
       activeSkin: 'default',
       isGuest: false,
@@ -87,7 +100,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       parentEmail: '',
       age: 7,
       subscription: SubscriptionTier.FREE,
-      progress: { unlockedLevels: 5, stars: 12, creativeProjects: 0, totalBlocksUsed: 0, secretsFound: 0 },
+      progress: { unlockedLevels: 1, stars: 0, creativeProjects: 0, totalBlocksUsed: 0, secretsFound: 0 },
       settings: { soundEnabled: true, musicEnabled: true },
       activeSkin: 'default',
       isGuest: true,
@@ -103,7 +116,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"></div>
 
         <div className="flex flex-col items-center mb-8">
-           <SparkyLogo size="lg" />
+           <div onClick={handleLogoClick} className="cursor-default active:scale-95 transition-transform">
+             <SparkyLogo size="lg" />
+           </div>
            <div className="bg-indigo-50 px-4 py-1 rounded-full mt-4 flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-indigo-900 font-black text-[10px] uppercase tracking-widest">Plataforma Sparky Ativa</span>
@@ -204,6 +219,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             </button>
           </div>
         </form>
+
+        {logoClicks > 0 && (
+          <div className="mt-4 flex justify-center gap-1 opacity-20">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className={`w-1 h-1 rounded-full ${i < logoClicks ? 'bg-indigo-600' : 'bg-slate-300'}`} />
+            ))}
+          </div>
+        )}
 
         <p className="mt-8 text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
             Contas salvas são sincronizadas em tempo real.<br/>Visitantes salvam apenas neste navegador.

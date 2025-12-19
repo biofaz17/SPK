@@ -63,7 +63,6 @@ class SparkyAudioService {
     }
   }
 
-  // Método assíncrono para garantir que o áudio seja desbloqueado pelo navegador
   public async resumeContext() {
     if (!this.audioCtx) {
       this.initAudioContext();
@@ -84,7 +83,6 @@ class SparkyAudioService {
     }
   }
 
-  // --- ENGINE DE EFEITOS SONOROS ---
   public playSfx(type: 'pop' | 'click' | 'success' | 'error' | 'delete' | 'start') {
     if (this.isMuted) return;
     
@@ -142,9 +140,9 @@ class SparkyAudioService {
         break;
 
       case 'success': 
-        this.playTone(523.25, 0.1, 'sine'); // C5
-        setTimeout(() => this.playTone(659.25, 0.1, 'sine'), 100); // E5
-        setTimeout(() => this.playTone(783.99, 0.4, 'sine'), 200); // G5
+        this.playTone(523.25, 0.1, 'sine');
+        setTimeout(() => this.playTone(659.25, 0.1, 'sine'), 100);
+        setTimeout(() => this.playTone(783.99, 0.4, 'sine'), 200);
         break;
 
       case 'error': 
@@ -159,12 +157,9 @@ class SparkyAudioService {
     }
   }
 
-  // Toca uma nota específica (Melhorado para garantir audibilidade)
   public async playTone(frequency: number, duration: number = 0.3, type: OscillatorType = 'square') {
     if (this.isMuted) return;
-    
     await this.resumeContext();
-
     if (!this.audioCtx) return;
 
     const t = this.audioCtx.currentTime;
@@ -177,25 +172,25 @@ class SparkyAudioService {
     osc.connect(gain);
     gain.connect(this.audioCtx.destination);
     
-    // Volume: Square wave é naturalmente mais alta, então usamos 0.2 para não distorcer, mas é bem audível
     const vol = type === 'square' ? 0.2 : 0.5;
 
     gain.gain.setValueAtTime(0.001, t);
-    gain.gain.linearRampToValueAtTime(vol, t + 0.02); // Ataque
-    gain.gain.exponentialRampToValueAtTime(0.001, t + duration); // Decaimento
+    gain.gain.linearRampToValueAtTime(vol, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
     
     osc.start(t);
     osc.stop(t + duration + 0.1);
   }
 
-  // --- TEXT TO SPEECH ---
   public speak(text: string, mood: 'happy' | 'neutral' | 'excited' | 'instruction' = 'neutral', onStart?: () => void, onEnd?: () => void) {
-    if (this.isMuted || !this.synth) {
+    if (this.isMuted || !this.synth || !text) {
       if (onEnd) onEnd();
       return;
     }
 
-    this.stop();
+    // Cancela qualquer fala anterior antes de começar uma nova
+    this.synth.cancel();
+
     if (!this.voicesLoaded) this.loadVoices();
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -220,8 +215,11 @@ class SparkyAudioService {
 
     utterance.onstart = () => { if (onStart) onStart(); };
     utterance.onend = () => { if (onEnd) onEnd(); };
-    utterance.onerror = (e) => { 
-        console.error("Erro TTS:", e); 
+    utterance.onerror = (e: any) => { 
+        // Erro 'interrupted' acontece quando cancelamos para falar algo novo, não é um erro real
+        if (e.error !== 'interrupted') {
+            console.warn("TTS Event Error:", e.error); 
+        }
         if (onEnd) onEnd(); 
     };
 

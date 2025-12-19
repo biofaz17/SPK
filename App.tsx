@@ -17,9 +17,10 @@ import { RhythmGameScreen } from './screens/RhythmGameScreen';
 import { GeometryGameScreen } from './screens/GeometryGameScreen';
 import { LogicGameScreen } from './screens/LogicGameScreen';
 import { CodeGameScreen } from './screens/CodeGameScreen';
-import { AdminDashboard } from './screens/AdminDashboard'; // Novo componente
-import { UserProfile, SubscriptionTier } from './types';
-import { LEVELS } from './constants';
+import { CreativeWorkshopScreen } from './screens/CreativeWorkshopScreen';
+import { AdminDashboard } from './screens/AdminDashboard';
+import { UserProfile, SubscriptionTier, LevelConfig } from './types';
+import { LEVELS, CREATIVE_LEVEL } from './constants';
 import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { SparkyAssistant } from './components/SparkyAssistant';
@@ -31,7 +32,7 @@ import { dataService } from './services/DataService';
 enum Screen {
   AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
   SCIENCE_GAME, MEMORY_GAME, RHYTHM_GAME, GEOMETRY_GAME, 
-  LOGIC_GAME, CODE_GAME, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS,
+  LOGIC_GAME, CODE_GAME, CREATIVE_WORKSHOP, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS,
   ADMIN_LOGIN, ADMIN_DASHBOARD
 }
 
@@ -43,26 +44,32 @@ export default function App() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState<number | string>(1);
+  const [customLevel, setCustomLevel] = useState<LevelConfig | null>(null);
   const [showParentGate, setShowParentGate] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [gateAction, setGateAction] = useState(''); 
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
 
-  // Monitoramento de URL para área Admin
   useEffect(() => {
-    const checkAdminRoute = () => {
-      if (window.location.pathname === '/admin' || window.location.hash === '#/admin') {
+    const handleHashChange = () => {
+      if (window.location.hash === '#/admin') {
         setScreen(Screen.ADMIN_LOGIN);
       }
     };
-    checkAdminRoute();
-    window.addEventListener('popstate', checkAdminRoute);
-    return () => window.removeEventListener('popstate', checkAdminRoute);
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   useEffect(() => {
     const init = async () => {
       try {
+        if (window.location.hash === '#/admin') {
+          setScreen(Screen.ADMIN_LOGIN);
+          setIsInitializing(false);
+          return;
+        }
+
         const sessionUser = await dataService.checkSession();
         if (sessionUser) {
           setUser(sessionUser);
@@ -78,12 +85,7 @@ export default function App() {
         setIsInitializing(false);
       }
     };
-    // Só inicializa sessão se não estiver tentando entrar no admin
-    if (window.location.pathname !== '/admin') {
-      init();
-    } else {
-      setIsInitializing(false);
-    }
+    init();
   }, []);
 
   useEffect(() => {
@@ -116,6 +118,7 @@ export default function App() {
     dataService.logout();
     setUser(null);
     setScreen(Screen.AUTH);
+    window.location.hash = ''; 
     audioService.playSfx('delete');
   };
 
@@ -162,17 +165,15 @@ export default function App() {
     );
   }
 
-  // --- RENDERING ADMIN LOGIN ---
   if (screen === Screen.ADMIN_LOGIN) {
-    return <AdminLogin onAccess={() => setScreen(Screen.ADMIN_DASHBOARD)} onCancel={() => setScreen(Screen.AUTH)} />;
+    return <AdminLogin onAccess={() => setScreen(Screen.ADMIN_DASHBOARD)} onCancel={() => { window.location.hash = ''; setScreen(Screen.AUTH); }} />;
   }
 
-  // --- RENDERING ADMIN DASHBOARD ---
   if (screen === Screen.ADMIN_DASHBOARD) {
-    return <AdminDashboard onExit={() => setScreen(Screen.AUTH)} />;
+    return <AdminDashboard onExit={() => { window.location.hash = ''; setScreen(Screen.AUTH); }} />;
   }
 
-  if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} />;
+  if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} onAdminTrigger={() => setScreen(Screen.ADMIN_LOGIN)} />;
   if (!user) return null; 
 
   return (
@@ -181,7 +182,7 @@ export default function App() {
           <StatusIndicator isSaving={isSyncing} isGuest={user?.isGuest} className="shadow-2xl bg-slate-900/80 text-white p-4" />
       </div>
       
-      {user && ![Screen.GAME, Screen.MATH_GAME, Screen.MEMORY_GAME, Screen.RHYTHM_GAME, Screen.TERMS, Screen.CODE_GAME].includes(screen) && (
+      {user && ![Screen.GAME, Screen.MATH_GAME, Screen.MEMORY_GAME, Screen.RHYTHM_GAME, Screen.TERMS, Screen.CODE_GAME, Screen.CREATIVE_WORKSHOP].includes(screen) && (
          <SparkyAssistant user={user} />
       )}
 
@@ -201,15 +202,34 @@ export default function App() {
       )}
 
       {screen === Screen.DASHBOARD && (
-        <Dashboard progress={user.progress} onPlayMission={() => setScreen(Screen.MAP)} onCreativeMode={() => { setCurrentLevelId('creative'); setScreen(Screen.GAME); }} onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }} onBackToHub={() => setScreen(Screen.HUB)} />
+        <Dashboard progress={user.progress} onPlayMission={() => setScreen(Screen.MAP)} onCreativeMode={() => setScreen(Screen.CREATIVE_WORKSHOP)} onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }} onBackToHub={() => setScreen(Screen.HUB)} />
       )}
       
       {screen === Screen.MAP && (
         <LevelMap unlockedLevels={user.progress.unlockedLevels} userSubscription={user.subscription} onSelectLevel={(id) => { setCurrentLevelId(id); setScreen(Screen.GAME); }} onBack={() => setScreen(Screen.DASHBOARD)} onHome={() => setScreen(Screen.HUB)} onRequestUpgrade={() => { setGateAction('upgrade'); setShowParentGate(true); }} />
       )}
 
+      {screen === Screen.CREATIVE_WORKSHOP && (
+        <CreativeWorkshopScreen 
+          onBack={() => setScreen(Screen.DASHBOARD)} 
+          onPlayLevel={(config) => {
+            setCustomLevel(config);
+            setCurrentLevelId('creative');
+            setScreen(Screen.GAME);
+          }}
+        />
+      )}
+
       {screen === Screen.GAME && (
-        <GameScreen levelId={currentLevelId} onBack={() => currentLevelId === 'creative' ? setScreen(Screen.DASHBOARD) : setScreen(Screen.MAP)} onHome={() => setScreen(Screen.HUB)} onNextLevel={handleLevelComplete} user={user} onUpdateSkin={(skinId) => setUser({ ...user, activeSkin: skinId })} />
+        <GameScreen 
+          levelId={currentLevelId} 
+          customConfig={currentLevelId === 'creative' ? customLevel : undefined}
+          onBack={() => currentLevelId === 'creative' ? setScreen(Screen.CREATIVE_WORKSHOP) : setScreen(Screen.MAP)} 
+          onHome={() => setScreen(Screen.HUB)} 
+          onNextLevel={handleLevelComplete} 
+          user={user} 
+          onUpdateSkin={(skinId) => setUser({ ...user, activeSkin: skinId })} 
+        />
       )}
 
       {screen === Screen.MATH_GAME && <MathGameScreen onBack={() => setScreen(Screen.HUB)} />}
@@ -241,7 +261,6 @@ export default function App() {
   );
 }
 
-// --- SUB-COMPONENT: ADMIN LOGIN ---
 const AdminLogin: React.FC<{ onAccess: () => void, onCancel: () => void }> = ({ onAccess, onCancel }) => {
   const [login, setLogin] = useState('');
   const [pass, setPass] = useState('');
@@ -259,7 +278,7 @@ const AdminLogin: React.FC<{ onAccess: () => void, onCancel: () => void }> = ({ 
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-       <form onSubmit={handle} className="bg-slate-900 p-8 rounded-[2rem] border-2 border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.2)] max-w-sm w-full">
+       <form onSubmit={handle} className="bg-slate-900 p-8 rounded-[2rem] border-2 border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.2)] max-w-sm w-full animate-popIn">
           <div className="flex flex-col items-center mb-6">
              <ShieldAlert size={48} className="text-emerald-500 mb-2" />
              <h2 className="text-xl font-heading text-white">Acesso Restrito</h2>

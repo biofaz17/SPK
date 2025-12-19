@@ -15,6 +15,7 @@ import { BlockCategory, BlockType, GridPosition, BLOCK_DEFINITIONS, UserProfile,
 
 interface GameScreenProps {
   levelId: number | string;
+  customConfig?: LevelConfig | null;
   onBack: () => void;
   onHome?: () => void;
   onNextLevel: (blocksUsed: number) => void;
@@ -58,7 +59,7 @@ const EndLevelModal: React.FC<{
           </h2>
           
           <p className="text-slate-500 font-bold text-lg mb-8 text-center">
-            {isWon ? `Nível ${String(level.id)} Desbloqueado!` : 'Vamos revisar seu código?'}
+            {isWon ? (level.id === 'creative' || String(level.id).startsWith('custom') ? 'Você venceu sua própria fase!' : `Nível ${String(level.id)} Desbloqueado!`) : 'Vamos revisar seu código?'}
           </p>
 
           {isWon && (
@@ -147,9 +148,9 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
   );
 };
 
-export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome, onNextLevel, user, onUpdateSkin }) => {
-  const level = levelId === 'creative' ? CREATIVE_LEVEL : (LEVELS.find(l => l.id === levelId) || LEVELS[0]);
-  const isHackerMode = level.id === 45 || level.id === 'creative'; 
+export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, onBack, onHome, onNextLevel, user, onUpdateSkin }) => {
+  const level = customConfig || (levelId === 'creative' ? CREATIVE_LEVEL : (LEVELS.find(l => l.id === levelId) || LEVELS[0]));
+  const isHackerMode = level.id === 45 || level.id === 'creative' || String(level.id).startsWith('custom'); 
 
   const [program, setProgram] = useState<BlockType[]>([]);
   const [robotState, setRobotState] = useState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' as 'left' | 'right' | 'up' | 'down' });
@@ -198,7 +199,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     if (level.mission && !isMuted) {
       setTimeout(() => {
         audioService.speak(
-          `Missão ${level.id === 'creative' ? 'Criativa' : String(level.id)}: ${level.mission}.`,
+          `${String(level.id).startsWith('custom') ? 'Missão Criada' : 'Missão ' + String(level.id)}: ${level.mission}.`,
           'instruction',
           () => setIsSpeaking(true),
           () => setIsSpeaking(false)
@@ -208,7 +209,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     return () => {
       audioService.stop();
     };
-  }, [levelId]);
+  }, [levelId, customConfig]);
 
   const handleExplainLogic = async () => {
     if (!process.env.API_KEY || program.length === 0) return;
@@ -263,7 +264,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
     if (program.length < level.maxBlocks) {
       setProgram(prev => [...prev, type]);
       audioService.playSfx('pop');
-      // Scroll para o fim da lista quando adiciona
       setTimeout(() => {
           if (programListRef.current) {
               programListRef.current.scrollTop = programListRef.current.scrollHeight;
@@ -398,7 +398,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
                 } else if (level.goalPos && !isAtGoal) {
                     setGameStatus('lost');
                 } else {
-                    // Creative mode or no goal level ends in idle/running
                     setGameStatus('idle');
                 }
             }
@@ -421,7 +420,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, onBack, onHome,
       {/* Coluna 1: Paleta de Blocos */}
       <div className="w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 bg-white h-[25vh] md:h-full overflow-hidden">
          <div className="p-4 border-b flex items-center justify-between bg-white shrink-0">
-            <button onClick={onBack} className="flex items-center gap-1 font-bold text-indigo-600 hover:scale-105 transition-transform"><ArrowLeft size={18}/> Mapa</button>
+            <button onClick={onBack} className="flex items-center gap-1 font-bold text-indigo-600 hover:scale-105 transition-transform"><ArrowLeft size={18}/> {String(level.id).startsWith('custom') ? 'Oficina' : 'Mapa'}</button>
             <button onClick={() => setIsMuted(!isMuted)} className="hover:scale-110 transition-transform">{isMuted ? <VolumeX className="text-red-500" /> : <Volume2 className="text-blue-500" />}</button>
          </div>
          <div className="flex-1 overflow-y-auto p-4 no-scrollbar bg-slate-50">

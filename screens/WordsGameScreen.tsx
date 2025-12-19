@@ -72,7 +72,6 @@ export const WordsGameScreen: React.FC<WordsGameScreenProps> = ({ onBack }) => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showVictory, setShowVictory] = useState(false);
 
-  // Seleciona um subconjunto de palavras aleatório para cada rodada
   const words = lang === 'PT' ? WORDS_PT : WORDS_EN;
   const currentWord = words[level % words.length];
 
@@ -91,7 +90,7 @@ export const WordsGameScreen: React.FC<WordsGameScreenProps> = ({ onBack }) => {
       const newSolved = wordsSolved + 1;
       setWordsSolved(newSolved);
 
-      if (newSolved >= 7) { // Aumentado de 5 para 7 para mais desafio
+      if (newSolved >= 7) {
         setTimeout(() => {
           setShowVictory(true);
           confetti({ particleCount: 150, spread: 70 });
@@ -160,9 +159,9 @@ export const WordsGameScreen: React.FC<WordsGameScreenProps> = ({ onBack }) => {
             </div>
         </div>
 
-        <motion.div key={`${level}-${lang}`} initial={{ y: 20, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} className="bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border-b-[12px] border-orange-200 max-w-md w-full text-center relative">
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-[10rem] drop-shadow-xl select-none">{currentWord.image}</div>
-            <div className="mt-20 flex flex-wrap justify-center gap-2 mb-10">
+        <motion.div key={`${level}-${lang}`} initial={{ y: 20, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} className="bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border-b-[12px] border-orange-200 max-w-md w-full text-center relative mt-16">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-6xl md:text-8xl drop-shadow-xl select-none leading-none">{currentWord.image}</div>
+            <div className="mt-14 flex flex-wrap justify-center gap-2 mb-10">
               {currentWord.word.split('').map((char, index) => (
                 <div key={index} className={`w-12 h-16 rounded-xl flex items-center justify-center text-3xl font-black border-b-4 ${index === currentWord.missingIndex ? 'bg-orange-50 text-orange-500 border-orange-300 ring-2 ring-orange-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
                   {index === currentWord.missingIndex ? (isCorrect ? char : '?') : char}
