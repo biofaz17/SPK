@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AuthScreen } from './screens/AuthScreen';
 import { PlatformHub } from './screens/PlatformHub';
 import { LevelMap } from './screens/LevelMap';
@@ -257,6 +258,7 @@ export default function App() {
 
       {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras e liberar novos mundos' : 'acessar área dos pais'} onSuccess={() => { setShowParentGate(false); if (gateAction === 'upgrade') setShowSubscriptionModal(true); else setScreen(Screen.PARENTS); }} onCancel={() => setShowParentGate(false)} />}
       {showSubscriptionModal && <SubscriptionModal onCheckoutStart={(tier) => { setPendingSubscriptionTier(tier); setShowSubscriptionModal(false); setScreen(Screen.CHECKOUT); }} onClose={() => setShowSubscriptionModal(false)} />}
+      <SpeedInsights />
     </div>
   );
 }
