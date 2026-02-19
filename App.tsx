@@ -28,6 +28,7 @@ import { StatusIndicator } from './components/StatusIndicator';
 import { Cloud, Loader2, ShieldAlert } from 'lucide-react';
 import { audioService } from './services/AudioService';
 import { dataService } from './services/DataService';
+import { Analytics } from '@vercel/analytics/react';
 
 enum Screen {
   AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
@@ -257,6 +258,7 @@ export default function App() {
 
       {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras e liberar novos mundos' : 'acessar área dos pais'} onSuccess={() => { setShowParentGate(false); if (gateAction === 'upgrade') setShowSubscriptionModal(true); else setScreen(Screen.PARENTS); }} onCancel={() => setShowParentGate(false)} />}
       {showSubscriptionModal && <SubscriptionModal onCheckoutStart={(tier) => { setPendingSubscriptionTier(tier); setShowSubscriptionModal(false); setScreen(Screen.CHECKOUT); }} onClose={() => setShowSubscriptionModal(false)} />}
+      <Analytics />
     </div>
   );
 }
