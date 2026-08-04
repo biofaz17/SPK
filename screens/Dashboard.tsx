@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '../components/Button';
-import { Map, Palette, UserCircle, Star, Lock, Trophy, Zap, Crown, Instagram, ShieldCheck, Mail, ArrowLeft } from 'lucide-react';
+import { Map, Palette, UserCircle, Star, Lock, Trophy, Zap, Crown, Instagram, ShieldCheck, Mail, ArrowLeft, BookOpen } from 'lucide-react';
 import { UserProgress } from '../types';
 import { SparkyLogo } from '../components/SparkyLogo';
 import { StatusIndicator } from '../components/StatusIndicator';
@@ -12,6 +12,7 @@ interface DashboardProps {
   onCreativeMode: () => void;
   onOpenParents: () => void;
   onBackToHub: () => void;
+  onOpenCourses?: () => void;
 }
 
 type AchievementTier = 'common' | 'rare' | 'epic' | 'legendary' | 'secret';
@@ -31,7 +32,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onPlayMission, 
   onCreativeMode, 
   onOpenParents,
-  onBackToHub
+  onBackToHub,
+  onOpenCourses
 }) => {
   
   const currentYear = new Date().getFullYear();
@@ -133,6 +135,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Palette size={180} className="absolute -bottom-10 -right-10 text-white opacity-10 rotate-12" />
             </div>
         </div>
+
+        {/* CARD PROMO DA ÁREA DE CURSOS */}
+        {onOpenCourses && (
+          <div 
+            onClick={onOpenCourses}
+            className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-[2.5rem] p-6 md:p-8 shadow-xl border-4 border-purple-400/30 flex flex-col sm:flex-row items-center justify-between gap-6 cursor-pointer hover:scale-[1.01] transition"
+          >
+             <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-purple-500/30 rounded-2xl flex items-center justify-center text-purple-300 border border-purple-400/40 shrink-0">
+                   <BookOpen size={28} />
+                </div>
+                <div>
+                   <span className="text-xs font-bold uppercase tracking-wider text-purple-300 block">Academia Sparky</span>
+                   <h3 className="text-2xl font-heading text-white">Cursos de Programação & Robótica</h3>
+                   <p className="text-slate-300 text-xs sm:text-sm">Acesse o conteúdo interativo exclusivo do seu plano com slides, quiz e sistema de XP.</p>
+                </div>
+             </div>
+             <Button onClick={onOpenCourses} variant="primary" size="md" className="bg-purple-600 hover:bg-purple-500 text-white border-none shrink-0">
+                <BookOpen size={18} className="mr-2" /> Acessar Cursos
+             </Button>
+          </div>
+        )}
 
         <div className="bg-slate-100 rounded-[3rem] p-8 md:p-10 border-4 border-slate-200">
              <div className="flex flex-col md:flex-row items-end justify-between mb-8 gap-4">

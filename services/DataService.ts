@@ -1,5 +1,5 @@
 
-import { UserProfile } from '../types';
+import { SubscriptionTier, UserProfile } from '../types';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://aluzklqouexuruppwumz.supabase.co';
@@ -10,7 +10,39 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 class DataService {
   private SESSION_KEY = 'sparky_session_token';
 
+  private readonly TEST_USER: UserProfile = {
+    id: 'testador_total',
+    name: 'Testador Sparky',
+    password: 'teste123',
+    parentEmail: 'teste@exemplo.com',
+    age: 10,
+    subscription: SubscriptionTier.PRO,
+    progress: {
+      unlockedLevels: 30,
+      stars: 150,
+      creativeProjects: 5,
+      totalBlocksUsed: 5200,
+      secretsFound: 12,
+    },
+    settings: {
+      soundEnabled: true,
+      musicEnabled: true,
+    },
+    activeSkin: 'super_sparky',
+    isGuest: false,
+    lastActive: Date.now(),
+    termsAcceptedVersion: 'v1.0',
+    termsAcceptedAt: new Date().toISOString(),
+  };
+
   async login(name: string, password?: string): Promise<UserProfile | null> {
+    const normalizedName = name.trim().toLowerCase();
+    if (normalizedName === 'teste' && password === this.TEST_USER.password) {
+      const profile = { ...this.TEST_USER };
+      localStorage.setItem(this.SESSION_KEY, profile.id);
+      return profile;
+    }
+
     const userId = this.generateId(name);
     
     const { data, error } = await supabase

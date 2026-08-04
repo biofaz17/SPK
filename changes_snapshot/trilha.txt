@@ -1,0 +1,1902 @@
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+  Trilha Completa de Tecnologia e Computação
+                      2025
+   Currículo anual, projetos, avaliações e materiais de implementação (1º
+              ano do Fundamental ao 3º ano do Ensino Médio)
+
+              Versão comercial - pronta para adoção por redes públicas e privadas
+
+
+
+
+ O que você está comprando aqui
+ Um pacote pedagógico completo, alinhado às diretrizes nacionais brasileiras para
+ Computação na Educação Básica e à BNCC, com foco em execução real em sala -
+ inclusive sem laboratório. O material foi desenhado para gerar resultado mensurável em
+ aprendizagem e, ao mesmo tempo, ser fácil de implementar por professores com
+ diferentes níveis de familiaridade tecnológica.
+
+
+ • Mapa anual por série + sequência didática por unidade (4 unidades/ano).
+ • Projetos maker e atividades desplugadas (100% viáveis em casa e na escola).
+ • Rubricas, instrumentos de avaliação e portfólio por estudante.
+ • Trilhas opcionais (EM) em Dados, IA, Web/App e Cibersegurança.
+ • Guia de implantação: infraestrutura mínima, formação docente e governança.
+
+
+
+
+ Como usar este documento
+ Use o mapa por série para definir a oferta anual (carga horária recomendada, objetivos e
+ projetos). Em seguida, selecione a Unidade 1 a 4 e aplique a sequência em aulas
+ semanais. Ao final de cada unidade, execute o projeto integrador e registre evidências
+ no portfólio.
+
+
+
+
+                                                                                    Página 1
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Base normativa e alinhamento curricular
+ Este currículo foi construído a partir das competências e eixos de Computação definidos
+ como complemento à BNCC, e das normas do CNE/CEB que orientam sua
+ implementação em redes e escolas. Os eixos estruturantes adotados aqui são:
+ Pensamento Computacional, Mundo Digital e Cultura Digital. A proposta também dialoga
+ com a organização do Ensino Médio e seus itinerários formativos, favorecendo projetos
+ integradores.
+ Principais referências (para validação e auditoria): BNCC (2018); Computação na Educação Básica -
+ Complemento à BNCC (MEC/CNE); Resolução CNE/CEB nº 1/2022; Parecer CNE/CEB nº 2/2022;
+ orientações públicas do MEC sobre o Ensino Médio a partir de 2025.
+
+
+
+ Princípios de design pedagógico
+ • Aprender fazendo: toda unidade termina em um produto (maker ou digital) com
+    apresentação.
+
+ • Baixo atrito: execução possível com papel, sucata e poucos dispositivos; tecnologia é
+    meio, não fim.
+
+ • Rigor sem 'cara de aula chata': linguagem simples, desafios progressivos e feedback
+    rápido.
+
+ • Inclusão: atividades com papéis diversos (design, escrita, lógica, testes) para
+    diferentes perfis.
+
+ • Segurança e ética: cidadania digital como conteúdo transversal, não palestra isolada.
+
+
+ Carga horária recomendada
+ Recomendação prática para adoção: 1 aula semanal de 50 min no Fundamental I e II; 2
+ aulas semanais no Ensino Médio (ou 1 aula + projeto quinzenal). Em redes com tempo
+ integral, a trilha pode ser expandida com laboratórios maker e clubes.
+
+
+
+
+                                                                                               Página 2
+ Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+   Mapa geral por etapa
+Etapa            Séries      Foco anual (síntese)                                   Produto final típico
+
+Ensino           1º ano      Alfabetização digital e pensamento computacional       Cartazes, histórias e
+Fundamental I                desplugado (sequências, padrões, decomposição).        algoritmos em papel
+
+Ensino           2º ano      Algoritmos desplugados, lógica com blocos e noções     Gráficos pictóricos e jogos
+Fundamental I                de dados (contagem, tabelas simples).                  de tabuleiro
+
+Ensino           3º ano      Condições (se/então), abstração por símbolos e         Jogos de decisão e modelos
+Fundamental I                introdução a programação em blocos (quando             em papel
+                             disponível).
+
+Ensino           4º ano      Pensamento computacional aplicado a problemas,         Circuito simples + relatório
+Fundamental I                introdução a dados e noções de redes e dispositivos.   de dados
+
+Ensino           5º ano      Programação em blocos (quando houver), lógica,         Jogo com pontuação +
+Fundamental I                dados e cidadania digital avançada                     projeto escola
+                             (responsabilidade).
+
+Ensino           6º ano      Transição: do desplugado para o digital; lógica,       Projeto integrador por
+Fundamental II               dados e cultura digital (produção responsável).        unidade + portfólio
+
+Ensino           7º ano      Programação em blocos avançada ou início de texto;     Projeto integrador por
+Fundamental II               variáveis, condições, laços; projetos com usuário.     unidade + portfólio
+
+Ensino           8º ano      Introdução a programação em texto (Python ou           Scripts e relatório de dados
+Fundamental II               equivalente) e dados; automação simples e ética.
+
+Ensino           9º ano      Projeto orientado a produto: web/app, dados e          MVP de app/portal +
+Fundamental II               segurança; preparação para itinerários do EM.          portfólio
+
+Ensino Médio     1ª série    Fundamentos sólidos: programação em texto, dados       Projeto técnico com banca
+                             e web; projetos integradores alinhados às áreas.       e portfólio
+
+Ensino Médio     2ª série    IA e automação: fundamentos, ética e aplicações;       Projeto técnico com banca
+                             cibersegurança e produtos digitais.                    e portfólio
+
+Ensino Médio     3ª série    Consolidação e portfólio: engenharia, dados/IA         Projeto técnico com banca
+                             aplicada, carreira, empreendedorismo e projeto         e portfólio
+                             final.
+
+
+
+   Observação: as escolas podem integrar conteúdos a Matemática, Ciências, Língua Portuguesa e
+   projetos interdisciplinares, mantendo o núcleo de Computação.
+
+
+
+
+                                                                                                     Página 3
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental I - 1º ano
+ Foco: Alfabetização digital e pensamento computacional desplugado (sequências,
+ padrões, decomposição).
+
+ Competências e resultados esperados
+
+ • Seguir e criar instruções passo a passo (algoritmos) usando linguagem cotidiana e
+     desenhos.
+
+ • Reconhecer padrões e classificar objetos por atributos.
+ • Praticar segurança e cuidado ao usar dispositivos e compartilhar informações
+     pessoais.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Eu sou um robô
+ Habilidades-chave
+
+ •    Sequência de ações; esquerda/direita; início e fim.
+
+ •    Decompor uma tarefa diária em passos.
+
+ •    Erro como pista: testar e corrigir.
+ Projeto integrador: Projeto: Mapa do Caminho (casa-escola) em forma de algoritmo.
+ Produto: cartaz com setas e passos.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Padrões no mundo
+ Habilidades-chave
+
+ •    Padrões visuais e sonoros; repetição.
+
+ •    Classificação por cor, forma, tamanho.
+
+ •    Previsão: 'o que vem depois?'
+ Projeto integrador: Projeto: Tapete de Padrões. Produto: mosaico com regras de
+ repetição e explicação oral.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Histórias interativas
+ Habilidades-chave
+
+
+
+                                                                                  Página 4
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Narrativa em 3 cenas; causa e efeito.
+
+ •    Personagens e cenários; escolhas do leitor.
+
+ •    Colaboração em dupla (autor + revisor).
+ Projeto integrador: Projeto: Livro-jogo de papel. Produto: história com escolhas (se...
+ então...) em cartões.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Tecnologia com segurança
+ Habilidades-chave
+
+ •    Dados pessoais x públicos; senhas fortes com apoio do professor.
+
+ •    Regras de convivência digital.
+
+ •    Identificar propagandas e 'cliques fáceis'.
+ Projeto integrador: Projeto: Cartaz 'Internet do Bem'. Produto: combinado da turma com
+ ícones.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+
+
+                                                                                      Página 5
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                                 Página 6
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental I - 2º ano
+ Foco: Algoritmos desplugados, lógica com blocos e noções de dados (contagem, tabelas
+ simples).
+
+ Competências e resultados esperados
+
+ • Construir algoritmos com repetição simples (faça 3 vezes).
+ • Registrar informações em tabelas e gráficos pictóricos.
+ • Compreender que tecnologia é criada por pessoas para resolver problemas.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Comandos e repetição
+ Habilidades-chave
+
+ •   Repetição e ritmo; laços em linguagem natural.
+
+ •   Planejar antes de executar.
+
+ •   Depuração: achar o passo errado.
+ Projeto integrador: Projeto: Dança do Robô com Repetição. Produto: coreografia +
+ algoritmo em cartões.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Dados da sala
+ Habilidades-chave
+
+ •   Coletar dados (preferências, clima, leitura).
+
+ •   Tabelas de dupla entrada (simples).
+
+ •   Gráficos com ícones.
+ Projeto integrador: Projeto: Pesquisa Rápida da Turma. Produto: gráfico pictórico e
+ conclusão em 3 frases.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Jogos com regras
+ Habilidades-chave
+
+ •   Regras claras; pontuação; turnos.
+
+
+
+                                                                                       Página 7
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Prototipar e testar com colegas.
+
+ •    Melhorar com feedback.
+ Projeto integrador: Projeto: Jogo de Tabuleiro 'Missão Lógica'. Produto: tabuleiro +
+ manual de regras.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Cidadania digital básica
+ Habilidades-chave
+
+ •    Respeito online; gentileza; pedir ajuda a adulto.
+
+ •    Imagens: permissão e crédito (noções).
+
+ •    Tempo de tela consciente (acordos).
+ Projeto integrador: Projeto: Selo 'Boa Convivência'. Produto: checklist ilustrado para a
+ turma.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+
+
+                                                                                        Página 8
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                                 Página 9
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental I - 3º ano
+ Foco: Condições (se/então), abstração por símbolos e introdução a programação em
+ blocos (quando disponível).
+
+ Competências e resultados esperados
+
+ • Usar condições para tomar decisões em algoritmos.
+ • Representar ideias com símbolos e diagramas simples.
+ • Criar e revisar histórias/jogos com regras e objetivos.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Decisões e condições
+ Habilidades-chave
+
+ •   Se/então/senão em situações do cotidiano.
+
+ •   Árvores de decisão com figuras.
+
+ •   Testes com casos diferentes.
+ Projeto integrador: Projeto: Semáforo Humano (jogo de decisão). Produto: cartas de
+ decisão + regras.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Modelos e símbolos
+ Habilidades-chave
+
+ •   Fluxogramas com ícones.
+
+ •   Mapas mentais simples.
+
+ •   Nomear partes e funções.
+ Projeto integrador: Projeto: Manual Ilustrado de um Objeto (ex.: lápis). Produto:
+ diagrama com partes e funções.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Jogos e simulações
+ Habilidades-chave
+
+ •   Simular situações (trânsito, fila, escolhas).
+
+
+
+                                                                                     Página 10
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Pontuação e níveis.
+
+ •    Equilíbrio: desafio x diversão.
+ Projeto integrador: Projeto: Mini-jogo de Escolhas. Produto: roteiro + protótipo em papel
+ (ou blocos).
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Segurança e ética
+ Habilidades-chave
+
+ •    Boatos e checagem básica: 'de onde veio?'.
+
+ •    Respeito à autoria.
+
+ •    Privacidade: o que não compartilhar.
+ Projeto integrador: Projeto: Campanha 'Pense Antes de Postar'. Produto: tirinhas
+ educativas.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+
+
+                                                                                    Página 11
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 12
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental I - 4º ano
+ Foco: Pensamento computacional aplicado a problemas, introdução a dados e noções de
+ redes e dispositivos.
+
+ Competências e resultados esperados
+
+ • Decompor problemas e criar soluções em etapas com critérios de sucesso.
+ • Coletar, organizar e interpretar dados simples.
+ • Compreender componentes básicos de dispositivos e como informações circulam.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Planejamento e decomposição
+ Habilidades-chave
+
+ •   Problema -> ideias -> protótipo -> teste.
+
+ •   Critérios (funciona? é claro?).
+
+ •   Checklist de qualidade.
+ Projeto integrador: Projeto: Guia de Solução de Problemas (metodologia). Produto: poster
+ de etapas + exemplo resolvido.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Dados e visualização
+ Habilidades-chave
+
+ •   Planilhas em papel; tabelas e gráficos de barras.
+
+ •   Noções de amostra e viés (ex.: perguntar só amigos).
+
+ •   Conclusões com evidências.
+ Projeto integrador: Projeto: Observatório da Escola (dados). Produto: relatório curto com
+ gráfico e recomendações.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Dispositivos e redes
+ Habilidades-chave
+
+ •   Entrada/processamento/saída; sensores do dia a dia.
+
+
+
+                                                                                   Página 13
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Rede como troca de mensagens; roteamento com alunos.
+
+ •    Cuidados com senhas e links.
+ Projeto integrador: Projeto: Correio de Rede (simulação). Produto: jogo que ensina
+ roteamento e pacotes.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto maker
+ Habilidades-chave
+
+ •    Prototipagem rápida com papelão.
+
+ •    Circuito simples com LED.
+
+ •    Iteração com feedback.
+ Projeto integrador: Projeto: Lanterna Inteligente (maker). Produto: lanterna com
+ interruptor + manual.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+
+
+                                                                                    Página 14
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 15
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental I - 5º ano
+ Foco: Programação em blocos (quando houver), lógica, dados e cidadania digital
+ avançada (responsabilidade).
+
+ Competências e resultados esperados
+
+ • Criar programas simples com eventos, variáveis e repetição.
+ • Trabalhar com dados (coleta, limpeza, apresentação).
+ • Entender impactos sociais da tecnologia e agir com responsabilidade.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Programação com eventos
+ Habilidades-chave
+
+ •   Eventos (quando clicar, quando começar).
+
+ •   Sprites e cenários; coordenadas básicas.
+
+ •   Teste sistemático.
+ Projeto integrador: Projeto: Jogo de Reação (eventos). Produto: jogo com 3 níveis e
+ pontuação.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Variáveis e dados
+ Habilidades-chave
+
+ •   Variáveis como 'caixas' de informação.
+
+ •   Contadores e placar.
+
+ •   Dados: limpar duplicados; registrar fonte.
+ Projeto integrador: Projeto: Placar Inteligente (variáveis). Produto: mini-app ou simulação
+ em papel com contador.
+ Entregáveis mínimos
+
+ •   Artefato físico (maker) ou digital
+
+ •   Registro em diário de bordo
+
+ •   Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Mídia e algoritmos
+ Habilidades-chave
+
+ •   Recomendações e bolhas (noções).
+
+
+
+                                                                                    Página 16
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Publicidade e persuasão.
+
+ •    Direitos e deveres no ambiente digital.
+ Projeto integrador: Projeto: Detetives da Mídia. Produto: checklist de checagem +
+ exemplo aplicado.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto integrador
+ Habilidades-chave
+
+ •    Projeto completo: problema real da escola.
+
+ •    Definir usuário, requisitos e protótipo.
+
+ •    Apresentar e receber perguntas.
+ Projeto integrador: Projeto: Solução para a Escola. Produto: protótipo + pitch + plano de
+ melhoria.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+
+
+                                                                                     Página 17
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 18
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental II - 6º ano
+ Foco: Transição: do desplugado para o digital; lógica, dados e cultura digital (produção
+ responsável).
+
+ Competências e resultados esperados
+
+ • Aplicar pensamento computacional (decomposição, abstração, algoritmos) em
+     problemas de diferentes áreas.
+
+ • Compreender fundamentos de sistemas computacionais (hardware, software, redes)
+     e segurança.
+
+ • Criar artefatos digitais com foco em autoria, colaboração e impacto social.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Algoritmos e depuração
+ Habilidades-chave
+
+ •    Pseudocódigo e fluxogramas.
+
+ •    Estratégias de depuração (testes, casos limite).
+
+ •    Boas práticas: nomear e organizar.
+ Projeto integrador: Projeto: 'Caça ao Bug'. Produto: desafios de lógica com explicação da
+ correção.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Dados e representações
+ Habilidades-chave
+
+ •    Tabelas, gráficos e interpretação.
+
+ •    Coleta ética de dados.
+
+ •    Introdução a probabilidade e incerteza em dados.
+ Projeto integrador: Projeto: 'Painel da Turma'. Produto: relatório com 2 gráficos e
+ insights.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Sistemas e arquivos
+ Habilidades-chave
+
+
+
+                                                                                       Página 19
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    O que é sistema operacional, arquivo, pasta.
+
+ •    Backup e versões.
+
+ •    Noções de licenças e autoria (CC, domínio público).
+ Projeto integrador: Projeto: 'Museu dos Arquivos'. Produto: guia de organização digital +
+ rotina de backup.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto: narrativa interativa
+ Habilidades-chave
+
+ •    Estrutura de história ramificada.
+
+ •    Estados e transições.
+
+ •    Revisão por pares e melhoria.
+ Projeto integrador: Projeto: 'História Interativa'. Produto: narrativa com ao menos 8
+ cenas e 3 finais.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+ • Prova prática curta: resolver um problema em tempo limitado com checklist.
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+ • Quando houver laboratório: editor de blocos, planilha simples e ferramenta de
+     apresentação.
+
+
+
+                                                                                    Página 20
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 21
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental II - 7º ano
+ Foco: Programação em blocos avançada ou início de texto; variáveis, condições, laços;
+ projetos com usuário.
+
+ Competências e resultados esperados
+
+ • Aplicar pensamento computacional (decomposição, abstração, algoritmos) em
+     problemas de diferentes áreas.
+
+ • Compreender fundamentos de sistemas computacionais (hardware, software, redes)
+     e segurança.
+
+ • Criar artefatos digitais com foco em autoria, colaboração e impacto social.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Variáveis e estruturas de controle
+ Habilidades-chave
+
+ •    Variáveis, tipos simples e operadores.
+
+ •    Condições aninhadas; laços (for/while conceitual).
+
+ •    Funções simples (blocos personalizados).
+ Projeto integrador: Projeto: Calculadora de Situações (condições). Produto: app simples
+ com validações.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Modelagem e simulação
+ Habilidades-chave
+
+ •    Modelos: regras e simplificações.
+
+ •    Simulações (epidemias, ecossistemas, tráfego) em papel.
+
+ •    Validação: o que o modelo não explica.
+ Projeto integrador: Projeto: Simulador de Regras. Produto: simulação + análise do que
+ mudou ao alterar uma variável.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Internet e redes
+ Habilidades-chave
+
+
+
+                                                                                  Página 22
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Como a web funciona (cliente/servidor) em nível conceitual.
+
+ •    Endereços e domínios (sem tecnicismo excessivo).
+
+ •    Segurança: phishing, senhas, 2FA (conceitos).
+ Projeto integrador: Projeto: Correio Web (analogia). Produto: encenação cliente/servidor
+ + diagrama.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto: jogo educativo
+ Habilidades-chave
+
+ •    Design de jogo: objetivo, mecânica, feedback.
+
+ •    Acessibilidade básica (texto, contraste, instruções).
+
+ •    Teste com usuários reais (colegas).
+ Projeto integrador: Projeto: Jogo Educativo. Produto: jogo com tutorial e aprendizagem
+ explícita.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+
+
+                                                                                  Página 23
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 24
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental II - 8º ano
+ Foco: Introdução a programação em texto (Python ou equivalente) e dados; automação
+ simples e ética.
+
+ Competências e resultados esperados
+
+ • Aplicar pensamento computacional (decomposição, abstração, algoritmos) em
+     problemas de diferentes áreas.
+
+ • Compreender fundamentos de sistemas computacionais (hardware, software, redes)
+     e segurança.
+
+ • Criar artefatos digitais com foco em autoria, colaboração e impacto social.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Fundamentos de programação em texto
+ Habilidades-chave
+
+ •    Entrada/saída, variáveis, condicionais, laços.
+
+ •    Funções e modularização.
+
+ •    Testes com casos e asserts (conceito).
+ Projeto integrador: Projeto: 'Meu Primeiro Script'. Produto: programa com menu e
+ validação de entrada.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Dados: limpeza e análise
+ Habilidades-chave
+
+ •    CSV, colunas e linhas (conceito).
+
+ •    Limpeza: valores faltantes e duplicados.
+
+ •    Visualizações simples e narrativa de dados.
+ Projeto integrador: Projeto: 'História dos Dados'. Produto: relatório com gráficos e
+ recomendações.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Mundo digital e automação
+ Habilidades-chave
+
+
+
+                                                                                        Página 25
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Automação de tarefas do cotidiano (conceitos).
+
+ •    IoT em casa: sensores e atuadores (noções).
+
+ •    Impactos: privacidade, vigilância, viés.
+ Projeto integrador: Projeto: 'Casa Conectada (no papel)'. Produto: diagrama de IoT com
+ medidas de segurança.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto: solução comunitária
+ Habilidades-chave
+
+ •    Problema local (escola/bairro).
+
+ •    Pesquisa com usuários e requisitos.
+
+ •    Protótipo + plano de implementação.
+ Projeto integrador: Projeto: 'Solução Comunitária'. Produto: protótipo funcional (ou
+ simulado) + pitch.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+ • Checklist de código: legibilidade, comentários úteis, tratamento de erros.
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+
+
+                                                                                    Página 26
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 27
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Fundamental II - 9º ano
+ Foco: Projeto orientado a produto: web/app, dados e segurança; preparação para
+ itinerários do EM.
+
+ Competências e resultados esperados
+
+ • Aplicar pensamento computacional (decomposição, abstração, algoritmos) em
+     problemas de diferentes áreas.
+
+ • Compreender fundamentos de sistemas computacionais (hardware, software, redes)
+     e segurança.
+
+ • Criar artefatos digitais com foco em autoria, colaboração e impacto social.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Projeto de software
+ Habilidades-chave
+
+ •    Ciclo de vida: backlog, sprints, revisão.
+
+ •    Controle de versão (conceito e prática se possível).
+
+ •    Qualidade: testes e documentação.
+ Projeto integrador: Projeto: App/Portal da Escola. Produto: MVP com funcionalidades
+ definidas e documentação.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Web e interfaces
+ Habilidades-chave
+
+ •    UI/UX: hierarquia, consistência, feedback.
+
+ •    Protótipos navegáveis.
+
+ •    Acessibilidade e inclusão.
+ Projeto integrador: Projeto: Protótipo de Interface. Produto: protótipo navegável + teste
+ com usuários.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Segurança e cidadania digital
+ Habilidades-chave
+
+
+
+                                                                                   Página 28
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Ameaças comuns e boas práticas.
+
+ •    LGPD em linguagem simples (princípios).
+
+ •    Comportamento ético e autoria.
+ Projeto integrador: Projeto: Plano de Segurança Digital. Produto: guia prático para família
+ e escola.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Carreira e portfólio
+ Habilidades-chave
+
+ •    Trilhas: dev, dados, design, robótica, suporte.
+
+ •    Portfólio e apresentação.
+
+ •    Entrevista simulada e soft skills.
+ Projeto integrador: Projeto: Portfólio 9º ano. Produto: página/arquivo com projetos e
+ reflexões.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+
+
+                                                                                    Página 29
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 30
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Médio - 1ª série
+ Foco: Fundamentos sólidos: programação em texto, dados e web; projetos integradores
+ alinhados às áreas.
+
+ Competências e resultados esperados
+
+ • Aprofundar pensamento computacional e engenharia de software em projetos reais.
+ • Trabalhar com dados, IA e automação com foco em responsabilidade, viés e
+     transparência.
+
+ • Articular tecnologia ao mundo do trabalho, pesquisa e empreendedorismo,
+     produzindo portfólio.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Programação e engenharia básica
+ Habilidades-chave
+
+ •    Estruturas de dados básicas (listas, dicionários).
+
+ •    Funções, módulos e arquivos.
+
+ •    Boas práticas: estilo, revisão, testes.
+ Projeto integrador: Projeto: Biblioteca de Funções. Produto: pacote simples +
+ documentação.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Dados e visualização
+ Habilidades-chave
+
+ •    Estatística descritiva; correlação não é causa.
+
+ •    Pipelines simples de dados.
+
+ •    Storytelling com dados.
+ Projeto integrador: Projeto: Painel de Dados. Produto: dashboard (ou relatório) com
+ conclusões defendidas.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Web e APIs (conceitos)
+ Habilidades-chave
+
+
+
+                                                                                  Página 31
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    HTTP em alto nível; APIs como 'serviços'.
+
+ •    Automação com requisições simuladas quando offline.
+
+ •    Segurança: tokens e cuidado com chaves.
+ Projeto integrador: Projeto: Serviço Simulado. Produto: especificação de API + cliente
+ offline.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto integrador: pesquisa aplicada
+ Habilidades-chave
+
+ •    Pergunta de pesquisa + hipótese.
+
+ •    Construção de instrumento de coleta.
+
+ •    Protótipo que responde à pergunta.
+ Projeto integrador: Projeto: Pesquisa Aplicada. Produto: relatório + protótipo +
+ apresentação.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+ • Avaliação técnica: revisão de código em dupla (pull request simulado).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+
+
+                                                                                    Página 32
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 33
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Médio - 2ª série
+ Foco: IA e automação: fundamentos, ética e aplicações; cibersegurança e produtos
+ digitais.
+
+ Competências e resultados esperados
+
+ • Aprofundar pensamento computacional e engenharia de software em projetos reais.
+ • Trabalhar com dados, IA e automação com foco em responsabilidade, viés e
+     transparência.
+
+ • Articular tecnologia ao mundo do trabalho, pesquisa e empreendedorismo,
+     produzindo portfólio.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Dados para IA
+ Habilidades-chave
+
+ •    Qualidade de dados; viés; balanceamento (conceito).
+
+ •    Pré-processamento e features (noções).
+
+ •    Métricas: acurácia, precisão, recall (em linguagem acessível).
+ Projeto integrador: Projeto: Auditoria de Dados. Produto: checklist e relatório de
+ viés/qualidade.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Introdução a IA e modelos
+ Habilidades-chave
+
+ •    Aprendizado supervisionado vs não supervisionado (conceitos).
+
+ •    Modelos simples e limitações.
+
+ •    IA generativa: uso responsável e verificação.
+ Projeto integrador: Projeto: IA no Cotidiano. Produto: estudo de caso + protótipo (mesmo
+ simulado) + limites.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Cibersegurança prática
+ Habilidades-chave
+
+
+
+                                                                                      Página 34
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Princípios de segurança: confidencialidade, integridade, disponibilidade.
+
+ •    Engenharia social e prevenção.
+
+ •    Boas práticas: senhas, 2FA, atualização, backup.
+ Projeto integrador: Projeto: Simulação de Ataque/Defesa. Produto: guia de boas práticas
+ e cenário encenado.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto: produto com impacto
+ Habilidades-chave
+
+ •    Produto: definição de problema, persona, proposta de valor.
+
+ •    Prototipação e validação.
+
+ •    MVP e métricas de sucesso.
+ Projeto integrador: Projeto: Produto com Impacto. Produto: MVP + pitch + plano de
+ sustentabilidade.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+ • Debates estruturados sobre dilemas (IA na escola, reconhecimento facial, deepfakes)
+     com roteiro.
+
+ Plano de aula padrão (50 min)
+
+                                                                                  Página 35
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 36
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Ensino Médio - 3ª série
+ Foco: Consolidação e portfólio: engenharia, dados/IA aplicada, carreira,
+ empreendedorismo e projeto final.
+
+ Competências e resultados esperados
+
+ • Aprofundar pensamento computacional e engenharia de software em projetos reais.
+ • Trabalhar com dados, IA e automação com foco em responsabilidade, viés e
+     transparência.
+
+ • Articular tecnologia ao mundo do trabalho, pesquisa e empreendedorismo,
+     produzindo portfólio.
+
+
+ Unidades do ano (sequência sugerida)
+
+ Unidade 1: Arquitetura e qualidade
+ Habilidades-chave
+
+ •    Arquitetura em camadas (conceito).
+
+ •    Testes automatizados (quando possível).
+
+ •    Documentação, manutenção e dívida técnica.
+ Projeto integrador: Projeto: Guia de Arquitetura. Produto: documentação de um sistema
+ + justificativas.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 2: Dados/IA aplicada
+ Habilidades-chave
+
+ •    Projeto de dados: coleta -> análise -> comunicação.
+
+ •    Avaliação de modelos e riscos.
+
+ •    Explicabilidade e governança (noções).
+ Projeto integrador: Projeto: IA Aplicada com Responsabilidade. Produto: estudo +
+ protótipo + avaliação de riscos.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 3: Empreendedorismo e carreira
+ Habilidades-chave
+
+
+
+                                                                                    Página 37
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ •    Canvas de modelo de negócio.
+
+ •    Precificação e validação.
+
+ •    Portfólio, currículo, entrevistas e networking.
+ Projeto integrador: Projeto: Portfólio Profissional. Produto: repositório/portfolio +
+ apresentação.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+ Unidade 4: Projeto final: TCC tecnológico
+ Habilidades-chave
+
+ •    Tema livre com banca.
+
+ •    Plano, cronograma, riscos.
+
+ •    Entrega e defesa.
+ Projeto integrador: Projeto Final (TCC). Produto: solução completa + relatório +
+ demonstração.
+ Entregáveis mínimos
+
+ •    Artefato físico (maker) ou digital
+
+ •    Registro em diário de bordo
+
+ •    Apresentação curta (pitch de 2 min)
+
+
+
+ Avaliação
+
+ • Rubrica de processo (planejamento, tentativa-erro, colaboração, comunicação).
+ • Rubrica de produto (funcionalidade, clareza, criatividade, adequação ao público).
+ • Portfólio trimestral com evidências (fotos, esquemas, prints, reflexões).
+ • Autoavaliação guiada e avaliação por pares (protocolos simples).
+ • Banca final com rubrica: clareza, evidências, impacto, ética, execução.
+
+ Kit de recursos (offline-first)
+
+ • Cartões de algoritmo (setas, repetir, condição) impressos e reutilizáveis.
+ • Material maker de baixo custo: papelão, rolos de papel, elásticos, barbante,
+     prendedores, tampinhas, fita adesiva, palitos, canudos.
+
+ • Eletrônica segura e simples: pilhas, LEDs, motor DC de brinquedo, fios com jacaré,
+     interruptores, sucata eletrônica (com supervisão).
+
+ • Diário de bordo (caderno) com registros em texto e desenho.
+
+ Plano de aula padrão (50 min)
+
+
+
+                                                                                         Página 38
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ • Aquecimento (5 min): desafio relâmpago ou pergunta-problema.
+ • Exploração guiada (15 min): demonstração curta + tentativa em duplas.
+ • Construção (20 min): atividade principal com checkpoints.
+ • Compartilhar (5 min): 2 grupos mostram a solução e contam o que deu errado.
+ • Fechamento (5 min): registro no diário de bordo + tarefa leve.
+
+
+
+
+                                                                             Página 39
+   Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+    Guia de implantação e venda (para redes e escolas)
+    Esta seção transforma o currículo em produto: o que a escola precisa para adotar, como
+    medir resultado e como comunicar valor para famílias.
+
+    Infraestrutura mínima (por cenário)
+
+Cenário               O que precisa                          O que dá para entregar
+Offline total         Impressões, materiais maker, 1 computador do
+                                                             Pensamento
+                                                                   professor (opcional)
+                                                                          computacional completo + projetos maker e
+Baixa conectividade 1 computador a cada 5-8 alunos, internet eventual
+                                                             Programação em blocos/texto em rodízio + dados e apres
+Conectividade plena Laboratório/Chromebooks + internet estável
+                                                            Web, dados avançados, automação e projetos com publica
+
+
+
+    Modelo de formação docente (rápido e escalável)
+
+    • Onboarding (2h): visão dos eixos, rotina de aula e avaliação por rubrica.
+    • Sprint de prática (4h): professor executa 2 atividades desplugadas e 1 projeto maker.
+    • Comunidade de prática (quinzenal): troca de planos, evidências e ajustes.
+    • Kit de facilitação: roteiros prontos, checklists, banco de problemas e rubricas.
+
+    Métricas de resultado (para contrato e renovação)
+
+    • Engajamento: presença, conclusão de projetos e participação em apresentações.
+    • Competências: rubricas por eixo (PC, Mundo Digital, Cultura Digital) com evolução
+        trimestral.
+
+    • Portfólio: número e qualidade de evidências por estudante.
+    • Impacto escolar: projetos que resolvem problemas reais (redução de retrabalho,
+        melhoria de comunicação, etc.).
+
+
+
+
+                                                                                              Página 40
+Trilha Completa de Tecnologia e Computação 2025 - 1º EF ao 3º EM
+
+
+
+
+ Referências (principais fontes públicas)
+ • Brasil. Ministério da Educação. Base Nacional Comum Curricular - BNCC (2018).
+ • Brasil. Ministério da Educação / Conselho Nacional de Educação. Computação na
+    Educação Básica - Complemento à BNCC (documento publicado pelo MEC).
+
+ • Brasil. Conselho Nacional de Educação. Resolução CNE/CEB nº 1, de 4 de outubro de
+    2022 (Normas sobre Computação na Educação Básica - Complemento à BNCC).
+
+ • Brasil. Conselho Nacional de Educação. Parecer CNE/CEB nº 2/2022 (Normas sobre
+    Computação na Educação Básica - Complemento à BNCC).
+
+ • Brasil. Ministério da Educação. Orientações e comunicações oficiais sobre mudanças
+    no Ensino Médio a partir de 2025 (MEC).
+
+ • Sociedade Brasileira de Computação (SBC). Materiais e orientações públicas sobre
+    Computação na Educação Básica (consulta institucional).
+
+
+
+
+                                                                               Página 41
+

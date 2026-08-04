@@ -1,0 +1,120 @@
+Guia Completo de Aulas de Tecnologia e Computação
+– 2025
+Este material descreve, série por série, o que será trabalhado nas aulas de Tecnologia,
+Computação e Pensamento Computacional, do 1º ano do Ensino Fundamental ao 3º ano do
+Ensino Médio. O foco é aprendizagem progressiva, prática, contextualizada e alinhada às
+demandas atuais das escolas.
+
+
+ENSINO FUNDAMENTAL I (1º ao 5º ano)
+
+1º Ano
+Aula 1–5: O que é tecnologia? Objetos do dia a dia e sua função.
+
+Aula 6–10: Sequência lógica com histórias, desenhos e brincadeiras.
+
+Aula 11–15: Introdução a comandos simples (andar, parar, virar).
+
+Aula 16–20: Jogos de lógica desplugados e resolução de problemas simples.
+
+2º Ano
+Aula 1–5: Tecnologia na escola e em casa.
+
+Aula 6–10: Algoritmos simples com cartões e setas.
+
+Aula 11–15: Noções de repetição e padrões.
+
+Aula 16–20: Criação de jogos físicos e desafios em grupo.
+
+3º Ano
+Aula 1–5: Pensamento computacional no cotidiano.
+
+Aula 6–10: Introdução a fluxogramas simples.
+
+Aula 11–15: Lógica com causa e efeito.
+
+Aula 16–20: Projetos práticos com jogos de tabuleiro criados pelos alunos.
+
+4º Ano
+Aula 1–5: O que é programação?
+
+Aula 6–10: Blocos de comandos e sequências.
+
+Aula 11–15: Condições (se / então).
+
+Aula 16–20: Criação de histórias interativas.
+
+5º Ano
+Aula 1–5: Introdução a jogos digitais educativos.
+
+Aula 6–10: Variáveis simples (pontuação, tempo).
+
+Aula 11–15: Depuração de erros.
+
+Aula 16–20: Projeto final: jogo ou história interativa.
+ENSINO FUNDAMENTAL II (6º ao 9º ano)
+
+6º Ano
+Algoritmos e lógica estruturada.
+
+Introdução à programação em blocos.
+
+Criação de animações e jogos simples.
+
+Projetos colaborativos.
+
+7º Ano
+Pensamento computacional aplicado.
+
+Laços de repetição e condições.
+
+Introdução à lógica de jogos.
+
+Projeto prático guiado.
+
+8º Ano
+Transição de blocos para código textual.
+
+Introdução a linguagens de programação.
+
+Noções de dados e variáveis.
+
+Projeto: aplicação simples.
+
+9º Ano
+Estruturas condicionais avançadas.
+
+Introdução a robótica educacional.
+
+Lógica aplicada a problemas reais.
+
+Projeto integrador anual.
+ENSINO MÉDIO (1º ao 3º ano)
+
+1º Ano
+Fundamentos da computação.
+
+Lógica de programação.
+
+Introdução ao desenvolvimento de sistemas.
+
+Projeto prático semestral.
+
+2º Ano
+Programação estruturada.
+
+Introdução a banco de dados.
+
+Pensamento computacional aplicado a problemas sociais.
+
+Projeto interdisciplinar.
+
+3º Ano
+Desenvolvimento de aplicações.
+
+Noções de inteligência artificial.
+
+Empreendedorismo e tecnologia.
+
+Projeto final: solução tecnológica completa.
+
