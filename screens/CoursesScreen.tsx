@@ -313,6 +313,19 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ user, onBack, onOp
                           >
                             <GraduationCap size={18} className="mr-2" /> Abrir Leitor Interativo ({(COURSE_DECKS[course.id]?.slides.length) ?? course.totalLessons} Slides + XP)
                           </Button>
+                          {COURSE_DECKS[course.id]?.pdfUrl && (
+                            <a
+                              href={COURSE_DECKS[course.id].pdfUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold transition"
+                            >
+                              <BookOpen size={16} className="mr-1" /> Abrir PDF oficial
+                            </a>
+                          )}
+                          <p className="text-amber-300 text-[11px] leading-relaxed mt-1">
+                            Acesse o conteúdo real do curso: slides extraídos do PDF oficial, página a página, para estudar na ordem certa.
+                          </p>
                           {/* Botão secundário: acessar por aula */}
                           <Button 
                             variant="secondary" 

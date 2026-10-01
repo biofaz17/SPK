@@ -1,0 +1,10 @@
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
+
+ADMIN_PASSWORD=use-a-long-unique-password
+ADMIN_TOKEN_SECRET=generate-a-random-32-byte-secret
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=server-only-service-role-key
+MP_ACCESS_TOKEN=server-only-mercado-pago-access-token
+GEMINI_API_KEY=server-only-gemini-api-key
+APP_URL=http://localhost:3000

@@ -27,6 +27,8 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
   const [lastCoverId, setLastCoverId] = useState<number | null>(null);
 
   const currentSlide: CourseSlide = deck.slides[currentSlideIndex] || deck.slides[0];
+  const slideHeading = currentSlide.title || `PDF Oficial do Curso`;
+  const slideTagline = currentSlide.subtitle || `Página ${currentSlide.slideNumber} de ${deck.slides.length} — 100% fiel ao material original.`;
 
   useEffect(() => {
     // Efeito para registrar XP do slide caso não tenha sido visitado ainda
@@ -149,6 +151,17 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
               {currentSlide.slideNumber} / {deck.slides.length}
             </div>
 
+            {deck.pdfUrl && (
+              <a
+                href={deck.pdfUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold border border-cyan-400 shadow-lg transition"
+              >
+                Ver PDF oficial
+              </a>
+            )}
+
             <button
               onClick={() => setShowDrawer(!showDrawer)}
               className="p-2 bg-slate-700/60 hover:bg-slate-700 rounded-xl transition text-slate-300 hover:text-white border border-white/10"
@@ -219,13 +232,14 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
                 <div className="space-y-6">
                   {/* Cabeçalho do Slide */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-white/10">
-                    {currentSlide.title ? (
+                    <div>
                       <h2 className="text-2xl sm:text-3xl font-heading text-white flex items-center gap-3">
-                        {currentSlide.title}
+                        {slideHeading}
                       </h2>
-                    ) : (
-                      <div />
-                    )}
+                      <p className="text-indigo-200 text-sm font-medium mt-1">
+                        {slideTagline}
+                      </p>
+                    </div>
 
                     {currentSlide.categoryTag && (
                       <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -233,12 +247,6 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
                       </span>
                     )}
                   </div>
-
-                  {currentSlide.subtitle && (
-                    <p className="text-indigo-200 text-sm font-medium">
-                      {currentSlide.subtitle}
-                    </p>
-                  )}
 
                   {currentSlide.imageUrl && (
                     <div className="my-4 mx-auto max-w-2xl">
@@ -249,6 +257,16 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
                       />
                     </div>
                   )}
+
+                  <div className="bg-slate-900/70 p-5 rounded-3xl border border-indigo-500/20 shadow-inner space-y-3">
+                    <div className="text-xs uppercase tracking-widest text-indigo-300 font-bold">Conteúdo do Slide</div>
+                    <p className="text-slate-200 text-sm leading-relaxed">
+                      Este slide corresponde à página <span className="font-semibold text-white">{currentSlide.slideNumber}</span> do PDF oficial do curso. O material foi preservado exatamente como na fonte original, mantendo o visual e a informação de cada página.
+                    </p>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      A navegação segue a ordem natural do PDF, então você lê o conteúdo na mesma sequência que o autor planejou.
+                    </p>
+                  </div>
 
                   {/* Bullet Points */}
                   {currentSlide.bulletPoints && currentSlide.bulletPoints.length > 0 && (

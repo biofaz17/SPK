@@ -30,6 +30,7 @@ export interface CourseSlidesDeck {
   courseId: string;
   courseTitle: string;
   badge: string;
+  pdfUrl?: string;
   slides: CourseSlide[];
 }
 
@@ -78,12 +79,14 @@ export const COURSE_DECKS: Record<string, CourseSlidesDeck> = {
     courseId: 'curso-1-scratch-ninja',
     courseTitle: 'Aventura Scratch Ninja',
     badge: 'Plano Básico & Completo',
+    pdfUrl: '/assets/pdfs/guia_completo_aulas_tecnologia_2025.pdf',
     slides: SCRATCH_NINJA_SLIDES
   },
   'curso-2-python-pro-mode': {
     courseId: 'curso-2-python-pro-mode',
     courseTitle: 'Python Pro Mode',
     badge: 'Exclusivo Plano Completo (PRO)',
+    pdfUrl: '/assets/pdfs/trilha_tecnologia_computacao_2025.pdf',
     slides: PYTHON_PRO_SLIDES
   }
 };

@@ -1,11 +1,15 @@
-
 import { SubscriptionTier, UserProfile } from '../types';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://aluzklqouexuruppwumz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsdXprbHFvdWV4dXJ1cHB3dW16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNjIzMDgsImV4cCI6MjA4MTYzODMwOH0.ChAxpI6gi7RX-W9XShu_21-q1diBfFBSsPgCs8S_o3Q';
+const env = (import.meta as any).env || {};
+const supabase = env.VITE_SUPABASE_URL && env.VITE_SUPABASE_ANON_KEY
+  ? createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+  : null;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const getSupabase = () => {
+  if (!supabase) throw new Error('Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
+  return supabase;
+};
 
 class DataService {
   private SESSION_KEY = 'sparky_session_token';
@@ -45,7 +49,7 @@ class DataService {
 
     const userId = this.generateId(name);
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -77,7 +81,7 @@ class DataService {
   }
 
   async register(profile: UserProfile): Promise<void> {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('profiles')
       .insert([{
         id: profile.id,
@@ -85,7 +89,6 @@ class DataService {
         password: profile.password,
         parent_email: profile.parentEmail,
         age: profile.age,
-        subscription: profile.subscription,
         active_skin: profile.activeSkin,
         progress: profile.progress,
         settings: profile.settings,
@@ -101,29 +104,15 @@ class DataService {
   }
 
   async syncProfile(profile: UserProfile): Promise<void> {
-    await supabase
+    await getSupabase()
       .from('profiles')
       .update({
         progress: profile.progress,
         settings: profile.settings,
         active_skin: profile.activeSkin,
-        subscription: profile.subscription,
         last_active: new Date().toISOString()
       })
       .eq('id', profile.id);
-  }
-
-  /**
-   * Obtém todos os perfis cadastrados (Admin only)
-   */
-  async getAllProfiles(): Promise<any[]> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('last_active', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
   }
 
   async acceptTerms(userId: string, version: string): Promise<{ success: boolean; timestamp: string }> {
@@ -137,7 +126,7 @@ class DataService {
       console.warn("Não foi possível capturar o IP para o log legal.");
     }
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('profiles')
       .update({
         terms_accepted_version: version,
@@ -158,7 +147,7 @@ class DataService {
     const sessionId = localStorage.getItem(this.SESSION_KEY);
     if (!sessionId) return null;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('profiles')
       .select('*')
       .eq('id', sessionId)

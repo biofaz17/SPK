@@ -25,5 +25,12 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "public/assets/**",
+    "changes_export",
+    "changes_snapshot"
+  ]
 }

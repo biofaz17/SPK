@@ -1,5 +1,4 @@
 
-import { GoogleGenAI } from "@google/genai";
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Battery, Code, HelpCircle, MessageSquare, Pause, Play, RotateCcw, Shirt, Sparkles, Star, Target, Terminal, Trash2, Volume2, VolumeX, XCircle, CheckCircle, Lock, Crown } from 'lucide-react';
 import React, { useEffect, useRef, useState, useMemo } from 'react';
@@ -212,16 +211,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   }, [levelId, customConfig]);
 
   const handleExplainLogic = async () => {
-    if (!process.env.API_KEY || program.length === 0) return;
+    if (program.length === 0) return;
     setIsAnalyzingLogic(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const blocksLabels = program.map(b => BLOCK_DEFINITIONS[b].label).join(', ');
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Você é o Sparky, robô tutor. O aluno usou: [${blocksLabels}] para vencer o nível ${String(level.id)}. Explique por que essa lógica é boa para uma criança de 7 anos. Seja muito lúdico e encorajador. Use emojis. Curto (max 2 parágrafos).`,
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: `Você é o Sparky, robô tutor. O aluno usou: [${blocksLabels}] para vencer o nível ${String(level.id)}. Explique por que essa lógica é boa para uma criança de 7 anos. Seja muito lúdico e encorajador. Use emojis. Curto (max 2 parágrafos).` }),
       });
-      setLogicExplanation(response.text || "Uau! Sua lógica funcionou!");
+      if (!response.ok) throw new Error('Falha ao gerar explicação');
+      const { text } = await response.json();
+      setLogicExplanation(text || "Uau! Sua lógica funcionou!");
     } catch (e) {
       setLogicExplanation("Sua lógica é única! Você usou os comandos certos na hora certa.");
     } finally { setIsAnalyzingLogic(false); }

@@ -55,51 +55,60 @@ export const CourseDemoScreen: React.FC<CourseDemoScreenProps> = ({ onBack }) =>
           <p className="text-slate-300 text-sm md:text-base leading-relaxed max-w-3xl">
             Implementamos o leitor completo contendo os <strong>{currentDeck.slides.length} slides originais baseados nas páginas do PDF</strong>. O aluno pode navegar slide a slide, ganhar XP a cada lição, visualizar os conteúdos e acompanhar o progresso!
           </p>
+          <p className="text-amber-300 text-sm md:text-base leading-relaxed max-w-3xl">
+            Aqui o foco é o conteúdo: cada slide corresponde fielmente a uma página do PDF original, com a informação preservada e pronta para aprendizado.
+          </p>
+          {currentDeck.pdfUrl && (
+            <a
+              href={currentDeck.pdfUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition"
+            >
+              <BookOpen size={18} /> Abrir PDF oficial
+            </a>
+          )}
         </div>
 
-        {/* Seleção do Curso para Testar */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-heading text-white">Selecione o Curso para Testar e Aprovar:</h3>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            
-            {/* CARD CURSO 1: SCRATCH */}
-            <div 
-              onClick={() => {
-                setSelectedDeckKey('curso-1-scratch-ninja');
-                audioService.playSfx('click');
-              }}
-              className={`
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* CARD CURSO 1: SCRATCH */}
+          <div 
+            onClick={() => {
+              setSelectedDeckKey('curso-1-scratch-ninja');
+              audioService.playSfx('click');
+            }}
+            className={
+              `
                 p-6 rounded-3xl border-2 cursor-pointer transition flex flex-col justify-between space-y-4
                 ${selectedDeckKey === 'curso-1-scratch-ninja'
                   ? 'bg-slate-900 border-amber-400 shadow-xl shadow-amber-500/10'
                   : 'bg-slate-900/60 border-slate-800 opacity-80 hover:opacity-100'}
               `}
-            >
-              <div className="space-y-2">
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-block">
-                  Plano Básico & Completo
-                </span>
-                <h4 className="text-xl font-heading text-white">1. Aventura Scratch Ninja</h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  {COURSE_DECKS['curso-1-scratch-ninja'].slides.length} Slides gamificados, 10 Módulos de animações, física, sons e o jogo "Pegue a Estrela".
-                </p>
-              </div>
-
-              <Button 
-                variant="primary" 
-                size="md" 
-                onClick={() => {
-                  setActiveViewerDeck(COURSE_DECKS['curso-1-scratch-ninja']);
-                  audioService.playSfx('pop');
-                }}
-                className="bg-amber-600 hover:bg-amber-500 text-white font-bold border-none w-full"
-              >
-                <Play size={18} className="mr-2" /> Abrir Leitor ({COURSE_DECKS['curso-1-scratch-ninja'].slides.length} Slides)
-              </Button>
+          >
+            <div className="space-y-2">
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-block">
+                Plano Básico & Completo
+              </span>
+              <h4 className="text-xl font-heading text-white">1. Aventura Scratch Ninja</h4>
+              <p className="text-slate-400 text-xs leading-relaxed">
+                {COURSE_DECKS['curso-1-scratch-ninja'].slides.length} Slides gamificados, 10 Módulos de animações, física, sons e o jogo "Pegue a Estrela".
+              </p>
             </div>
 
-            {/* CARD CURSO 2: PYTHON PRO */}
+            <Button 
+              variant="primary" 
+              size="md" 
+              onClick={() => {
+                setActiveViewerDeck(COURSE_DECKS['curso-1-scratch-ninja']);
+                audioService.playSfx('pop');
+              }}
+              className="bg-amber-600 hover:bg-amber-500 text-white font-bold border-none w-full"
+            >
+              <Play size={18} className="mr-2" /> Abrir Leitor ({COURSE_DECKS['curso-1-scratch-ninja'].slides.length} Slides)
+            </Button>
+          </div>
+
+          {/* CARD CURSO 2: PYTHON PRO */}
             <div 
               onClick={() => {
                 setSelectedDeckKey('curso-2-python-pro-mode');
@@ -134,8 +143,6 @@ export const CourseDemoScreen: React.FC<CourseDemoScreenProps> = ({ onBack }) =>
                 <Play size={18} className="mr-2" /> Abrir Leitor ({COURSE_DECKS['curso-2-python-pro-mode'].slides.length} Slides)
               </Button>
             </div>
-
-          </div>
         </div>
 
         {/* Pré-visualização Amostra dos Módulos do Curso Selecionado */}

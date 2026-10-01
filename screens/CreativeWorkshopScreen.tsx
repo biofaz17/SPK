@@ -6,7 +6,6 @@ import { Button } from '../components/Button';
 import { SparkyLogo } from '../components/SparkyLogo';
 import { LevelConfig, GridPosition, BlockType, SubscriptionTier } from '../types';
 import { audioService } from '../services/AudioService';
-import { GoogleGenAI } from "@google/genai";
 
 interface CreativeWorkshopScreenProps {
   onBack: () => void;
@@ -65,25 +64,22 @@ export const CreativeWorkshopScreen: React.FC<CreativeWorkshopScreenProps> = ({ 
   };
 
   const generateMission = async () => {
-    if (!process.env.API_KEY) {
-      setMissionText("Seu objetivo é guiar o Sparky até a bandeira desviando de todos os obstáculos!");
-      return;
-    }
-
     setIsGeneratingMission(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `Crie uma missão lúdica e curta para uma criança de 7 anos em um jogo de robô. 
       O robô começa em (${startPos.x}, ${startPos.y}) e deve chegar em (${goalPos.x}, ${goalPos.y}). 
       Há ${obstacles.length} obstáculos no caminho. Invente um contexto divertido (espaço, floresta, oceano). 
       Máximo 2 frases. Use emojis.`;
       
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
       });
-      setMissionText(response.text || "Ajude o Sparky a chegar ao objetivo final!");
-      audioService.speak(response.text || "Objetivo definido!", "instruction");
+      if (!response.ok) throw new Error('Falha ao gerar missão');
+      const { text } = await response.json();
+      setMissionText(text || "Ajude o Sparky a chegar ao objetivo final!");
+      audioService.speak(text || "Objetivo definido!", "instruction");
     } catch (e) {
       setMissionText("Uma falha no sistema! Mas seu objetivo continua sendo chegar à bandeira!");
     } finally {

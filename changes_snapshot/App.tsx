@@ -271,7 +271,7 @@ export default function App() {
       )}
 
       {screen === Screen.CHECKOUT && pendingSubscriptionTier && (
-         <CheckoutScreen user={user} tier={pendingSubscriptionTier} onConfirm={() => { setUser({...user, subscription: pendingSubscriptionTier}); setScreen(Screen.PAYMENT_SUCCESS); }} onCancel={() => setScreen(Screen.DASHBOARD)} />
+         <CheckoutScreen user={user} tier={pendingSubscriptionTier} onCancel={() => setScreen(Screen.DASHBOARD)} />
       )}
 
       {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.TERMS)} />}
@@ -293,7 +293,7 @@ const AdminLogin: React.FC<{ onAccess: () => void, onCancel: () => void }> = ({ 
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login === 'admin' && pass === '853817') {
+    if (false) {
       onAccess();
     } else {
       setErr(true);

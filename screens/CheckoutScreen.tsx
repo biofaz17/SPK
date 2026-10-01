@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { SubscriptionTier, UserProfile } from '../types';
-import { MERCADO_PAGO_CONFIG, PLANS } from '../constants';
+import { PLANS } from '../constants';
 import { ArrowLeft, Loader2, Lock, CheckCircle, Store, AlertTriangle, User, Mail, FileText, ArrowRight, ShieldCheck, Building2 } from 'lucide-react';
 
 interface CheckoutScreenProps {
   user: UserProfile;
   tier: SubscriptionTier;
-  onConfirm: () => void;
   onCancel: () => void;
 }
 
@@ -39,7 +38,7 @@ const isValidCPF = (cpf: string) => {
     return true;
 };
 
-export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onConfirm, onCancel }) => {
+export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCancel }) => {
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   
@@ -114,39 +113,18 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
       const safeEmail = sanitizeInput(payerEmail);
       const safeDoc = payerDoc.replace(/\D/g, ''); // Numeric only for CPF
 
-      const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      const response = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${MERCADO_PAGO_CONFIG.ACCESS_TOKEN}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          items: [
-            {
-              id: tier,
-              title: `Sparky App - Plano ${plan.title} (Vitalício)`,
-              description: `Acesso completo e vitalício ao conteúdo ${plan.title}`,
-              quantity: 1,
-              currency_id: 'BRL',
-              unit_price: plan.price
-            }
-          ],
+          userId: user.id,
+          tier,
           payer: {
-            name: safeName.split(' ')[0],
-            surname: safeName.split(' ').slice(1).join(' '),
+            name: safeName,
             email: safeEmail,
             identification: { type: "CPF", number: safeDoc }
-          },
-          back_urls: {
-            success: window.location.href, 
-            failure: window.location.href,
-            pending: window.location.href
-          },
-          auto_return: "approved",
-          statement_descriptor: "SPARKY TI",
-          payment_methods: {
-              excluded_payment_types: [{ id: "ticket" }], 
-              installments: 12
           }
         })
       });
@@ -157,8 +135,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
         throw new Error(data.message || 'Erro ao comunicar com Mercado Pago');
       }
 
-      if (data.init_point) {
-        window.location.href = data.init_point; 
+      if (data.initPoint) {
+        window.location.href = data.initPoint;
       } else {
         throw new Error('Link de pagamento não gerado');
       }
@@ -166,19 +144,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCo
     } catch (error: any) {
       console.error(error);
       
-      const isCors = error.message.includes('Failed to fetch') || error.name === 'TypeError';
-      
-      if (isCors) {
-          // MODO DE COMPATIBILIDADE (FALLBACK PARA DEMO SEM BACKEND)
-          // Isso é apenas para a demonstração funcionar no navegador sem servidor proxy.
-          setErrorMessage('Modo Simulação: Redirecionamento bloqueado pelo navegador (CORS).');
-          setTimeout(() => {
-              onConfirm();
-          }, 2000);
-      } else {
-          setErrorMessage(error.message || 'Falha na conexão.');
-          setStatus('error');
-      }
+        setErrorMessage(error.message || 'Falha na conexão.');
+        setStatus('error');
     }
   };
 

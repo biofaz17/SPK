@@ -6,14 +6,14 @@ import {
   RefreshCcw, Database, HardDrive, Terminal, Zap, Crown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { dataService } from '../services/DataService';
 import { SubscriptionTier } from '../types';
 
 interface AdminDashboardProps {
+   token: string;
   onExit: () => void;
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onExit }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ token, onExit }) => {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,9 +22,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onExit }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await dataService.getAllProfiles();
-      // Garantimos que data seja um array antes de setar
-      setProfiles(Array.isArray(data) ? data : []);
+         const response = await fetch('/api/admin-data', {
+            headers: { Authorization: `Bearer ${token}` },
+         });
+         if (!response.ok) throw new Error('Falha ao carregar dados administrativos');
+         const { profiles } = await response.json();
+         setProfiles(Array.isArray(profiles) ? profiles : []);
     } catch (e) {
       console.error("Erro ao buscar perfis:", e);
       setProfiles([]);

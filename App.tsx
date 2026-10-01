@@ -19,8 +19,6 @@ import { LogicGameScreen } from './screens/LogicGameScreen';
 import { CodeGameScreen } from './screens/CodeGameScreen';
 import { CreativeWorkshopScreen } from './screens/CreativeWorkshopScreen';
 import { AdminDashboard } from './screens/AdminDashboard';
-import { CoursesScreen } from './screens/CoursesScreen';
-import { CourseDemoScreen } from './screens/CourseDemoScreen';
 import { UserProfile, SubscriptionTier, LevelConfig } from './types';
 import { LEVELS, CREATIVE_LEVEL } from './constants';
 import { ParentGate } from './components/ParentGate';
@@ -35,7 +33,7 @@ enum Screen {
   AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
   SCIENCE_GAME, MEMORY_GAME, RHYTHM_GAME, GEOMETRY_GAME, 
   LOGIC_GAME, CODE_GAME, CREATIVE_WORKSHOP, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS,
-  ADMIN_LOGIN, ADMIN_DASHBOARD, COURSES, COURSE_DEMO
+  ADMIN_LOGIN, ADMIN_DASHBOARD
 }
 
 const CURRENT_TERMS_VERSION = "v1.0";
@@ -51,6 +49,7 @@ export default function App() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [gateAction, setGateAction] = useState(''); 
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
+  const [adminToken, setAdminToken] = useState<string | null>(null);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -74,6 +73,23 @@ export default function App() {
 
         const sessionUser = await dataService.checkSession();
         if (sessionUser) {
+          const params = new URLSearchParams(window.location.search);
+          const paymentId = params.get('payment_id') || params.get('collection_id');
+          const paymentStatus = params.get('collection_status') || params.get('status');
+          if (paymentId && paymentStatus === 'approved') {
+            const response = await fetch('/api/payment-confirm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId, userId: sessionUser.id }),
+            });
+            if (response.ok) {
+              const { subscription } = await response.json();
+              window.history.replaceState({}, document.title, window.location.pathname);
+              setUser({ ...sessionUser, subscription });
+              setScreen(Screen.PAYMENT_SUCCESS);
+              return;
+            }
+          }
           setUser(sessionUser);
           if (sessionUser.subscription !== SubscriptionTier.FREE && sessionUser.termsAcceptedVersion !== CURRENT_TERMS_VERSION) {
               setScreen(Screen.TERMS);
@@ -168,11 +184,11 @@ export default function App() {
   }
 
   if (screen === Screen.ADMIN_LOGIN) {
-    return <AdminLogin onAccess={() => setScreen(Screen.ADMIN_DASHBOARD)} onCancel={() => { window.location.hash = ''; setScreen(Screen.AUTH); }} />;
+    return <AdminLogin onAccess={(token) => { setAdminToken(token); setScreen(Screen.ADMIN_DASHBOARD); }} onCancel={() => { window.location.hash = ''; setScreen(Screen.AUTH); }} />;
   }
 
   if (screen === Screen.ADMIN_DASHBOARD) {
-    return <AdminDashboard onExit={() => { window.location.hash = ''; setScreen(Screen.AUTH); }} />;
+    return <AdminDashboard token={adminToken || ''} onExit={() => { setAdminToken(null); window.location.hash = ''; setScreen(Screen.AUTH); }} />;
   }
 
   if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} onAdminTrigger={() => setScreen(Screen.ADMIN_LOGIN)} />;
@@ -191,7 +207,6 @@ export default function App() {
       {screen === Screen.HUB && (
         <PlatformHub user={user} onSelectGame={(id) => {
               if (id === 'sparky') setScreen(Screen.DASHBOARD);
-              else if (id === 'courses') setScreen(Screen.COURSES);
               else if (id === 'math') setScreen(Screen.MATH_GAME);
               else if (id === 'words') setScreen(Screen.WORDS_GAME);
               else if (id === 'science') setScreen(Screen.SCIENCE_GAME);
@@ -204,29 +219,13 @@ export default function App() {
         />
       )}
 
-      {screen === Screen.COURSES && (
-        <CoursesScreen 
-          user={user} 
-          onBack={() => setScreen(Screen.HUB)} 
-          onOpenCheckout={(tier) => {
-            setPendingSubscriptionTier(tier);
-            setScreen(Screen.CHECKOUT);
-          }} 
-        />
-      )}
-
-      {screen === Screen.COURSE_DEMO && (
-        <CourseDemoScreen onBack={() => setScreen(Screen.COURSES)} />
-      )}
-
       {screen === Screen.DASHBOARD && (
         <Dashboard 
           progress={user.progress} 
           onPlayMission={() => setScreen(Screen.MAP)} 
           onCreativeMode={() => setScreen(Screen.CREATIVE_WORKSHOP)} 
           onOpenParents={() => { setGateAction('parents_area'); setShowParentGate(true); }} 
-          onBackToHub={() => setScreen(Screen.HUB)} 
-          onOpenCourses={() => setScreen(Screen.COURSES)}
+          onBackToHub={() => setScreen(Screen.HUB)}
         />
       )}
       
@@ -271,7 +270,7 @@ export default function App() {
       )}
 
       {screen === Screen.CHECKOUT && pendingSubscriptionTier && (
-         <CheckoutScreen user={user} tier={pendingSubscriptionTier} onConfirm={() => { setUser({...user, subscription: pendingSubscriptionTier}); setScreen(Screen.PAYMENT_SUCCESS); }} onCancel={() => setScreen(Screen.DASHBOARD)} />
+        <CheckoutScreen user={user} tier={pendingSubscriptionTier} onCancel={() => setScreen(Screen.DASHBOARD)} />
       )}
 
       {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.TERMS)} />}
@@ -286,18 +285,29 @@ export default function App() {
   );
 }
 
-const AdminLogin: React.FC<{ onAccess: () => void, onCancel: () => void }> = ({ onAccess, onCancel }) => {
-  const [login, setLogin] = useState('');
+const AdminLogin: React.FC<{ onAccess: (token: string) => void, onCancel: () => void }> = ({ onAccess, onCancel }) => {
   const [pass, setPass] = useState('');
   const [err, setErr] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handle = (e: React.FormEvent) => {
+  const handle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login === 'admin' && pass === '853817') {
-      onAccess();
-    } else {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pass }),
+      });
+      if (!response.ok) throw new Error('Acesso negado');
+      const { token } = await response.json();
+      if (typeof token !== 'string') throw new Error('Resposta inválida');
+      onAccess(token);
+    } catch {
       setErr(true);
       setTimeout(() => setErr(false), 2000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -310,10 +320,9 @@ const AdminLogin: React.FC<{ onAccess: () => void, onCancel: () => void }> = ({ 
              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Terminal de Controle Sparky</p>
           </div>
           <div className="space-y-4">
-             <input type="text" placeholder="Login Admin" value={login} onChange={e=>setLogin(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none font-mono" />
-             <input type="password" placeholder="Senha" value={pass} onChange={e=>setPass(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none font-mono" />
+             <input type="password" autoComplete="current-password" placeholder="Senha administrativa" value={pass} onChange={e=>setPass(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none font-mono" />
              {err && <div className="text-red-500 text-[10px] font-black uppercase text-center animate-pulse">Acesso Negado</div>}
-             <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-3 rounded-xl transition-all shadow-lg">ENTRAR NO TERMINAL</button>
+             <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-3 rounded-xl transition-all shadow-lg disabled:opacity-60">{loading ? 'VALIDANDO...' : 'ENTRAR NO TERMINAL'}</button>
              <button type="button" onClick={onCancel} className="w-full text-slate-600 text-[10px] font-black uppercase hover:text-white transition">Voltar</button>
           </div>
        </form>

@@ -30,7 +30,7 @@ export const COURSES_DATA: Course[] = [
             description: 'Entenda como dar instruções 100% exatas para computadores e robôs sem desandar o bolo!',
             isPreview: true,
             videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-            pdfMaterialUrl: '/guia_completo_aulas_tecnologia_2025.pdf',
+            pdfMaterialUrl: '/assets/pdfs/guia_completo_aulas_tecnologia_2025.pdf',
             quizQuestions: [
               {
                 question: 'O que é um Algoritmo em programação?',
@@ -409,7 +409,7 @@ export const COURSES_DATA: Course[] = [
             description: 'Entenda como a mesma lógica de loops e decisões do Scratch é usada no TikTok, YouTube e OpenAI.',
             isPreview: true,
             videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-            pdfMaterialUrl: '/trilha_tecnologia_computacao_2025.pdf',
+            pdfMaterialUrl: '/assets/pdfs/trilha_tecnologia_computacao_2025.pdf',
             quizQuestions: [
               {
                 question: 'Por que o Python é considerado a linguagem #1 mundial?',

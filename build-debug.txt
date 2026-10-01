@@ -1,0 +1,493 @@
+
+> universo@0.0.0 build
+> vite build --debug --logLevel debug
+
+2026-08-04T17:46:21.078Z vite:config config file loaded in 217.74ms
+2026-08-04T17:46:21.083Z vite:env loading env files: [ '.env', '.env.local', '.env.production', '.env.production.local' ]
+2026-08-04T17:46:21.088Z vite:env env files loaded in 5.58ms
+2026-08-04T17:46:21.101Z vite:env using resolved env: {
+  NX_DAEMON: 'false',
+  TURBO_CACHE: 'remote:rw',
+  TURBO_DOWNLOAD_LOCAL_ENABLED: 'true',
+  TURBO_REMOTE_ONLY: 'true',
+  TURBO_RUN_SUMMARY: 'true',
+  VERCEL: '1',
+  VERCEL_ENV: 'production',
+  VERCEL_GIT_COMMIT_AUTHOR_LOGIN: '',
+  VERCEL_GIT_COMMIT_AUTHOR_NAME: '',
+  VERCEL_GIT_COMMIT_MESSAGE: '',
+  VERCEL_GIT_COMMIT_REF: '',
+  VERCEL_GIT_COMMIT_SHA: '',
+  VERCEL_GIT_PREVIOUS_SHA: '',
+  VERCEL_GIT_PROVIDER: '',
+  VERCEL_GIT_PULL_REQUEST_ID: '',
+  VERCEL_GIT_REPO_ID: '',
+  VERCEL_GIT_REPO_OWNER: '',
+  VERCEL_GIT_REPO_SLUG: '',
+  VERCEL_OIDC_TOKEN: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1yay00MzAyZWMxYjY3MGY0OGE5OGFkNjFkYWRlNGEyM2JlNyJ9.eyJpc3MiOiJodHRwczovL29pZGMudmVyY2VsLmNvbS9mYWJpb3MtcHJvamVjdHMtMjg3NDUyOTEiLCJzdWIiOiJvd25lcjpmYWJpb3MtcHJvamVjdHMtMjg3NDUyOTE6cHJvamVjdDpiaW9mYXoxNy1zcGFya3llZHVfLXBvcnRhbC1pbnN0aXR1Y2lvbmFsLWRlLWNvbXB1dGEtLW86ZW52aXJvbm1lbnQ6ZGV2ZWxvcG1lbnQiLCJzY29wZSI6Im93bmVyOmZhYmlvcy1wcm9qZWN0cy0yODc0NTI5MTpwcm9qZWN0OmJpb2ZhejE3LXNwYXJreWVkdV8tcG9ydGFsLWluc3RpdHVjaW9uYWwtZGUtY29tcHV0YS0tbzplbnZpcm9ubWVudDpkZXZlbG9wbWVudCIsImF1ZCI6Imh0dHBzOi8vdmVyY2VsLmNvbS9mYWJpb3MtcHJvamVjdHMtMjg3NDUyOTEiLCJvd25lciI6ImZhYmlvcy1wcm9qZWN0cy0yODc0NTI5MSIsIm93bmVyX2lkIjoidGVhbV9aWG55MnFITXE0YUZhRTBlSXpzSnpmakQiLCJwcm9qZWN0IjoiYmlvZmF6MTctc3Bhcmt5ZWR1Xy1wb3J0YWwtaW5zdGl0dWNpb25hbC1kZS1jb21wdXRhLS1vIiwicHJvamVjdF9pZCI6InByal9lZ2wyTkx5b2hPbkJTbGN5NVdnUG5KbkwxQnV0IiwiZW52aXJvbm1lbnQiOiJkZXZlbG9wbWVudCIsInBsYW4iOiJob2JieSIsInVzZXJfaWQiOiJYSGtZV3l6RDI4N3hTOGJQdG9zWlpjSHgiLCJuYmYiOjE3Njg0MDAxNDMsImlhdCI6MTc2ODQwMDE0MywiZXhwIjoxNzY4NDQzMzQzfQ.lESlMaZdW_e81aPym-rozk_A5QLDVU-l1TBUpt1TUvLzXf31DNxZWRVwRd0fHzJ0AT5b9xhoFTqQKw2T2R8VthTVREV9xlpuChOgjw4hEvRQ0QnlM6kqrIdNGv53RxpW9QyZVzFbiS71JGC1e5G5YpFHwmfxYcOkOj8RpE9q4fSquQQ7PSDR9fGxVKjm0txepFoUDn77x87oQISvNXKuhyUkTH8FOwh2FkqEyWT45LZP4SA0GwkXyBrV3sDfAZwJgxuWfkWZ9PyiMt6P2nBvhB6dNKSejTDnhxqaKmKWubn60jQPIeJg7CnRc7J8JIge7U7gZBhMJPntMMAp7OHe4Q',
+  VERCEL_TARGET_ENV: 'production',
+  VERCEL_URL: '',
+  AI_AGENT: 'github_copilot_vscode_agent',
+  ALLUSERSPROFILE: 'C:\\ProgramData',
+  APPDATA: 'C:\\Users\\fabio\\AppData\\Roaming',
+  COLOR: '0',
+  COLORTERM: 'truecolor',
+  CommonProgramFiles: 'C:\\Program Files\\Common Files',
+  'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+  CommonProgramW6432: 'C:\\Program Files\\Common Files',
+  COMPUTERNAME: 'DESKTOP-IQHTPEM',
+  ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+  COPILOT_AGENT: '1',
+  COPILOT_DEBUG_NONCE: '605dbb9c8df01c307ebdb3d43b072e3f',
+  DEBIAN_FRONTEND: 'noninteractive',
+  DEBUG: 'vite:*',
+  DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+  EDITOR: 'C:\\WINDOWS\\notepad.exe',
+  FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
+  FPS_BROWSER_USER_PROFILE_STRING: 'Default',
+  GIT_ASKPASS: 'c:\\Users\\fabio\\AppData\\Roaming\\Code\\User\\globalStorage\\vscode.git\\askpass\\70789581cae28aa7\\askpass.sh',
+  GIT_EDITOR: ':',
+  GIT_MERGE_AUTOEDIT: 'no',
+  GIT_PAGER: 'cat',
+  HOME: 'C:\\Users\\fabio',
+  HOMEDRIVE: 'C:',
+  HOMEPATH: '\\Users\\fabio',
+  INIT_CWD: 'C:\\Users\\fabio\\OneDrive\\Área de Trabalho\\aventura-do-sparky',
+  LANG: 'en_US.UTF-8',
+  LOCALAPPDATA: 'C:\\Users\\fabio\\AppData\\Local',
+  LOGONSERVER: '\\\\DESKTOP-IQHTPEM',
+  MOZ_CRASHREPORTER_DATA_DIRECTORY: 'C:\\Users\\fabio\\AppData\\Roaming\\Mozilla\\Firefox\\Crash Reports',
+  MOZ_CRASHREPORTER_EVENTS_DIRECTORY: 'C:\\Users\\fabio\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\i2b1hl93.default-release\\crashes\\events',
+  MOZ_CRASHREPORTER_PING_DIRECTORY: 'C:\\Users\\fabio\\AppData\\Roaming\\Mozilla\\Firefox\\Pending Pings',
+  MOZ_CRASHREPORTER_RESTART_ARG_1: '-os-autostart',
+  NODE: 'C:\\Program Files\\nodejs\\node.exe',
+  NODE_ENV: 'production',
+  NODE_EXE: 'C:\\Program Files\\nodejs\\\\node.exe',
+  NPM_CLI_JS: 'C:\\Program Files\\nodejs\\\\node_modules\\npm\\bin\\npm-cli.js',
+  npm_command: 'run',
+  npm_config_allow_scripts: '',
+  npm_config_cache: 'C:\\Users\\fabio\\AppData\\Local\\npm-cache',
+  npm_config_globalconfig: 'C:\\Users\\fabio\\AppData\\Roaming\\npm\\etc\\npmrc',
+  npm_config_global_prefix: 'C:\\Users\\fabio\\AppData\\Roaming\\npm',
+  npm_config_init_module: 'C:\\Users\\fabio\\.npm-init.js',
+  npm_config_local_prefix: 'C:\\Users\\fabio\\OneDrive\\Área de Trabalho\\aventura-do-sparky',
+  npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+  npm_config_noproxy: '',
+  npm_config_npm_version: '11.16.0',
+  npm_config_prefix: 'C:\\Users\\fabio\\AppData\\Roaming\\npm',
+  npm_config_userconfig: 'C:\\Users\\fabio\\.npmrc',
+  npm_config_user_agent: 'npm/11.16.0 node/v24.18.0 win32 x64 workspaces/false',
+  npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+  npm_lifecycle_event: 'build',
+  npm_lifecycle_script: 'vite build',
+  npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
+  npm_package_json: 'C:\\Users\\fabio\\OneDrive\\Área de Trabalho\\aventura-do-sparky\\package.json',
+  npm_package_name: 'universo',
+  npm_package_version: '0.0.0',
+  NPM_PREFIX_JS: 'C:\\Program Files\\nodejs\\\\node_modules\\npm\\bin\\npm-prefix.js',
+  NPM_PREFIX_NPM_CLI_JS: 'C:\\Users\\fabio\\AppData\\Roaming\\npm\\node_modules\\npm\\bin\\npm-cli.js',
+  NUMBER_OF_PROCESSORS: '4',
+  OneDrive: 'C:\\Users\\fabio\\OneDrive',
+  OneDriveConsumer: 'C:\\Users\\fabio\\OneDrive',
+  OS: 'Windows_NT',
+  Path: 'C:\\Users\\fabio\\OneDrive\\Área de Trabalho\\aventura-do-sparky\\node_modules\\.bin;C:\\Users\\fabio\\OneDrive\\Área de Trabalho\\node_modules\\.bin;C:\\Users\\fabio\\OneDrive\\node_modules\\.bin;C:\\Users\\fabio\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;c:\\Users\\fabio\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand;c:\\Users\\fabio\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli;C:\\Program Files\\Mozilla Firefox;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\nodejs\\;C:\\Users\\fabio\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\fabio\\AppData\\Local\\Programs\\Antigravity IDE\\bin;C:\\Users\\fabio\\AppData\\Roaming\\npm',
+  PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
+  PROCESSOR_ARCHITECTURE: 'AMD64',
+  PROCESSOR_IDENTIFIER: 'Intel64 Family 6 Model 42 Stepping 7, GenuineIntel',
+  PROCESSOR_LEVEL: '6',
+  PROCESSOR_REVISION: '2a07',
+  ProgramData: 'C:\\ProgramData',
+  ProgramFiles: 'C:\\Program Files',
+  'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+  ProgramW6432: 'C:\\Program Files',
+  PROMPT: '$P$G',
+  PSModulePath: 'C:\\Users\\fabio\\OneDrive\\Documentos\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+  PUBLIC: 'C:\\Users\\Public',
+  SESSIONNAME: 'Console',
+  SystemDrive: 'C:',
+  SystemRoot: 'C:\\WINDOWS',
+  TEMP: 'C:\\Users\\fabio\\AppData\\Local\\Temp',
+  TERM_PROGRAM: 'vscode',
+  TERM_PROGRAM_VERSION: '1.131.0',
+  TMP: 'C:\\Users\\fabio\\AppData\\Local\\Temp',
+  USERDOMAIN: 'DESKTOP-IQHTPEM',
+  USERDOMAIN_ROAMINGPROFILE: 'DESKTOP-IQHTPEM',
+  USERNAME: 'fabio',
+  USERPROFILE: 'C:\\Users\\fabio',
+  VSCODE_A11Y_MODE: '0',
+  VSCODE_GIT_ASKPASS_EXTRA_ARGS: '',
+  VSCODE_GIT_ASKPASS_MAIN: 'c:\\Users\\fabio\\AppData\\Roaming\\Code\\User\\globalStorage\\vscode.git\\askpass\\70789581cae28aa7\\askpass-main.js',
+  VSCODE_GIT_ASKPASS_NODE: 'C:\\Users\\fabio\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe',
+  VSCODE_GIT_IPC_HANDLE: '\\\\.\\pipe\\vscode-git-89ef8df176-sock',
+  VSCODE_INJECTION: '1',
+  VSCODE_NONCE: 'a3f0dc97-da0b-441c-bc8d-547f06b7efbe',
+  VSCODE_PREVENT_SHELL_HISTORY: '1',
+  VSCODE_STABLE: '1',
+  windir: 'C:\\WINDOWS'
+}
+2026-08-04T17:46:21.115Z vite:env loading env files: [
+  'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/.env',
+  'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/.env.local',
+  'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/.env.production',
+  'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/.env.production.local'
+]
+2026-08-04T17:46:21.118Z vite:env env files loaded in 4.07ms
+2026-08-04T17:46:21.127Z vite:env using resolved env: {}
+2026-08-04T17:46:21.254Z vite:config using resolved config: {
+  server: {
+    port: 3000,
+    strictPort: false,
+    host: '0.0.0.0',
+    allowedHosts: [],
+    https: undefined,
+    open: false,
+    proxy: undefined,
+    cors: {
+      origin: /^https?:\/\/(?:(?:[^:]+\.)?localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/
+    },
+    headers: {},
+    warmup: { clientFiles: [], ssrFiles: [] },
+    middlewareMode: false,
+    fs: {
+      strict: true,
+      deny: [ '.env', '.env.*', '*.{crt,pem}', '**/.git/**' ],
+      allow: [ 'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky' ]
+    },
+    preTransformRequests: true,
+    perEnvironmentStartEndDuringDev: false,
+    sourcemapIgnoreList: [Function: isInNodeModules$1]
+  },
+  plugins: [
+    'vite:build-metadata',
+    'vite:watch-package-data',
+    'alias',
+    'vite:react-babel',
+    'vite:react-refresh',
+    'vite:modulepreload-polyfill',
+    'vite:resolve',
+    'vite:html-inline-proxy',
+    'vite:css',
+    'vite:esbuild',
+    'vite:json',
+    'vite:wasm-helper',
+    'vite:worker',
+    'vite:asset',
+    'vite:react-virtual-preamble',
+    'vite:wasm-fallback',
+    'vite:define',
+    'vite:css-post',
+    'vite:build-html',
+    'vite:worker-import-meta-url',
+    'vite:asset-import-meta-url',
+    'vite:force-systemjs-wrap-complete',
+    'commonjs',
+    'vite:data-uri',
+    'vite:rollup-options-plugins',
+    'vite:dynamic-import-vars',
+    'vite:import-glob',
+    'vite:build-import-analysis',
+    'vite:esbuild-transpile',
+    'vite:terser',
+    'vite:manifest',
+    'vite:ssr-manifest',
+    'vite:reporter',
+    'vite:load-fallback'
+  ],
+  define: {
+    'process.env.API_KEY': undefined,
+    'process.env.GEMINI_API_KEY': undefined
+  },
+  resolve: {
+    externalConditions: [ 'node' ],
+    extensions: [
+      '.mjs',  '.js',
+      '.mts',  '.ts',
+      '.jsx',  '.tsx',
+      '.json'
+    ],
+    dedupe: [],
+    noExternal: [],
+    external: [],
+    preserveSymlinks: false,
+    alias: [
+      {
+        find: '@',
+        replacement: 'C:\\Users\\fabio\\OneDrive\\Área de Trabalho\\aventura-do-sparky'
+      },
+      {
+        find: /^\/?@vite\/env/,
+        replacement: '/@fs/C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/node_modules/vite/dist/client/env.mjs'
+      },
+      {
+        find: /^\/?@vite\/client/,
+        replacement: '/@fs/C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/node_modules/vite/dist/client/client.mjs'
+      }
+    ],
+    mainFields: [ 'browser', 'module', 'jsnext:main', 'jsnext' ],
+    conditions: [ 'module', 'browser', 'development|production' ],
+    builtins: []
+  },
+  logLevel: 'debug',
+  build: {
+    target: [ 'es2020', 'edge88', 'firefox78', 'chrome87', 'safari14' ],
+    polyfillModulePreload: true,
+    modulePreload: { polyfill: true },
+    outDir: 'dist',
+    assetsDir: 'assets',
+    assetsInlineLimit: 4096,
+    sourcemap: false,
+    terserOptions: {},
+    rollupOptions: { onwarn: [Function: onwarn] },
+    commonjsOptions: { include: [ /node_modules/ ], extensions: [ '.js', '.cjs' ] },
+    dynamicImportVarsOptions: { warnOnError: true, exclude: [ /node_modules/ ] },
+    write: true,
+    emptyOutDir: null,
+    copyPublicDir: true,
+    manifest: false,
+    lib: false,
+    ssrManifest: false,
+    ssrEmitAssets: false,
+    reportCompressedSize: true,
+    chunkSizeWarningLimit: 500,
+    watch: null,
+    cssCodeSplit: true,
+    minify: 'esbuild',
+    ssr: false,
+    emitAssets: true,
+    createEnvironment: [Function: createEnvironment],
+    cssTarget: [ 'es2020', 'edge88', 'firefox78', 'chrome87', 'safari14' ],
+    cssMinify: true
+  },
+  esbuild: { jsxDev: false, jsx: 'automatic', jsxImportSource: undefined },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react/jsx-dev-runtime',
+      'react/jsx-runtime'
+    ],
+    exclude: [],
+    needsInterop: [],
+    extensions: [],
+    disabled: undefined,
+    holdUntilCrawlEnd: true,
+    force: false,
+    noDiscovery: false,
+    esbuildOptions: { preserveSymlinks: false, jsx: 'automatic' }
+  },
+  environments: {
+    client: {
+      define: {
+        'process.env.API_KEY': undefined,
+        'process.env.GEMINI_API_KEY': undefined
+      },
+      resolve: {
+        externalConditions: [ 'node' ],
+        extensions: [
+          '.mjs',  '.js',
+          '.mts',  '.ts',
+          '.jsx',  '.tsx',
+          '.json'
+        ],
+        dedupe: [],
+        noExternal: [],
+        external: [],
+        preserveSymlinks: false,
+        alias: [
+          {
+            find: '@',
+            replacement: 'C:\\Users\\fabio\\OneDrive\\Área de Trabalho\\aventura-do-sparky'
+          },
+          {
+            find: /^\/?@vite\/env/,
+            replacement: '/@fs/C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/node_modules/vite/dist/client/env.mjs'
+          },
+          {
+            find: /^\/?@vite\/client/,
+            replacement: '/@fs/C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/node_modules/vite/dist/client/client.mjs'
+          }
+        ],
+        mainFields: [ 'browser', 'module', 'jsnext:main', 'jsnext' ],
+        conditions: [ 'module', 'browser', 'development|production' ],
+        builtins: []
+      },
+      keepProcessEnv: false,
+      consumer: 'client',
+      optimizeDeps: {
+        include: [
+          'react',
+          'react-dom',
+          'react/jsx-dev-runtime',
+          'react/jsx-runtime'
+        ],
+        exclude: [],
+        needsInterop: [],
+        extensions: [],
+        disabled: undefined,
+        holdUntilCrawlEnd: true,
+        force: false,
+        noDiscovery: false,
+        esbuildOptions: { preserveSymlinks: false, jsx: 'automatic' }
+      },
+      dev: {
+        warmup: [],
+        sourcemap: { js: true },
+        sourcemapIgnoreList: [Function: isInNodeModules$1],
+        preTransformRequests: true,
+        createEnvironment: [Function: defaultCreateClientDevEnvironment],
+        recoverable: true,
+        moduleRunnerTransform: false
+      },
+      build: {
+        target: [ 'es2020', 'edge88', 'firefox78', 'chrome87', 'safari14' ],
+        polyfillModulePreload: true,
+        modulePreload: { polyfill: true },
+        outDir: 'dist',
+        assetsDir: 'assets',
+        assetsInlineLimit: 4096,
+        sourcemap: false,
+        terserOptions: {},
+        rollupOptions: { onwarn: [Function: onwarn] },
+        commonjsOptions: { include: [ /node_modules/ ], extensions: [ '.js', '.cjs' ] },
+        dynamicImportVarsOptions: { warnOnError: true, exclude: [ /node_modules/ ] },
+        write: true,
+        emptyOutDir: null,
+        copyPublicDir: true,
+        manifest: false,
+        lib: false,
+        ssrManifest: false,
+        ssrEmitAssets: false,
+        reportCompressedSize: true,
+        chunkSizeWarningLimit: 500,
+        watch: null,
+        cssCodeSplit: true,
+        minify: 'esbuild',
+        ssr: false,
+        emitAssets: true,
+        createEnvironment: [Function: createEnvironment],
+        cssTarget: [ 'es2020', 'edge88', 'firefox78', 'chrome87', 'safari14' ],
+        cssMinify: true
+      }
+    }
+  },
+  configFile: 'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/vite.config.ts',
+  configFileDependencies: [
+    'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/vite.config.ts'
+  ],
+  inlineConfig: {
+    root: undefined,
+    base: undefined,
+    mode: undefined,
+    configFile: undefined,
+    configLoader: undefined,
+    logLevel: 'debug',
+    clearScreen: undefined,
+    build: {}
+  },
+  root: 'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky',
+  base: '/',
+  decodedBase: '/',
+  rawBase: '/',
+  publicDir: 'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/public',
+  cacheDir: 'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky/node_modules/.vite',
+  command: 'build',
+  mode: 'production',
+  isWorker: false,
+  mainConfig: null,
+  bundleChain: [],
+  isProduction: true,
+  css: {
+    transformer: 'postcss',
+    preprocessorMaxWorkers: 0,
+    devSourcemap: false
+  },
+  json: { namedExports: true, stringify: 'auto' },
+  builder: undefined,
+  preview: {
+    port: 4173,
+    strictPort: false,
+    host: '0.0.0.0',
+    allowedHosts: [],
+    https: undefined,
+    open: false,
+    proxy: undefined,
+    cors: {
+      origin: /^https?:\/\/(?:(?:[^:]+\.)?localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/
+    },
+    headers: {}
+  },
+  envDir: 'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky',
+  env: { BASE_URL: '/', MODE: 'production', DEV: false, PROD: true },
+  assetsInclude: [Function: assetsInclude],
+  logger: {
+    hasWarned: false,
+    info: [Function: info],
+    warn: [Function: warn],
+    warnOnce: [Function: warnOnce],
+    error: [Function: error],
+    clearScreen: [Function: clearScreen],
+    hasErrorLogged: [Function: hasErrorLogged]
+  },
+  packageCache: Map(1) {
+    'fnpd_C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky' => {
+      dir: 'C:/Users/fabio/OneDrive/Área de Trabalho/aventura-do-sparky',
+      data: {
+        name: 'universo',
+        private: true,
+        version: '0.0.0',
+        type: 'module',
+        scripts: {
+          dev: 'vite',
+          'extract-images': 'node scripts/extract-images.js',
+          build: 'vite build',
+          preview: 'vite preview'
+        },
+        dependencies: {
+          react: '^18.2.3',
+          'react-dom': '^18.2.3',
+          'lucide-react': '0.292.0',
+          'framer-motion': '10.16.4',
+          'canvas-confetti': '1.6.0',
+          'react-hot-toast': '2.4.1',
+          '@google/genai': '^1.33.0'
+        },
+        devDependencies: {
+          '@types/node': '^22.14.0',
+          '@vitejs/plugin-react': '^5.0.0',
+          typescript: '~5.8.2',
+          vite: '^6.2.0'
+        }
+      },
+      hasSideEffects: [Function: hasSideEffects],
+      setResolvedCache: [Function: setResolvedCache],
+      getResolvedCache: [Function: getResolvedCache]
+    },
+    set: [Function (anonymous)]
+  },
+  worker: { format: 'iife', plugins: '() => plugins', rollupOptions: {} },
+  appType: 'spa',
+  experimental: { importGlobRestoreExtension: false, hmrPartialAccept: false },
+  future: undefined,
+  ssr: {
+    target: 'node',
+    optimizeDeps: { esbuildOptions: { preserveSymlinks: false } },
+    resolve: { conditions: undefined, externalConditions: undefined }
+  },
+  dev: {
+    warmup: [],
+    sourcemap: { js: true },
+    sourcemapIgnoreList: [Function: isInNodeModules$1],
+    preTransformRequests: false,
+    createEnvironment: [Function: defaultCreateDevEnvironment],
+    recoverable: false,
+    moduleRunnerTransform: false
+  },
+  webSocketToken: 'mx5KvoSDuBkU',
+  getSortedPlugins: [Function: getSortedPlugins],
+  getSortedPluginHooks: [Function: getSortedPluginHooks],
+  createResolver: [Function: createResolver],
+  fsDenyGlob: [Function: arrayMatcher],
+  safeModulePaths: Set(0) {},
+  additionalAllowedHosts: [ '0.0.0.0', '0.0.0.0' ],
+  Symbol(vite:resolved-config): true
+}

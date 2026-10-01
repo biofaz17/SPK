@@ -70,14 +70,6 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
               </div>
            </div>
 
-           <button 
-             onClick={() => onSelectGame('courses')}
-             className="hidden sm:flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl transition text-white font-bold text-xs shadow-lg border border-purple-400/30 ring-2 ring-purple-500/20"
-             title="Área de Cursos Sparky"
-           >
-              <BookOpen size={16} />
-              <span>🎓 Cursos</span>
-           </button>
 
            <button 
              onClick={onOpenParents}
@@ -106,7 +98,7 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
              Pronto para a próxima missão?
            </h2>
            <p className="text-slate-400 text-sm md:text-base max-w-2xl">
-             Escolha um mundo para explorar. Comece pela Aventura Principal, acesse os **Cursos por Plano** ou pratique habilidades nos mini-jogos!
+             Escolha um mundo para explorar. Comece pela Aventura Principal ou pratique habilidades nos mini-jogos!
            </p>
         </div>
 
@@ -171,46 +163,6 @@ export const PlatformHub: React.FC<PlatformHubProps> = ({ user, onSelectGame, on
             </div>
         </motion.div>
 
-        {/* COURSES FEATURE BANNER */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-full"
-        >
-          <div 
-            onClick={() => onSelectGame('courses')}
-            className="
-              group relative w-full
-              bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900
-              rounded-[2rem] p-6 md:p-8 overflow-hidden cursor-pointer 
-              shadow-xl hover:shadow-[0_0_40px_rgba(168,85,247,0.3)]
-              border-2 border-purple-500/40 hover:border-purple-400 
-              transition-all duration-300 hover:scale-[1.01] flex flex-col md:flex-row items-center justify-between gap-6
-            "
-          >
-            <div className="flex items-center gap-5 flex-1">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-xl shrink-0 group-hover:scale-110 transition border border-white/20">
-                <BookOpen size={32} />
-              </div>
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold border border-purple-500/40">
-                  🎓 NOVO: Academia de Cursos Sparky
-                </div>
-                <h3 className="text-xl md:text-2xl font-heading text-white">
-                  Aulas de Programação & Robótica por Plano
-                </h3>
-                <p className="text-slate-300 text-xs md:text-sm max-w-xl">
-                  <strong>Curso 1 (Scratch)</strong> para Plano Básico e <strong>Curso 2 (Python Pro)</strong> exclusivo para Plano Completo. Acesse o conteúdo interativo completo, com slides, quiz e XP — disponível exclusivamente nesta plataforma!
-                </p>
-              </div>
-            </div>
-
-            <Button variant="primary" size="md" className="bg-purple-600 hover:bg-purple-500 text-white font-bold border-none shrink-0 shadow-lg">
-              Acessar Área de Cursos <ArrowRight size={18} className="ml-2" />
-            </Button>
-          </div>
-        </motion.div>
 
         {/* MINI GAMES GRID */}
         <motion.div 
