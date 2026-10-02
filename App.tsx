@@ -63,6 +63,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (screen !== Screen.ADMIN_LOGIN && screen !== Screen.ADMIN_DASHBOARD) {
+      setAdminToken(null);
+    }
+  }, [screen]);
+
+  useEffect(() => {
     const init = async () => {
       try {
         if (window.location.hash === '#/admin') {
