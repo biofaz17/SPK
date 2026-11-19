@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, ArrowLeft, Crown, Zap, Check, Star, Play, Home } from 'lucide-react';
-import { LEVELS } from '../constants';
+import { Lock, ArrowLeft, Crown, Zap, Check, Star, Play, FlaskConical, Orbit } from 'lucide-react';
+import { FIRST_PRO_EXPANSION_LEVEL_ID, LEGACY_LEVELS } from '../constants';
+import { ALGORITHM_WORKSHOP_LEVELS } from '../algorithmWorkshopLevels';
+import { SPARKY_OBSERVATORY_LEVELS } from '../sparkyObservatoryLevels';
 import { SubscriptionTier, LevelConfig } from '../types';
 import { SparkyLogo } from '../components/SparkyLogo';
 
 interface LevelMapProps {
   unlockedLevels: number;
+  unlockedProLevel?: number;
   userSubscription: SubscriptionTier;
   onSelectLevel: (levelId: number) => void;
   onBack: () => void;
@@ -16,6 +19,7 @@ interface LevelMapProps {
 
 export const LevelMap: React.FC<LevelMapProps> = ({ 
   unlockedLevels, 
+  unlockedProLevel,
   userSubscription,
   onSelectLevel, 
   onBack,
@@ -24,16 +28,18 @@ export const LevelMap: React.FC<LevelMapProps> = ({
 }) => {
   
   const currentLevelRef = useRef<HTMLButtonElement>(null);
+  const currentProLevelRef = useRef<HTMLButtonElement>(null);
+  const proWorldsRef = useRef<HTMLDivElement>(null);
+  const proProgress = unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID;
+  const lastProLevel = Number(SPARKY_OBSERVATORY_LEVELS.at(-1)?.id);
+  const proExpansionComplete = proProgress > lastProLevel;
 
   // Auto-scroll to current level on mount
   useEffect(() => {
-    if (currentLevelRef.current) {
-        currentLevelRef.current.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'center'
-        });
-    }
+    const destination = userSubscription === SubscriptionTier.PRO && unlockedProLevel !== undefined
+      ? currentProLevelRef.current ?? proWorldsRef.current
+      : currentLevelRef.current;
+    destination?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
   }, []);
 
   const hasSubscriptionAccess = (requiredTier: SubscriptionTier): boolean => {
@@ -55,11 +61,17 @@ export const LevelMap: React.FC<LevelMapProps> = ({
     onSelectLevel(level.id as number);
   };
 
-  const freeLevels = LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.FREE);
-  const starterLevels = LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.STARTER);
-  const proLevels = LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.PRO);
+  const showProWorlds = () => {
+    proWorldsRef.current?.focus({ preventScroll: true });
+    proWorldsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
-  const renderLevelGrid = (levels: LevelConfig[], title: string, tierColor: string, icon: React.ReactNode, locked: boolean) => (
+  const freeLevels = LEGACY_LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.FREE);
+  const starterLevels = LEGACY_LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.STARTER);
+  const proLevels = LEGACY_LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.PRO);
+  const proLocked = !hasSubscriptionAccess(SubscriptionTier.PRO);
+
+  const renderLevelGrid = (levels: LevelConfig[], title: string, tierColor: string, icon: React.ReactNode, locked: boolean, expansionDescription?: string) => (
       <div className={`mb-12 w-full max-w-5xl ${locked ? 'opacity-80 grayscale-[0.5]' : ''}`}>
           <div className={`flex items-center gap-3 mb-6 p-4 rounded-xl shadow-sm ${locked ? 'bg-slate-200' : 'bg-white/90 backdrop-blur-sm'}`}>
               <div className={`p-2 rounded-full text-white ${tierColor}`}>
@@ -68,23 +80,31 @@ export const LevelMap: React.FC<LevelMapProps> = ({
               <div>
                   <h3 className="text-xl md:text-2xl font-heading text-slate-800">{title}</h3>
                   {locked && <span className="text-xs font-bold text-red-500 uppercase flex items-center gap-1"><Lock size={12}/> Bloqueado</span>}
+                  {expansionDescription && <p className="mt-1 text-sm font-semibold text-slate-600">{expansionDescription}</p>}
               </div>
           </div>
 
           <div className="flex flex-wrap justify-center md:justify-start gap-8 px-4">
-              {levels.map((level, index) => {
+              {levels.map(level => {
                   const levelId = level.id as number;
-                  const isCurrent = levelId === unlockedLevels;
-                  const isCompleted = levelId < unlockedLevels;
-                  const isProgressionLocked = levelId > unlockedLevels;
+                  const unlockedLevel = expansionDescription ? proProgress : unlockedLevels;
+                  const isCurrent = levelId === unlockedLevel;
+                  const isCompleted = levelId < unlockedLevel;
+                  const isProgressionLocked = levelId > unlockedLevel;
                   const isPlayable = !locked && !isProgressionLocked;
+                  const levelStatus = locked ? 'exclusivo do plano Pro' : isCompleted ? 'concluído' : isProgressionLocked ? 'bloqueado pelo progresso' : 'disponível';
+                  const scrollRef = expansionDescription
+                    ? ((isCurrent || (proExpansionComplete && levelId === lastProLevel)) ? currentProLevelRef : null)
+                    : (isCurrent ? currentLevelRef : null);
 
                   return (
                       <button
                         key={levelId}
-                        ref={isCurrent ? currentLevelRef : null}
+                        ref={scrollRef}
                         onClick={() => handleLevelClick(level)}
                         disabled={!isPlayable && !locked}
+                        aria-label={expansionDescription ? `Nível ${levelId}, ${level.title}, ${levelStatus}` : undefined}
+                        aria-current={expansionDescription && isCurrent && !locked ? 'step' : undefined}
                         className={`
                           group relative w-20 h-20 md:w-24 md:h-24 rounded-3xl flex flex-col items-center justify-center transition-all duration-300
                           ${locked 
@@ -169,10 +189,28 @@ export const LevelMap: React.FC<LevelMapProps> = ({
         <p className="text-green-100 font-bold mb-10 text-center max-w-md bg-green-800/30 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
             Escolha um nível para começar! Complete os desafios para liberar novos mundos.
         </p>
+        <button
+          type="button"
+          onClick={showProWorlds}
+          className="fixed left-1/2 top-4 z-40 -translate-x-1/2 rounded-xl border-2 border-purple-700 bg-white px-3 py-2 text-sm font-bold text-purple-800 shadow-md hover:bg-purple-50"
+        >
+          Novos mundos Pro
+        </button>
 
         {renderLevelGrid(freeLevels, "Mundo Inicial (Grátis)", "bg-green-500", <Star fill="currentColor" />, false)}
         {renderLevelGrid(starterLevels, "Mundo da Floresta (Starter)", "bg-blue-500", <Zap fill="currentColor" />, !hasSubscriptionAccess(SubscriptionTier.STARTER))}
         {renderLevelGrid(proLevels, "Mundo Hacker (Pro)", "bg-purple-600", <Crown fill="currentColor" />, !hasSubscriptionAccess(SubscriptionTier.PRO))}
+
+        <div ref={proWorldsRef} tabIndex={-1} role="region" aria-label="Novos mundos Pro" className="w-full scroll-mt-24">
+          {renderLevelGrid(ALGORITHM_WORKSHOP_LEVELS, 'Oficina de Algoritmos (Pro)', 'bg-teal-700', <FlaskConical />, proLocked,
+            'Aprenda a dividir missões em etapas, combinar padrões e corrigir suas soluções.')}
+          {renderLevelGrid(SPARKY_OBSERVATORY_LEVELS, 'Observatório do Sparky (Pro)', 'bg-indigo-700', <Orbit />, proLocked,
+            proProgress < Number(SPARKY_OBSERVATORY_LEVELS[0].id)
+              ? 'Conclua a Oficina de Algoritmos para testar seus programas em mapas diferentes.'
+              : proExpansionComplete && !proLocked
+                ? 'Você concluiu todas as missões do Observatório! Volte a uma fase quando quiser.'
+                : 'Teste o mesmo programa em mapas diferentes e confira como ele se adapta.')}
+        </div>
 
       </div>
     </div>

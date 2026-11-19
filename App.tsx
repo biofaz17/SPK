@@ -20,7 +20,7 @@ import { CodeGameScreen } from './screens/CodeGameScreen';
 import { CreativeWorkshopScreen } from './screens/CreativeWorkshopScreen';
 import { AdminDashboard } from './screens/AdminDashboard';
 import { UserProfile, SubscriptionTier, LevelConfig } from './types';
-import { LEVELS, CREATIVE_LEVEL } from './constants';
+import { FIRST_PRO_EXPANSION_LEVEL_ID, LEGACY_LEVELS, PRO_EXPANSION_LEVELS } from './constants';
 import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { SparkyAssistant } from './components/SparkyAssistant';
@@ -146,10 +146,33 @@ export default function App() {
     audioService.playSfx('delete');
   };
 
+  const canPlayLevel = (id: string | number) =>
+    typeof id !== 'number' || !PRO_EXPANSION_LEVELS.some(level => level.id === id) || (
+      user?.subscription === SubscriptionTier.PRO &&
+      id <= (user.progress.unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID)
+    );
+
   const handleLevelComplete = (blocksUsed: number) => {
-    if (!user) return;
+    if (!user || !canPlayLevel(currentLevelId)) return;
     if (typeof currentLevelId === 'number') {
-        const sortedLevels = [...LEVELS].sort((a,b) => (a.id as number) - (b.id as number));
+        const expansionIndex = PRO_EXPANSION_LEVELS.findIndex(level => level.id === currentLevelId);
+        if (expansionIndex !== -1) {
+            const unlockedProLevel = user.progress.unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID;
+
+            const nextLevel = PRO_EXPANSION_LEVELS[expansionIndex + 1];
+            const progress = {
+                ...user.progress,
+                unlockedProLevel: Math.max(unlockedProLevel, nextLevel ? Number(nextLevel.id) : currentLevelId + 1),
+                stars: user.progress.stars + 1,
+                totalBlocksUsed: user.progress.totalBlocksUsed + blocksUsed,
+            };
+            setUser({ ...user, progress, lastActive: Date.now() });
+            if (nextLevel) setCurrentLevelId(nextLevel.id);
+            else setScreen(Screen.MAP);
+            return;
+        }
+
+        const sortedLevels = [...LEGACY_LEVELS].sort((a,b) => (a.id as number) - (b.id as number));
         const currentIndex = sortedLevels.findIndex(l => l.id === currentLevelId);
         let nextLevelId = currentLevelId; 
         let hasNext = false;
@@ -200,6 +223,8 @@ export default function App() {
   if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} onAdminTrigger={() => setScreen(Screen.ADMIN_LOGIN)} />;
   if (!user) return null; 
 
+  const canPlayCurrentLevel = canPlayLevel(currentLevelId);
+
   return (
     <div className="antialiased text-slate-800 font-sans selection:bg-indigo-100">
       <div className="fixed bottom-6 left-6 z-[100] pointer-events-none">
@@ -235,8 +260,8 @@ export default function App() {
         />
       )}
       
-      {screen === Screen.MAP && (
-        <LevelMap unlockedLevels={user.progress.unlockedLevels} userSubscription={user.subscription} onSelectLevel={(id) => { setCurrentLevelId(id); setScreen(Screen.GAME); }} onBack={() => setScreen(Screen.DASHBOARD)} onHome={() => setScreen(Screen.HUB)} onRequestUpgrade={() => { setGateAction('upgrade'); setShowParentGate(true); }} />
+      {(screen === Screen.MAP || (screen === Screen.GAME && !canPlayCurrentLevel)) && (
+        <LevelMap unlockedLevels={user.progress.unlockedLevels} unlockedProLevel={user.progress.unlockedProLevel} userSubscription={user.subscription} onSelectLevel={(id) => { if (canPlayLevel(id)) { setCurrentLevelId(id); setScreen(Screen.GAME); } }} onBack={() => setScreen(Screen.DASHBOARD)} onHome={() => setScreen(Screen.HUB)} onRequestUpgrade={() => { setGateAction('upgrade'); setShowParentGate(true); }} />
       )}
 
       {screen === Screen.CREATIVE_WORKSHOP && (
@@ -250,7 +275,7 @@ export default function App() {
         />
       )}
 
-      {screen === Screen.GAME && (
+      {screen === Screen.GAME && canPlayCurrentLevel && (
         <GameScreen 
           levelId={currentLevelId} 
           customConfig={currentLevelId === 'creative' ? customLevel : undefined}

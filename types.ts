@@ -55,6 +55,8 @@ export interface LevelConfig {
   requiredSubscription: SubscriptionTier;
   bnccCode?: string;
   timeLimit?: number;
+  paintTargets?: GridPosition[];
+  testScenarios?: { label: string; obstacles: GridPosition[] }[];
   introData?: {
     title: string;
     description: string;
@@ -86,6 +88,7 @@ export interface UserProfile {
 
 export interface UserProgress {
   unlockedLevels: number;
+  unlockedProLevel?: number;
   stars: number;
   creativeProjects: number;
   totalBlocksUsed: number;

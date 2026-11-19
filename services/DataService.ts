@@ -137,16 +137,16 @@ class DataService {
   async syncProfile(profile: UserProfile): Promise<void> {
     if (!supabase) return;
 
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({
         progress: profile.progress,
         settings: profile.settings,
         active_skin: profile.activeSkin,
-        subscription: profile.subscription,
         last_active: new Date().toISOString()
       })
       .eq('id', profile.id);
+    if (error) throw error;
   }
 
   /**

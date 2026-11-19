@@ -8,8 +8,9 @@ import { Button } from '../components/Button';
 import { Robot } from '../components/Robot';
 import { StatusIndicator } from '../components/StatusIndicator';
 import { SparkyLogo } from '../components/SparkyLogo';
-import { CREATIVE_LEVEL, LEVELS } from '../constants';
+import { CREATIVE_LEVEL, LEVELS, PRO_EXPANSION_LEVELS } from '../constants';
 import { audioService } from '../services/AudioService';
+import { simulateProProgram } from '../services/ProLevelProgram';
 import { BlockCategory, BlockType, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier, LevelConfig } from '../types';
 
 interface GameScreenProps {
@@ -30,7 +31,9 @@ const EndLevelModal: React.FC<{
   onNext: () => void;
   explanation?: string | null;
   isAnalyzing?: boolean;
-}> = ({ status, level, blocksUsed, onRetry, onNext, explanation, isAnalyzing }) => {
+  isProChallenge?: boolean;
+  isFinalChallenge?: boolean;
+}> = ({ status, level, blocksUsed, onRetry, onNext, explanation, isAnalyzing, isProChallenge, isFinalChallenge }) => {
   const isWon = status === 'won';
   
   return (
@@ -54,11 +57,13 @@ const EndLevelModal: React.FC<{
           </div>
 
           <h2 className="text-4xl md:text-5xl font-heading mb-2 text-slate-800 uppercase tracking-tighter text-center">
-            {isWon ? 'Missão Cumprida!' : 'Ops! Bati!'}
+            {isWon ? 'Missão Cumprida!' : isProChallenge ? 'Vamos revisar!' : 'Ops! Bati!'}
           </h2>
           
           <p className="text-slate-500 font-bold text-lg mb-8 text-center">
-            {isWon ? (level.id === 'creative' || String(level.id).startsWith('custom') ? 'Você venceu sua própria fase!' : `Nível ${String(level.id)} Desbloqueado!`) : 'Vamos revisar seu código?'}
+            {isProChallenge
+              ? isWon && (isFinalChallenge ? 'Você concluiu os dois novos mundos!' : `Nível ${level.id} concluído!`)
+              : isWon ? (level.id === 'creative' || String(level.id).startsWith('custom') ? 'Você venceu sua própria fase!' : `Nível ${String(level.id)} Desbloqueado!`) : 'Vamos revisar seu código?'}
           </p>
 
           {isWon && (
@@ -95,7 +100,7 @@ const EndLevelModal: React.FC<{
             </button>
             {isWon && (
               <button onClick={onNext} className="flex-1 py-4 text-xl font-heading bg-green-500 text-white rounded-3xl border-b-4 border-green-700 active:border-b-0 flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all">
-                 Próxima Missão <ArrowRight size={24} />
+                 {isFinalChallenge ? 'Concluir trilha' : 'Próxima Missão'} <ArrowRight size={24} />
               </button>
             )}
           </div>
@@ -149,6 +154,8 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
 
 export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, onBack, onHome, onNextLevel, user, onUpdateSkin }) => {
   const level = customConfig || (levelId === 'creative' ? CREATIVE_LEVEL : (LEVELS.find(l => l.id === levelId) || LEVELS[0]));
+  const isProChallenge = PRO_EXPANSION_LEVELS.some(entry => entry.id === level.id);
+  const scenarios = [{ label: 'Cenário inicial', obstacles: level.obstacles }, ...(level.testScenarios ?? [])];
   const isHackerMode = level.id === 45 || level.id === 'creative' || String(level.id).startsWith('custom'); 
 
   const [program, setProgram] = useState<BlockType[]>([]);
@@ -158,6 +165,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   const [gameStatus, setGameStatus] = useState<'idle' | 'running' | 'won' | 'lost'>('idle');
   const [paintedCells, setPaintedCells] = useState<GridPosition[]>([]);
   const [activeObstacles, setActiveObstacles] = useState<GridPosition[]>(level.obstacles);
+  const [scenarioIndex, setScenarioIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
@@ -167,8 +175,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   // Responsividade da Grade
   const [gridScale, setGridScale] = useState(1);
   const stageRef = useRef<HTMLDivElement>(null);
+  const proBoardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isProChallenge) {
+      const board = proBoardRef.current;
+      if (!board) return;
+      const resizeBoard = () => {
+        const gridPixels = level.gridSize * 60;
+        setGridScale(Math.max(0, Math.min(1, (board.clientWidth - 24) / gridPixels, (board.clientHeight - 24) / gridPixels)));
+      };
+      resizeBoard();
+      const observer = new ResizeObserver(resizeBoard);
+      observer.observe(board);
+      return () => observer.disconnect();
+    }
+
     const updateScale = () => {
       if (stageRef.current) {
         const containerWidth = stageRef.current.offsetWidth - 40;
@@ -182,7 +204,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     updateScale();
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
-  }, [level.gridSize]);
+  }, [isProChallenge, level.gridSize]);
 
   const abortController = useRef<AbortController | null>(null);
   const programListRef = useRef<HTMLDivElement>(null);
@@ -195,6 +217,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     setProgram([]);
     resetGame();
     setActiveObstacles(level.obstacles);
+    setScenarioIndex(0);
     if (level.mission && !isMuted) {
       setTimeout(() => {
         audioService.speak(
@@ -206,6 +229,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
       }, 500); 
     }
     return () => {
+      if (isProChallenge) abortController.current?.abort();
       audioService.stop();
     };
   }, [levelId, customConfig]);
@@ -234,11 +258,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
        setTimeout(() => {
            audioService.speak("Conseguimos! Você é incrível!", 'happy', () => setIsSpeaking(true), () => setIsSpeaking(false));
        }, 500);
-       handleExplainLogic();
+       if (!isProChallenge) handleExplainLogic();
     } else if (gameStatus === 'lost') {
        audioService.playSfx('error');
        setTimeout(() => {
-           audioService.speak("Ops, bati! Vamos tentar de novo?", 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
+           audioService.speak(isProChallenge ? 'Vamos revisar o código e testar outra vez?' : 'Ops, bati! Vamos tentar de novo?', 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
        }, 500);
     }
   }, [gameStatus]);
@@ -262,6 +286,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   };
 
   const addBlock = (type: BlockType) => {
+    if (isProChallenge && (isPlaying || !level.availableBlocks.includes(type))) return;
     if (program.length < level.maxBlocks) {
       setProgram(prev => [...prev, type]);
       audioService.playSfx('pop');
@@ -290,6 +315,70 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     e.preventDefault();
     const type = e.dataTransfer.getData('blockType') as BlockType;
     if (type) addBlock(type);
+  };
+
+  const selectScenario = (index: number) => {
+    resetGame();
+    setScenarioIndex(index);
+    setActiveObstacles(scenarios[index].obstacles);
+  };
+
+  const runProProgram = async () => {
+    if (isPlaying) {
+      resetGame();
+      return;
+    }
+    if (program.length === 0) return;
+
+    resetGame();
+    const controller = new AbortController();
+    abortController.current = controller;
+    setGameStatus('running');
+    setIsPlaying(true);
+    audioService.playSfx('start');
+
+    const wait = (ms: number) => new Promise<void>(resolve => window.setTimeout(resolve, ms));
+
+    try {
+      for (const [index, scenario] of scenarios.entries()) {
+        if (controller.signal.aborted) return;
+        setScenarioIndex(index);
+        setActiveObstacles(scenario.obstacles);
+        setRobotState({ ...level.startPos, dir: 'right' });
+        setPaintedCells([]);
+        setCurrentBlockIndex(null);
+        if (scenarios.length > 1) await wait(380);
+
+        const { steps, failure } = simulateProProgram(level, program, scenario.obstacles);
+        for (const step of steps) {
+          if (controller.signal.aborted) return;
+          setCurrentBlockIndex(step.index);
+          if (step.kind === 'move') {
+            setRobotState({ ...step.position, dir: step.direction });
+            audioService.playSfx('click');
+          } else if (step.kind === 'paint') {
+            setPaintedCells(cells => [...cells, step.position]);
+            audioService.playTone(880, 0.1, 'sine');
+          }
+          await wait(step.kind === 'check' ? 100 : 210);
+        }
+
+        if (controller.signal.aborted) return;
+        if (failure) {
+          setLogicExplanation(scenarios.length > 1 ? `${scenario.label}. ${failure}` : failure);
+          setGameStatus('lost');
+          return;
+        }
+      }
+
+      setGameStatus('won');
+      confetti({ particleCount: 150, spread: 70 });
+    } finally {
+      if (abortController.current === controller && !controller.signal.aborted) {
+        setIsPlaying(false);
+        setCurrentBlockIndex(null);
+      }
+    }
   };
 
   const runProgram = async () => {
@@ -416,7 +505,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   const workspaceClass = isHackerMode ? 'bg-slate-900 border-slate-700' : 'bg-slate-100 border-slate-200';
 
   return (
-    <div className={`flex flex-col md:flex-row h-screen overflow-hidden ${isHackerMode ? 'bg-slate-950 text-emerald-400' : 'bg-slate-50 text-slate-800'}`}>
+    <div className={`flex flex-col md:flex-row ${isProChallenge ? 'min-h-screen md:h-screen md:overflow-hidden' : 'h-screen overflow-hidden'} ${isHackerMode ? 'bg-slate-950 text-emerald-400' : 'bg-slate-50 text-slate-800'}`}>
       
       {/* Coluna 1: Paleta de Blocos */}
       <div className="w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 bg-white h-[25vh] md:h-full overflow-hidden">
@@ -441,13 +530,46 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
       </div>
 
       {/* Coluna 2: Palco do Robô (Grid Central) */}
-      <div ref={stageRef} className="flex-1 flex flex-col relative shrink-0 bg-slate-200 border-x border-slate-300 h-[40vh] md:h-full overflow-hidden">
+      <div ref={stageRef} className={`flex flex-col relative shrink-0 bg-slate-200 border-x border-slate-300 md:h-full overflow-hidden ${isProChallenge ? 'min-w-0 md:flex-1' : 'flex-1 h-[40vh]'}`}>
           <div className="p-3 bg-white/90 border-b flex items-center justify-between backdrop-blur-sm z-20">
-             <div className="flex items-center gap-2 text-xs font-bold text-slate-600 truncate max-w-[200px] md:max-w-none"><Target size={16} className="text-indigo-500"/> {String(level.mission)}</div>
+             {isProChallenge ? (
+               <div className="flex items-start gap-2 pr-3">
+                 <Target size={18} className="mt-1 shrink-0 text-indigo-500" aria-hidden="true" />
+                 <div>
+                   <h2 className="font-heading text-base text-slate-800">{level.id}. {level.title}</h2>
+                   <p className="text-xs font-bold text-slate-600">{level.mission}</p>
+                 </div>
+               </div>
+             ) : (
+               <div className="flex items-center gap-2 text-xs font-bold text-slate-600 truncate max-w-[200px] md:max-w-none"><Target size={16} className="text-indigo-500"/> {String(level.mission)}</div>
+             )}
              <StatusIndicator isGuest={user?.isGuest} />
           </div>
 
-          <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+          {isProChallenge && (
+            <div key={level.id} className="space-y-2 border-b bg-indigo-50 px-4 py-2 text-xs text-slate-700">
+              {level.tutorialMessage && (
+                <details>
+                  <summary className="cursor-pointer font-bold text-indigo-700">Ver dica</summary>
+                  <p className="mt-1 leading-relaxed">{level.tutorialMessage}</p>
+                </details>
+              )}
+              {level.paintTargets?.length > 0 && <p>Use Pintar Chão nas casas com contorno roxo.</p>}
+              {scenarios.length > 1 && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <label className="font-bold">
+                    Cenário
+                    <select value={scenarioIndex} onChange={event => selectScenario(Number(event.target.value))} disabled={isPlaying} className="ml-2 rounded-md border border-indigo-200 bg-white p-1 text-slate-700">
+                      {scenarios.map((scenario, index) => <option key={index} value={index}>{scenario.label}</option>)}
+                    </select>
+                  </label>
+                  <span role="status">{isPlaying ? `Testando ${scenarioIndex + 1} de ${scenarios.length}` : 'O mesmo código será testado em todos os cenários.'}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div ref={isProChallenge ? proBoardRef : undefined} className={`flex-1 relative overflow-hidden flex items-center justify-center p-4 ${isProChallenge ? 'min-h-[240px] md:min-h-0' : ''}`}>
               <motion.div 
                 style={{ 
                     width: level.gridSize * 60, 
@@ -456,11 +578,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                     backgroundSize: '60px 60px', 
                     backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)' 
                 }}
-                className={`relative shadow-2xl rounded-2xl overflow-hidden bg-white border-4 border-white transform origin-center ${gameStatus === 'lost' ? 'animate-shake ring-4 ring-red-400' : ''}`}
+                className={`relative shadow-2xl rounded-2xl overflow-hidden bg-white border-4 border-white transform origin-center ${isProChallenge ? 'shrink-0' : ''} ${gameStatus === 'lost' ? 'animate-shake ring-4 ring-red-400' : ''}`}
               >
                   {level.goalPos && <div className="absolute flex items-center justify-center animate-pulse" style={{ left: level.goalPos.x * 60, top: level.goalPos.y * 60, width: 60, height: 60 }}><div className="w-8 h-8 rounded-full border-4 border-green-400 bg-green-100" /></div>}
                   {activeObstacles.map((obs, i) => <div key={i} className="absolute rounded-xl bg-slate-700 border-b-4 border-slate-900" style={{ left: obs.x * 60 + 5, top: obs.y * 60 + 5, width: 50, height: 50 }} />)}
                   {paintedCells.map((cell, i) => <div key={i} className="absolute bg-purple-400/50" style={{ left: cell.x * 60, top: cell.y * 60, width: 60, height: 60 }} />)}
+                  {isProChallenge && level.paintTargets?.map(cell => (
+                    <div key={`${cell.x},${cell.y}`} className="absolute rounded-xl border-4 border-dashed border-purple-600" style={{ left: cell.x * 60 + 5, top: cell.y * 60 + 5, width: 50, height: 50 }} />
+                  ))}
                   
                   <AnimatePresence>
                       {gameStatus === 'lost' && (
@@ -479,7 +604,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
 
               <button 
                 onClick={() => setShowSkinSelector(true)}
-                className="absolute bottom-6 left-6 p-4 bg-white rounded-full shadow-2xl border-4 border-indigo-100 text-indigo-600 hover:scale-110 active:scale-95 transition-all z-30 group"
+                className={`absolute bg-white rounded-full shadow-2xl border-4 border-indigo-100 text-indigo-600 hover:scale-110 active:scale-95 transition-all z-30 group ${isProChallenge ? 'bottom-3 left-3 p-2' : 'bottom-6 left-6 p-4'}`}
                 title="Trocar de Roupa"
               >
                 <Shirt size={32} />
@@ -497,13 +622,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                 onNext={() => onNextLevel(program.length)}
                 explanation={logicExplanation}
                 isAnalyzing={isAnalyzingLogic}
+                isProChallenge={isProChallenge}
+                isFinalChallenge={level.id === PRO_EXPANSION_LEVELS[PRO_EXPANSION_LEVELS.length - 1]?.id}
               />
             )}
           </AnimatePresence>
       </div>
 
       {/* Coluna 3: Workspace de Código */}
-      <div className={`w-full md:w-80 flex flex-col relative ${workspaceClass} border-l shadow-2xl z-10 h-[35vh] md:h-full overflow-hidden`}>
+      <div className={`w-full md:w-80 flex flex-col relative ${workspaceClass} border-l shadow-2xl z-10 md:h-full overflow-hidden ${isProChallenge ? 'h-96' : 'h-[35vh]'}`}>
           <div className="p-4 border-b flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
               <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
                  <Terminal size={14} /> Lógica de Comandos
@@ -575,7 +702,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                     <Trash2 size={24}/>
                   </button>
                   <Button 
-                    onClick={runProgram} 
+                    onClick={isProChallenge ? runProProgram : runProgram}
                     variant={isPlaying ? 'secondary' : 'success'} 
                     size="md" 
                     className="flex-1 h-14 text-xl shadow-lg active:scale-95 transition-transform" 
