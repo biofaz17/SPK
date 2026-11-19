@@ -1,7 +1,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Battery, Code, HelpCircle, MessageSquare, Pause, Play, RotateCcw, Shirt, Sparkles, Star, Target, Terminal, Trash2, Volume2, VolumeX, XCircle, CheckCircle, Lock, Crown } from 'lucide-react';
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { BlockIcon } from '../components/BlockIcon';
 import { Button } from '../components/Button';
@@ -9,6 +9,7 @@ import { Robot } from '../components/Robot';
 import { StatusIndicator } from '../components/StatusIndicator';
 import { SparkyLogo } from '../components/SparkyLogo';
 import { CREATIVE_LEVEL, LEVELS, PRO_EXPANSION_LEVELS } from '../constants';
+import { LEGACY_LEVEL_HINTS } from '../legacyLevelHints';
 import { audioService } from '../services/AudioService';
 import { simulateProProgram } from '../services/ProLevelProgram';
 import { BlockCategory, BlockType, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier, LevelConfig } from '../types';
@@ -23,6 +24,29 @@ interface GameScreenProps {
   onUpdateSkin?: (skinId: string) => void;
 }
 
+const GRID_CELL_SIZE = 60;
+const STANDARD_GRID_SIZE = 5 * GRID_CELL_SIZE;
+
+interface SparkyHintProps {
+  text: string;
+  onListen: () => void;
+  isMuted: boolean;
+}
+
+const SparkyHint: React.FC<SparkyHintProps> = ({ text, onListen, isMuted }) => (
+  <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-left text-slate-800">
+    <p className="flex items-center gap-2 text-sm font-black text-amber-900">
+      <Sparkles size={16} aria-hidden="true" /> Dica do Sparky
+    </p>
+    <p className="mt-1 text-sm leading-relaxed">{text}</p>
+    {!isMuted && (
+      <button type="button" onClick={onListen} className="mt-2 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-bold text-indigo-700 ring-1 ring-indigo-200 hover:bg-indigo-50">
+        <Volume2 size={16} aria-hidden="true" /> Ouvir dica
+      </button>
+    )}
+  </div>
+);
+
 const EndLevelModal: React.FC<{
   status: 'won' | 'lost';
   level: LevelConfig;
@@ -33,8 +57,11 @@ const EndLevelModal: React.FC<{
   isAnalyzing?: boolean;
   isProChallenge?: boolean;
   isFinalChallenge?: boolean;
-}> = ({ status, level, blocksUsed, onRetry, onNext, explanation, isAnalyzing, isProChallenge, isFinalChallenge }) => {
+  hint?: SparkyHintProps;
+}> = ({ status, level, blocksUsed, onRetry, onNext, explanation, isAnalyzing, isProChallenge, isFinalChallenge, hint }) => {
   const isWon = status === 'won';
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { dialogRef.current?.focus({ preventScroll: true }); }, []);
   
   return (
     <motion.div 
@@ -44,9 +71,14 @@ const EndLevelModal: React.FC<{
       className="fixed inset-0 z-[100] bg-indigo-950/80 backdrop-blur-md flex items-center justify-center p-4"
     >
       <motion.div 
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isWon ? 'Missão cumprida' : 'Vamos revisar o código'}
+        tabIndex={-1}
         initial={{ scale: 0.8, y: 50, rotate: -2 }}
         animate={{ scale: 1, y: 0, rotate: 0 }}
-        className={`bg-white rounded-[3.5rem] p-8 md:p-12 text-center max-w-lg w-full shadow-2xl border-b-[16px] ${isWon ? 'border-green-500' : 'border-red-500'} relative overflow-hidden`}
+        className={`bg-white rounded-[3.5rem] p-8 md:p-12 text-center max-w-lg w-full shadow-2xl border-b-[16px] ${isWon ? 'border-green-500' : 'border-red-500'} relative ${hint ? 'max-h-[calc(100dvh-2rem)] overflow-y-auto' : 'overflow-hidden'}`}
       >
         <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-20 ${isWon ? 'bg-green-400' : 'bg-red-400'}`} />
         <div className={`absolute -bottom-24 -left-24 w-48 h-48 rounded-full blur-3xl opacity-20 ${isWon ? 'bg-blue-400' : 'bg-orange-400'}`} />
@@ -57,7 +89,7 @@ const EndLevelModal: React.FC<{
           </div>
 
           <h2 className="text-4xl md:text-5xl font-heading mb-2 text-slate-800 uppercase tracking-tighter text-center">
-            {isWon ? 'Missão Cumprida!' : isProChallenge ? 'Vamos revisar!' : 'Ops! Bati!'}
+            {isWon ? 'Missão Cumprida!' : isProChallenge || hint ? 'Vamos revisar!' : 'Ops! Bati!'}
           </h2>
           
           <p className="text-slate-500 font-bold text-lg mb-8 text-center">
@@ -85,14 +117,22 @@ const EndLevelModal: React.FC<{
                   <MessageSquare size={20} />
                </div>
                <div className="text-sm text-slate-700 font-bold leading-relaxed min-h-[60px]">
-                  {isAnalyzing ? (
+                  {isWon && isAnalyzing ? (
                     <div className="flex items-center gap-2 animate-pulse text-indigo-500">
                        <Sparkles size={16} /> Analisando sua lógica...
                     </div>
-                  ) : String(explanation || level.explanation || (isWon ? 'Você foi incrível! Seu robô seguiu cada comando perfeitamente.' : 'Quase lá! Tente mudar a ordem dos blocos ou remover o que não precisa.'))}
+                  ) : explanation || (isWon
+                    ? level.explanation || 'Você foi incrível! Seu robô seguiu cada comando perfeitamente.'
+                    : 'Quase lá! Tente mudar a ordem dos blocos ou remover o que não precisa.')}
                </div>
             </div>
           </div>
+
+          {hint && (
+            <div className="-mt-4 mb-5" aria-live="polite">
+              <SparkyHint {...hint} />
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4">
             <button onClick={onRetry} className="flex-1 py-4 text-xl font-heading bg-slate-100 text-slate-600 rounded-3xl border-b-4 border-slate-300 active:border-b-0 flex items-center justify-center gap-2 transition-all">
@@ -163,74 +203,89 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBlockIndex, setCurrentBlockIndex] = useState<number | null>(null);
   const [gameStatus, setGameStatus] = useState<'idle' | 'running' | 'won' | 'lost'>('idle');
+  const [failedAttempts, setFailedAttempts] = useState(0);
   const [paintedCells, setPaintedCells] = useState<GridPosition[]>([]);
   const [activeObstacles, setActiveObstacles] = useState<GridPosition[]>(level.obstacles);
   const [scenarioIndex, setScenarioIndex] = useState(0);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [mutedByPlayer, setMutedByPlayer] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
   const [logicExplanation, setLogicExplanation] = useState<string | null>(null);
   const [isAnalyzingLogic, setIsAnalyzingLogic] = useState(false);
+  const soundOffInSettings = user?.settings?.soundEnabled === false;
+  const isMuted = mutedByPlayer || soundOffInSettings;
+  const hintText = failedAttempts >= 2 && typeof level.id === 'number'
+    ? level.tutorialMessage || LEGACY_LEVEL_HINTS[level.id]
+    : undefined;
 
   // Responsividade da Grade
-  const [gridScale, setGridScale] = useState(1);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const proBoardRef = useRef<HTMLDivElement>(null);
+  const [availableBoardSize, setAvailableBoardSize] = useState<number>();
+  const boardAreaRef = useRef<HTMLDivElement>(null);
+  const gridPixels = level.gridSize * GRID_CELL_SIZE;
+  const preferredBoardSize = isProChallenge ? gridPixels : Math.max(STANDARD_GRID_SIZE, gridPixels);
+  const gridScale = Math.min(preferredBoardSize, availableBoardSize ?? preferredBoardSize) / gridPixels;
 
   useEffect(() => {
-    if (isProChallenge) {
-      const board = proBoardRef.current;
-      if (!board) return;
-      const resizeBoard = () => {
-        const gridPixels = level.gridSize * 60;
-        setGridScale(Math.max(0, Math.min(1, (board.clientWidth - 24) / gridPixels, (board.clientHeight - 24) / gridPixels)));
-      };
-      resizeBoard();
-      const observer = new ResizeObserver(resizeBoard);
-      observer.observe(board);
+    const area = boardAreaRef.current;
+    if (!area) return;
+
+    const measureArea = (width: number, height: number) => {
+      const availableSize = Math.min(width, height);
+      if (availableSize > 0) setAvailableBoardSize(availableSize);
+    };
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(([{ contentRect }]) => measureArea(contentRect.width, contentRect.height));
+      observer.observe(area);
       return () => observer.disconnect();
     }
 
-    const updateScale = () => {
-      if (stageRef.current) {
-        const containerWidth = stageRef.current.offsetWidth - 40;
-        const containerHeight = stageRef.current.offsetHeight - 40;
-        const gridPixelSize = level.gridSize * 60;
-        const scaleW = containerWidth / gridPixelSize;
-        const scaleH = containerHeight / gridPixelSize;
-        setGridScale(Math.min(1, scaleW, scaleH));
-      }
-    };
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, [isProChallenge, level.gridSize]);
+    const padding = isProChallenge ? 24 : 32;
+    const onResize = () => measureArea(area.clientWidth - padding, area.clientHeight - padding);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [isProChallenge]);
 
   const abortController = useRef<AbortController | null>(null);
   const programListRef = useRef<HTMLDivElement>(null);
+  const speechTimer = useRef<number>();
+
+  const stopSpeech = () => {
+    window.clearTimeout(speechTimer.current);
+    audioService.stop();
+  };
+
+  const queueSpeech = (text: string, mood: 'instruction' | 'happy' | 'neutral') => {
+    if (isMuted) return;
+    stopSpeech();
+    speechTimer.current = window.setTimeout(() => audioService.speak(text, mood), 500);
+  };
+
+  const listenToHint = () => {
+    if (!hintText || isMuted) return;
+    stopSpeech();
+    audioService.speak(`Dica do Sparky. ${hintText}`, 'instruction');
+  };
+
+  const hint = hintText ? { text: hintText, onListen: listenToHint, isMuted } : undefined;
 
   useEffect(() => {
     audioService.setMute(isMuted);
+    if (isMuted) window.clearTimeout(speechTimer.current);
   }, [isMuted]);
 
   useEffect(() => {
     setProgram([]);
+    setFailedAttempts(0);
     resetGame();
     setActiveObstacles(level.obstacles);
     setScenarioIndex(0);
     if (level.mission && !isMuted) {
-      setTimeout(() => {
-        audioService.speak(
-          `${String(level.id).startsWith('custom') ? 'Missão Criada' : 'Missão ' + String(level.id)}: ${level.mission}.`,
-          'instruction',
-          () => setIsSpeaking(true),
-          () => setIsSpeaking(false)
-        );
-      }, 500); 
+      queueSpeech(`${String(level.id).startsWith('custom') ? 'Missão Criada' : 'Missão ' + String(level.id)}: ${level.mission}.`, 'instruction');
     }
     return () => {
-      if (isProChallenge) abortController.current?.abort();
-      audioService.stop();
+      abortController.current?.abort();
+      stopSpeech();
     };
   }, [levelId, customConfig]);
 
@@ -254,18 +309,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
 
   useEffect(() => {
     if (gameStatus === 'won') {
-       audioService.playSfx('success');
-       setTimeout(() => {
-           audioService.speak("Conseguimos! Você é incrível!", 'happy', () => setIsSpeaking(true), () => setIsSpeaking(false));
-       }, 500);
-       if (!isProChallenge) handleExplainLogic();
+      audioService.playSfx('success');
+      queueSpeech('Conseguimos! Você é incrível!', 'happy');
+      if (!isProChallenge) handleExplainLogic();
     } else if (gameStatus === 'lost') {
-       audioService.playSfx('error');
-       setTimeout(() => {
-           audioService.speak(isProChallenge ? 'Vamos revisar o código e testar outra vez?' : 'Ops, bati! Vamos tentar de novo?', 'neutral', () => setIsSpeaking(true), () => setIsSpeaking(false));
-       }, 500);
+      audioService.playSfx('error');
+      if (failedAttempts === 2 && hintText) {
+        queueSpeech(`Vamos por partes! ${hintText}`, 'instruction');
+      } else {
+        queueSpeech(isProChallenge || hintText ? 'Vamos revisar o código e testar outra vez?' : 'Ops, bati! Vamos tentar de novo?', 'neutral');
+      }
     }
   }, [gameStatus]);
+
+  const reportFailure = () => {
+    setFailedAttempts(attempts => attempts + 1);
+    setGameStatus('lost');
+  };
+
+  const reportSuccess = () => {
+    setFailedAttempts(0);
+    setGameStatus('won');
+    confetti({ particleCount: 150, spread: 70 });
+  };
 
   const resetGame = () => {
     if (abortController.current) abortController.current.abort();
@@ -275,7 +341,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     setIsPlaying(false);
     setCurrentBlockIndex(null);
     setLogicExplanation(null);
-    audioService.stop();
+    stopSpeech();
   };
 
   const clearWorkspace = () => {
@@ -366,13 +432,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
         if (controller.signal.aborted) return;
         if (failure) {
           setLogicExplanation(scenarios.length > 1 ? `${scenario.label}. ${failure}` : failure);
-          setGameStatus('lost');
+          reportFailure();
           return;
         }
       }
 
-      setGameStatus('won');
-      confetti({ particleCount: 150, spread: 70 });
+      reportSuccess();
     } finally {
       if (abortController.current === controller && !controller.signal.aborted) {
         setIsPlaying(false);
@@ -382,7 +447,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   };
 
   const runProgram = async () => {
-    if (program.length === 0 || isPlaying) return;
+    if (isPlaying) {
+      resetGame();
+      return;
+    }
+    if (program.length === 0) return;
     
     resetGame();
     setRobotState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' });
@@ -390,16 +459,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     setIsPlaying(true);
     audioService.playSfx('start');
 
-    abortController.current = new AbortController();
-    const signal = abortController.current.signal;
+    const controller = new AbortController();
+    abortController.current = controller;
+    const { signal } = controller;
 
     const STEP_DURATION = isHackerMode ? 350 : 800; 
     const PAINT_DURATION = isHackerMode ? 300 : 700;
 
-    const wait = (ms: number) => new Promise(resolve => {
-        if (signal.aborted) return;
-        setTimeout(resolve, ms);
-    });
+    const wait = (ms: number) => new Promise<void>(resolve => window.setTimeout(resolve, ms));
 
     let currentX = level.startPos.x;
     let currentY = level.startPos.y;
@@ -453,7 +520,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
             if (isObs) {
                 hasFailed = true;
                 await wait(100);
-                if (!signal.aborted) setGameStatus('lost');
+                if (!signal.aborted) reportFailure();
                 return;
             }
             
@@ -472,31 +539,24 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
             pc += getBlockSize(pc);
         }
         
-        if (!signal.aborted) {
+        if (!signal.aborted && !hasFailed) {
             await wait(500);
             if (signal.aborted) return;
 
-            if (hasFailed) {
-                setGameStatus('lost');
+            const isAtGoal = !level.goalPos || (currentX === level.goalPos.x && currentY === level.goalPos.y);
+            if (isAtGoal) {
+                reportSuccess();
             } else {
-                const isAtGoal = level.goalPos ? (currentX === level.goalPos.x && currentY === level.goalPos.y) : true;
-                const hasActuallyExecuted = program.length > 0;
-
-                if (isAtGoal && hasActuallyExecuted) {
-                    setGameStatus('won');
-                    confetti({ particleCount: 150, spread: 70 });
-                } else if (level.goalPos && !isAtGoal) {
-                    setGameStatus('lost');
-                } else {
-                    setGameStatus('idle');
-                }
+                reportFailure();
             }
         }
     } catch (e) { 
         console.error(e);
     } finally {
-        setIsPlaying(false);
-        setCurrentBlockIndex(null);
+        if (abortController.current === controller && !signal.aborted) {
+            setIsPlaying(false);
+            setCurrentBlockIndex(null);
+        }
     }
   };
 
@@ -511,7 +571,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
       <div className="w-full md:w-64 border-r flex flex-col z-10 shadow-lg shrink-0 bg-white h-[25vh] md:h-full overflow-hidden">
          <div className="p-4 border-b flex items-center justify-between bg-white shrink-0">
             <button onClick={onBack} className="flex items-center gap-1 font-bold text-indigo-600 hover:scale-105 transition-transform"><ArrowLeft size={18}/> {String(level.id).startsWith('custom') ? 'Oficina' : 'Mapa'}</button>
-            <button onClick={() => setIsMuted(!isMuted)} className="hover:scale-110 transition-transform">{isMuted ? <VolumeX className="text-red-500" /> : <Volume2 className="text-blue-500" />}</button>
+            <button
+              type="button"
+              onClick={() => setMutedByPlayer(muted => !muted)}
+              disabled={soundOffInSettings}
+              aria-label={soundOffInSettings ? 'Som desativado no Painel dos Pais' : isMuted ? 'Ativar som' : 'Silenciar som'}
+              className="hover:scale-110 transition-transform disabled:opacity-60"
+            >
+              {isMuted ? <VolumeX className="text-red-500" /> : <Volume2 className="text-blue-500" />}
+            </button>
          </div>
          <div className="flex-1 overflow-y-auto p-4 no-scrollbar bg-slate-50">
             {blocksByCategory.map(cat => (
@@ -530,7 +598,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
       </div>
 
       {/* Coluna 2: Palco do Robô (Grid Central) */}
-      <div ref={stageRef} className={`flex flex-col relative shrink-0 bg-slate-200 border-x border-slate-300 md:h-full overflow-hidden ${isProChallenge ? 'min-w-0 md:flex-1' : 'flex-1 h-[40vh]'}`}>
+      <div className={`flex min-w-0 flex-col relative shrink-0 bg-slate-200 border-x border-slate-300 md:h-full overflow-hidden ${isProChallenge ? 'md:flex-1' : 'flex-1 h-[40vh]'}`}>
           <div className="p-3 bg-white/90 border-b flex items-center justify-between backdrop-blur-sm z-20">
              {isProChallenge ? (
                <div className="flex items-start gap-2 pr-3">
@@ -569,16 +637,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
             </div>
           )}
 
-          <div ref={isProChallenge ? proBoardRef : undefined} className={`flex-1 relative overflow-hidden flex items-center justify-center p-4 ${isProChallenge ? 'min-h-[240px] md:min-h-0' : ''}`}>
+          <div ref={boardAreaRef} className={`flex-1 relative overflow-hidden flex items-center justify-center ${isProChallenge ? 'min-h-[240px] p-3 md:min-h-0' : 'min-h-0 p-4'}`}>
               <motion.div 
                 style={{ 
-                    width: level.gridSize * 60, 
-                    height: level.gridSize * 60, 
+                    width: gridPixels,
+                    height: gridPixels,
                     scale: gridScale,
                     backgroundSize: '60px 60px', 
                     backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)' 
                 }}
-                className={`relative shadow-2xl rounded-2xl overflow-hidden bg-white border-4 border-white transform origin-center ${isProChallenge ? 'shrink-0' : ''} ${gameStatus === 'lost' ? 'animate-shake ring-4 ring-red-400' : ''}`}
+                className={`relative shrink-0 shadow-2xl rounded-2xl overflow-hidden bg-white border-4 border-white transform origin-center ${gameStatus === 'lost' ? 'animate-shake ring-4 ring-red-400' : ''}`}
               >
                   {level.goalPos && <div className="absolute flex items-center justify-center animate-pulse" style={{ left: level.goalPos.x * 60, top: level.goalPos.y * 60, width: 60, height: 60 }}><div className="w-8 h-8 rounded-full border-4 border-green-400 bg-green-100" /></div>}
                   {activeObstacles.map((obs, i) => <div key={i} className="absolute rounded-xl bg-slate-700 border-b-4 border-slate-900" style={{ left: obs.x * 60 + 5, top: obs.y * 60 + 5, width: 50, height: 50 }} />)}
@@ -604,7 +672,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
 
               <button 
                 onClick={() => setShowSkinSelector(true)}
-                className={`absolute bg-white rounded-full shadow-2xl border-4 border-indigo-100 text-indigo-600 hover:scale-110 active:scale-95 transition-all z-30 group ${isProChallenge ? 'bottom-3 left-3 p-2' : 'bottom-6 left-6 p-4'}`}
+                className={`absolute bottom-3 left-3 bg-white p-2 rounded-full shadow-2xl border-4 border-indigo-100 text-indigo-600 hover:scale-110 active:scale-95 transition-all z-30 group ${isProChallenge ? '' : 'md:bottom-6 md:left-6 md:p-4'}`}
                 title="Trocar de Roupa"
               >
                 <Shirt size={32} />
@@ -620,10 +688,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                 blocksUsed={program.length}
                 onRetry={resetGame}
                 onNext={() => onNextLevel(program.length)}
-                explanation={logicExplanation}
+                explanation={gameStatus === 'won' || isProChallenge ? logicExplanation : null}
                 isAnalyzing={isAnalyzingLogic}
                 isProChallenge={isProChallenge}
                 isFinalChallenge={level.id === PRO_EXPANSION_LEVELS[PRO_EXPANSION_LEVELS.length - 1]?.id}
+                hint={gameStatus === 'lost' ? hint : undefined}
               />
             )}
           </AnimatePresence>
@@ -646,6 +715,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
             onDragOver={e => e.preventDefault()} 
             onDrop={handleDrop}
           >
+              {hint && gameStatus === 'idle' && (
+                <details className="mb-2 shrink-0 rounded-xl border border-amber-300 bg-amber-50 p-2 text-amber-900">
+                  <summary className="cursor-pointer px-1 py-1 text-sm font-bold">Rever dica do Sparky</summary>
+                  <SparkyHint {...hint} />
+                </details>
+              )}
               {program.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center opacity-30 text-center pointer-events-none mt-10">
                     <div className="p-4 bg-slate-200 rounded-full mb-4 animate-float">

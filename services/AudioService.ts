@@ -44,8 +44,8 @@ class SparkyAudioService {
       this.voice = voices.find(v => v.lang === 'pt-BR' && v.name.includes('Google')) 
                 || voices.find(v => v.lang === 'pt-BR' && v.name.includes('Natural'))
                 || voices.find(v => v.lang === 'pt-BR') 
-                || voices.find(v => v.lang.includes('pt'))
-                || voices[0];
+                || voices.find(v => /^pt(?:-|$)/i.test(v.lang))
+                || null;
     }
   }
 
@@ -194,6 +194,7 @@ class SparkyAudioService {
     if (!this.voicesLoaded) this.loadVoices();
 
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
     if (this.voice) utterance.voice = this.voice;
 
     let basePitch = 1.2; 
