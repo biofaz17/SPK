@@ -11,8 +11,10 @@ Aplicação React com APIs serverless para administração, checkout e geração
 1. Instale as dependências com `npm install`.
 2. Use [env-exemplo.txt](env-exemplo.txt) como guia para preencher `.env.local`. As chaves `ADMIN_PASSWORD`, `ADMIN_TOKEN_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN` e `GEMINI_API_KEY` são somente do servidor; não use prefixo `VITE_` nelas.
 3. Gere o segredo do token administrativo com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` e defina uma senha administrativa longa e única.
-4. Rode as funções e o app localmente com `npx vercel dev`.
-5. Aplique [supabase-rls.sql](supabase-rls.sql) no SQL Editor do Supabase depois de conferir a tabela `profiles` e os nomes de coluna.
+4. No SQL Editor do projeto Supabase, execute [supabase-rls.sql](supabase-rls.sql) sobre a tabela `profiles` existente. A migração vincula novos cadastros ao Supabase Auth e libera a leitura do perfil apenas para sua conta.
+5. Rode `npm run dev` para usar o app com login e cadastro. Para executar também as demais funções, rode `npx vercel dev`.
+
+Os exploradores entram com nome e senha. Perfis antigos ainda sem um usuário no Supabase Auth são vinculados no primeiro login com a senha já cadastrada. Cada explorador usa um endereço interno no Auth, então o mesmo e-mail de contato pode ser usado por vários perfis. O cadastro libera a entrada imediata e mantém o e-mail do responsável no perfil.
 
 O token do painel fica apenas na memória da página. O plano pago é alterado no servidor depois que o pagamento é consultado na API do Mercado Pago. Configure `APP_URL` para a URL pública da aplicação e cadastre `/api/payment-webhook` como endpoint de notificação.
 
@@ -22,7 +24,7 @@ Para testar o Checkout Pro via Orders API, aplique a migração [supabase-mercad
 
 ## Publicação no Cloudflare Workers
 
-O Worker serve o conteúdo de `dist`, encaminha rotas como `/auth` para a SPA e executa as funções de `api/` no mesmo endereço. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no ambiente de build ou no `.env.local` ao compilar pela máquina local. Essas duas variáveis são incorporadas ao JavaScript do navegador. Cadastre chaves privadas como secrets do Worker.
+O Worker serve o conteúdo de `dist`, encaminha rotas como `/auth` para a SPA e executa as funções de `api/` no mesmo endereço. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no ambiente de build ou no `.env.local` ao compilar pela máquina local. Essas duas variáveis são incorporadas ao JavaScript do navegador. Para habilitar login e cadastro no Worker publicado, aplique o SQL ao projeto e configure `SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` como variáveis do Worker e `SUPABASE_SERVICE_ROLE_KEY` como secret. Use o mesmo projeto Supabase no build e no Worker.
 
 Autentique o Wrangler com `npx --yes wrangler@4.147.0 login` usando a conta Cloudflare correta e publique com `npm run deploy:cloudflare`. O Wrangler informa o endereço `workers.dev` ao concluir. As rotas de pagamento ficam desativadas na configuração padrão do Worker. Para habilitá-las no Worker publicado, cadastre `MP_ACCESS_TOKEN` de produção e `SUPABASE_SERVICE_ROLE_KEY` como segredos. Defina `APP_URL` com o endereço HTTPS da publicação, `SUPABASE_URL` com a URL do projeto e `ENABLE_PRODUCTION_PAYMENTS` com o valor `true` nas variáveis do Worker.
 

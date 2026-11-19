@@ -1,27 +1,30 @@
 /// <reference types="vite/client" />
 
-import { SubscriptionTier, UserProfile } from '../types';
 import { createClient } from '@supabase/supabase-js';
+import { SubscriptionTier, UserProfile } from '../types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim();
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+const AUTH_STORAGE_KEY = 'sparky_auth_session';
+const LEGACY_SESSION_KEY = 'sparky_session_token';
+const TEST_SESSION_KEY = 'sparky_test_session';
 const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false },
+  auth: {
+    storage: sessionStorage,
+    storageKey: AUTH_STORAGE_KEY,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
 }) : null;
 
-const normalizeName = (value: string, maxLength = 32): string | null => {
-  const clean = value.trim().replace(/\s+/g, '_').toLowerCase();
-  if (!clean || clean.length > maxLength || !/^[a-z0-9_]+$/.test(clean)) return null;
-  return clean;
-};
+type Registration = { name: string; password: string; parentEmail: string; age: number };
+type AuthRequest = ({ action: 'login' } & Pick<Registration, 'name' | 'password'>)
+  | ({ action: 'register' } & Registration);
 
 class DataService {
-  private SESSION_KEY = 'sparky_session_token';
-
   private readonly TEST_USER: UserProfile | null = import.meta.env.DEV ? {
     id: 'testador_total',
     name: 'Testador Sparky',
-    password: 'teste123',
     parentEmail: 'teste@exemplo.com',
     age: 10,
     subscription: SubscriptionTier.PRO,
@@ -43,35 +46,61 @@ class DataService {
     termsAcceptedAt: new Date().toISOString(),
   } : null;
 
-  async login(name: string, password?: string): Promise<UserProfile | null> {
-    const normalizedName = normalizeName(name, 32);
-    if (!normalizedName) {
-      throw new Error('Nome de explorador inválido');
-    }
-    if (!password) {
-      throw new Error('Digite sua senha');
+  async login(name: string, password: string): Promise<UserProfile> {
+    if (this.TEST_USER && name.trim().toLowerCase() === 'teste' && password === 'teste123') {
+      sessionStorage.setItem(TEST_SESSION_KEY, this.TEST_USER.id);
+      return { ...this.TEST_USER };
     }
 
-    if (this.TEST_USER && normalizedName === 'teste' && password === this.TEST_USER.password) {
-      const profile = { ...this.TEST_USER };
-      sessionStorage.setItem(this.SESSION_KEY, profile.id);
+    return this.authenticate({ action: 'login', name, password });
+  }
+
+  async register(registration: Registration): Promise<UserProfile> {
+    return this.authenticate({ action: 'register', ...registration });
+  }
+
+  private async authenticate(request: AuthRequest): Promise<UserProfile> {
+    if (!supabase) throw new Error('Supabase não configurado.');
+
+    const response = await fetch('/api/explorer-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+      signal: AbortSignal.timeout(20000),
+    }).catch(() => {
+      throw new Error('Serviço de autenticação indisponível. Tente novamente.');
+    });
+
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(typeof result?.error === 'string'
+        ? result.error
+        : 'Serviço de autenticação indisponível. Tente novamente.');
+    }
+
+    if (typeof result?.access_token !== 'string' || typeof result?.refresh_token !== 'string') {
+      throw new Error('O serviço de autenticação retornou uma sessão inválida.');
+    }
+
+    const { data, error } = await supabase.auth.setSession({
+      access_token: result.access_token,
+      refresh_token: result.refresh_token,
+    });
+    if (error || !data.session) throw new Error('Não foi possível iniciar sua sessão. Tente novamente.');
+
+    try {
+      const profile = await this.loadProfile(data.session.user.id);
+      if (!profile) throw new Error('O perfil do explorador ainda não está vinculado à conta.');
+      sessionStorage.removeItem(TEST_SESSION_KEY);
       return profile;
+    } catch (error) {
+      await this.logout();
+      throw error;
     }
+  }
 
-    if (!supabase) throw new Error('Supabase não configurado');
-
-    const email = normalizedName === 'fabio'
-      ? 'fabio.gouvea.cabral@hotmail.com'
-      : null;
-    if (!email) {
-      throw new Error('Explorador ainda não migrado para o novo login.');
-    }
-
-    const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({ email, password });
-    if (authError || !authData.user) {
-      throw new Error('Nome ou senha incorretos.');
-    }
+  private async loadProfile(authUserId: string): Promise<UserProfile | null> {
+    if (!supabase) return null;
 
     const { data, error } = await supabase
       .from('profiles')
@@ -84,14 +113,17 @@ class DataService {
         active_skin,
         progress,
         settings,
-        last_active
+        last_active,
+        terms_accepted_version,
+        terms_accepted_at
       `)
-      .eq('auth_user_id', authData.user.id)
-      .single();
+      .eq('auth_user_id', authUserId)
+      .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) throw new Error('Não foi possível carregar o perfil do explorador. Tente novamente.');
+    if (!data) return null;
 
-    const profile: UserProfile = {
+    return {
       id: data.id,
       name: data.name,
       parentEmail: data.parent_email,
@@ -101,41 +133,14 @@ class DataService {
       progress: data.progress,
       settings: data.settings,
       lastActive: data.last_active ? new Date(data.last_active).getTime() : Date.now(),
+      termsAcceptedVersion: data.terms_accepted_version ?? undefined,
+      termsAcceptedAt: data.terms_accepted_at ?? undefined,
       isGuest: false,
     };
-
-    sessionStorage.setItem(this.SESSION_KEY, profile.id);
-    return profile;
-  }
-
-  async register(profile: UserProfile): Promise<void> {
-    if (!supabase) throw new Error('Supabase não configurado');
-
-    const { error } = await supabase
-      .from('profiles')
-      .insert([{
-        id: profile.id,
-        name: profile.name,
-        password: profile.password,
-        parent_email: profile.parentEmail,
-        age: profile.age,
-        subscription: profile.subscription,
-        active_skin: profile.activeSkin,
-        progress: profile.progress,
-        settings: profile.settings,
-        last_active: new Date().toISOString()
-      }]);
-
-    if (error) {
-        if (error.code === '23505') throw new Error("Este nome de explorador já existe!");
-        throw new Error("Erro ao criar conta no servidor.");
-    }
-
-    sessionStorage.setItem(this.SESSION_KEY, profile.id);
   }
 
   async syncProfile(profile: UserProfile): Promise<void> {
-    if (!supabase) return;
+    if (!supabase || (this.TEST_USER && sessionStorage.getItem(TEST_SESSION_KEY) === profile.id)) return;
 
     const { error } = await supabase
       .from('profiles')
@@ -143,25 +148,10 @@ class DataService {
         progress: profile.progress,
         settings: profile.settings,
         active_skin: profile.activeSkin,
-        last_active: new Date().toISOString()
+        last_active: new Date().toISOString(),
       })
       .eq('id', profile.id);
     if (error) throw error;
-  }
-
-  /**
-   * Obtém todos os perfis cadastrados (Admin only)
-   */
-  async getAllProfiles(): Promise<any[]> {
-    if (!supabase) return [];
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('last_active', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
   }
 
   async acceptTerms(userId: string, version: string): Promise<{ success: boolean; timestamp: string }> {
@@ -171,65 +161,50 @@ class DataService {
       const ipRes = await fetch('https://api.ipify.org?format=json');
       const ipData = await ipRes.json();
       userIp = ipData.ip;
-    } catch (e) {
-      console.warn("Não foi possível capturar o IP para o log legal.");
+    } catch {
+      console.warn('Não foi possível capturar o IP para o log legal.');
     }
 
-    if (!supabase) throw new Error('Supabase não configurado');
-
+    if (!supabase) throw new Error('Supabase não configurado.');
     const { error } = await supabase
       .from('profiles')
       .update({
         terms_accepted_version: version,
         terms_accepted_at: timestamp,
         terms_log: {
-            ip: userIp,
-            ua: navigator.userAgent,
-            version: version
-        }
+          ip: userIp,
+          ua: navigator.userAgent,
+          version,
+        },
       })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select('id')
+      .single();
 
     if (error) throw error;
     return { success: true, timestamp };
   }
 
   async checkSession(): Promise<UserProfile | null> {
-    const sessionId = sessionStorage.getItem(this.SESSION_KEY);
-    if (!sessionId) return null;
+    sessionStorage.removeItem(LEGACY_SESSION_KEY);
+    if (this.TEST_USER && sessionStorage.getItem(TEST_SESSION_KEY) === this.TEST_USER.id) {
+      return { ...this.TEST_USER };
+    }
     if (!supabase) return null;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', sessionId)
-      .single();
-
-    if (error || !data) return null;
-
-    return {
-        id: data.id,
-        name: data.name,
-        password: data.password,
-        parentEmail: data.parent_email,
-        age: data.age,
-        subscription: data.subscription,
-        activeSkin: data.active_skin,
-        progress: data.progress,
-        settings: data.settings,
-        lastActive: new Date(data.last_active).getTime(),
-        termsAcceptedVersion: data.terms_accepted_version,
-        termsAcceptedAt: data.terms_accepted_at
-    };
+    const { data: { session } } = await supabase.auth.getSession();
+    return session ? this.loadProfile(session.user.id) : null;
   }
 
-  logout() {
-    sessionStorage.removeItem(this.SESSION_KEY);
-  }
-
-  private generateId(name: string): string {
-    const safe = normalizeName(name, 32);
-    return safe || 'guest';
+  async logout(): Promise<void> {
+    sessionStorage.removeItem(TEST_SESSION_KEY);
+    try {
+      await supabase?.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      console.warn('Não foi possível encerrar a sessão no Supabase.', error);
+    } finally {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    }
   }
 }
 

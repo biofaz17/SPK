@@ -5,11 +5,12 @@ import adminData from './api/admin-data';
 import adminLogin from './api/admin-login';
 import adminPaymentAction from './api/admin-payment-action';
 import createCheckout from './api/create-checkout';
+import explorerAuth, { type ExplorerAuthEnvironment } from './api/explorer-auth';
 import gemini from './api/gemini';
 import paymentConfirm from './api/payment-confirm';
 import paymentWebhook from './api/payment-webhook';
 
-interface WorkerEnv extends PaymentEnvironment {
+interface WorkerEnv extends PaymentEnvironment, ExplorerAuthEnvironment {
   ASSETS: { fetch(request: Request): Promise<Response> };
   ENABLE_PRODUCTION_PAYMENTS?: string;
 }
@@ -21,6 +22,7 @@ const routes = new Map<string, { handler: ApiHandler; payment?: boolean }>([
   ['/api/admin-login', { handler: adminLogin }],
   ['/api/admin-payment-action', { handler: adminPaymentAction, payment: true }],
   ['/api/create-checkout', { handler: createCheckout, payment: true }],
+  ['/api/explorer-auth', { handler: explorerAuth }],
   ['/api/gemini', { handler: gemini }],
   ['/api/payment-confirm', { handler: paymentConfirm, payment: true }],
   ['/api/payment-webhook', { handler: paymentWebhook, payment: true }],

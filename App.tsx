@@ -252,8 +252,8 @@ export default function App() {
     audioService.playSfx('start');
   };
 
-  const handleLogout = () => {
-    dataService.logout();
+  const handleLogout = async () => {
+    await dataService.logout();
     setCheckoutIntent(null);
     setUser(null);
     setScreen(Screen.AUTH);

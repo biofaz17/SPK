@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { UserProfile, SubscriptionTier } from '../types';
-import { User, LogIn, UserPlus, KeyRound, Mail, Gamepad2, Loader2, Sparkles, ShieldAlert } from 'lucide-react';
+import { User, LogIn, UserPlus, KeyRound, Mail, Loader2, Sparkles } from 'lucide-react';
 import { SparkyLogo } from '../components/SparkyLogo';
 import { audioService } from '../services/AudioService';
 import { dataService } from '../services/DataService';
@@ -39,20 +39,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger,
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setErrorMsg('');
     setIsLoading(true);
 
     try {
       const user = await dataService.login(name, password);
-      if (user) {
-        audioService.playSfx('success');
-        onLogin(user);
-      } else {
-        setErrorMsg('Explorador não encontrado. Verifique o nome ou crie uma conta!');
-        audioService.playSfx('error');
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao entrar.');
+      audioService.playSfx('success');
+      onLogin(user);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Erro ao entrar.');
       audioService.playSfx('error');
     } finally {
       setIsLoading(false);
@@ -61,33 +57,26 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger,
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setErrorMsg('');
-    
-    if (name.length < 3) { setErrorMsg('Seu nome precisa de pelo menos 3 letras!'); return; }
-    if (password.length < 4) { setErrorMsg('Crie uma senha de pelo menos 4 caracteres.'); return; }
+
+    if (name.trim().length < 3) {
+      setErrorMsg('Seu nome precisa ter pelo menos 3 caracteres.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg('Crie uma senha de pelo menos 6 caracteres.');
+      return;
+    }
 
     setIsLoading(true);
 
-    const newUser: UserProfile = {
-      id: name.trim().toLowerCase().replace(/\s/g, '_'),
-      name: name.trim(),
-      password: password,
-      parentEmail: parentEmail,
-      age: parseInt(age) || 7,
-      subscription: SubscriptionTier.FREE, 
-      progress: { unlockedLevels: 1, stars: 0, creativeProjects: 0, totalBlocksUsed: 0, secretsFound: 0 },
-      settings: { soundEnabled: true, musicEnabled: true },
-      activeSkin: 'default',
-      isGuest: false,
-      lastActive: Date.now()
-    };
-
     try {
-      await dataService.register(newUser);
+      const newUser = await dataService.register({ name, password, parentEmail, age: Number(age) });
       audioService.playSfx('start');
       onLogin(newUser);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao criar conta.');
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Erro ao criar conta.');
     } finally {
       setIsLoading(false);
     }
@@ -133,12 +122,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger,
         )}
         <div className="flex bg-slate-100 p-1.5 rounded-[1.5rem] mb-8 border border-slate-200 shadow-inner">
             <button 
+                disabled={isLoading}
                 onClick={() => { setAuthMode('login'); setErrorMsg(''); }}
                 className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-800'}`}
             >
                 <LogIn size={18} /> ENTRAR
             </button>
             <button 
+                disabled={isLoading}
                 onClick={() => { setAuthMode('register'); setErrorMsg(''); }}
                 className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-800'}`}
             >
@@ -152,7 +143,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger,
             <div className="relative group">
                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={20} />
                <input 
-                 type="text" value={name} onChange={e => setName(e.target.value)}
+                 type="text" autoComplete="username" value={name} onChange={e => setName(e.target.value)}
                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition-all shadow-inner"
                  placeholder="Ex: Pedro123" required
                />
@@ -164,7 +155,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger,
             <div className="relative group">
                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={20} />
                <input 
-                 type="password" value={password} onChange={e => setPassword(e.target.value)}
+                 type="password" autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                 value={password} onChange={e => setPassword(e.target.value)}
                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pl-12 font-bold text-slate-700 focus:border-indigo-400 outline-none transition-all shadow-inner"
                  placeholder="Seu código de acesso" required
                />
@@ -201,7 +193,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger,
           </AnimatePresence>
 
           {errorMsg && (
-              <motion.div initial={{ x: -10 }} animate={{ x: [10, -10, 10, 0] }} className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-200 text-center">
+              <motion.div role="alert" initial={{ x: -10 }} animate={{ x: [10, -10, 10, 0] }} className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-200 text-center">
                   {errorMsg}
               </motion.div>
           )}
@@ -219,7 +211,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger,
             <button 
                 type="button"
                 onClick={onBackFromCheckout ?? handleGuestLogin}
-                disabled={Boolean(onBackFromCheckout) && isLoading}
+                disabled={isLoading}
                 className="w-full py-4 rounded-2xl border-2 border-slate-100 text-slate-500 font-bold text-sm hover:bg-slate-50 hover:border-indigo-200 transition-all flex items-center justify-center gap-2"
             >
                 {onBackFromCheckout ? 'Voltar sem comprar' : <><Sparkles size={18} className="text-yellow-400" /> JOGAR AGORA</>}

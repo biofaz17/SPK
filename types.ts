@@ -72,7 +72,6 @@ export interface UserSettings {
 export interface UserProfile {
   id: string;
   name: string;
-  password?: string;
   parentEmail: string;
   age: number;
   subscription: SubscriptionTier;
