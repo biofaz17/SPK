@@ -127,25 +127,30 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
             identification: { type: "CPF", number: safeDoc }
           }
         })
-      });
+      }).catch(() => null);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao comunicar com Mercado Pago');
+      if (!response || response.status === 502) {
+        throw new Error('Não foi possível conectar ao Mercado Pago. Tente novamente em instantes.');
       }
 
-      if (data.initPoint) {
-        window.location.href = data.initPoint;
-      } else {
-        throw new Error('Link de pagamento não gerado');
+      if (response.status === 503) {
+        throw new Error('O checkout está indisponível no momento. Tente novamente mais tarde.');
       }
 
-    } catch (error: any) {
-      console.error(error);
-      
-        setErrorMessage(error.message || 'Falha na conexão.');
-        setStatus('error');
+      if (response.status === 400) {
+        throw new Error('Confira os dados do titular do pagamento e tente novamente.');
+      }
+
+      if (!response.ok) throw new Error('Não foi possível iniciar o checkout.');
+
+      const data = await response.json().catch(() => null);
+      if (typeof data?.initPoint !== 'string' || !data.initPoint) {
+        throw new Error('Link de pagamento não gerado.');
+      }
+      window.location.href = data.initPoint;
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Falha na conexão.');
+      setStatus('error');
     }
   };
 

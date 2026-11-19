@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import type { PaidTier } from './_lib/payment';
+import type { PaidTier, PaymentEnvironment } from './_lib/payment';
 
 const prices: Record<PaidTier, number> = { STARTER: 19.99, PRO: 49.99 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse, env?: PaymentEnvironment) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { userId, tier, payer } = req.body || {};
@@ -16,8 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cpf = typeof payer.identification?.number === 'string' ? payer.identification.number.replace(/\D/g, '') : '';
   if (!/^\d{11}$/.test(cpf)) return res.status(400).json({ error: 'Invalid payer identification' });
 
-  const accessToken = process.env.MP_ACCESS_TOKEN;
-  const appUrl = (process.env.APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')).replace(/\/$/, '');
+  const { MP_ACCESS_TOKEN: accessToken, APP_URL, VERCEL_URL } = env ?? process.env;
+  const appUrl = (APP_URL || (VERCEL_URL ? `https://${VERCEL_URL}` : '')).replace(/\/$/, '');
   if (!accessToken || !appUrl) return res.status(503).json({ error: 'Checkout service is not configured' });
 
   const firstName = payer.name.trim().split(/\s+/)[0] || 'Responsável';
@@ -26,6 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(10000),
     body: JSON.stringify({
       items: [{ id: tier, title: `Sparky App - Plano ${tier} (Vitalício)`, quantity: 1, currency_id: 'BRL', unit_price: prices[tier as PaidTier] }],
       payer: { name: firstName, surname, email: payer.email, identification: { type: 'CPF', number: cpf } },
@@ -40,10 +41,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       statement_descriptor: 'SPARKY TI',
       payment_methods: { excluded_payment_types: [{ id: 'ticket' }], installments: 12 },
     }),
-  });
+  }).catch(() => null);
 
-  const result = await response.json();
-  if (!response.ok || typeof result.init_point !== 'string') {
+  if (!response?.ok) return res.status(502).json({ error: 'Unable to create checkout preference' });
+  const result = await response.json().catch(() => null);
+  if (typeof result?.init_point !== 'string' || !result.init_point) {
     return res.status(502).json({ error: 'Unable to create checkout preference' });
   }
   return res.status(200).json({ initPoint: result.init_point });

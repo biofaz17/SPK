@@ -2,6 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 
 export type PaidTier = 'STARTER' | 'PRO';
 
+export interface PaymentEnvironment {
+  MP_ACCESS_TOKEN?: string;
+  APP_URL?: string;
+  VERCEL_URL?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+}
+
 const prices: Record<PaidTier, number> = { STARTER: 19.99, PRO: 49.99 };
 
 function parseExternalReference(value: unknown): { userId: string; tier: PaidTier } | null {
@@ -15,14 +23,17 @@ function parseExternalReference(value: unknown): { userId: string; tier: PaidTie
   }
 }
 
-export async function confirmApprovedPayment(paymentId: string, expectedUserId?: string): Promise<PaidTier | null> {
-  const accessToken = process.env.MP_ACCESS_TOKEN;
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export async function confirmApprovedPayment(
+  paymentId: string,
+  expectedUserId?: string,
+  env: PaymentEnvironment | NodeJS.ProcessEnv = process.env,
+): Promise<PaidTier | null> {
+  const { MP_ACCESS_TOKEN: accessToken, SUPABASE_URL: supabaseUrl, SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey } = env;
   if (!accessToken || !supabaseUrl || !serviceRoleKey) throw new Error('Payment service is not configured');
 
   const paymentResponse = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(paymentId)}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(10000),
   });
   if (!paymentResponse.ok) throw new Error('Unable to verify payment');
 

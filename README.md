@@ -16,10 +16,12 @@ Aplicação React com APIs serverless para administração, checkout e geração
 
 O token do painel fica apenas na memória da página. O plano pago é alterado no servidor depois que o pagamento é consultado na API do Mercado Pago. Configure `APP_URL` para a URL pública da aplicação e cadastre `/api/payment-webhook` como endpoint de notificação.
 
+Para verificar o checkout pelo Cloudflare Workers local, use credenciais de teste do Mercado Pago no `.env.local` e rode `npm run dev:payments`. Configure `APP_URL` com o endereço HTTPS público que encaminha para o Worker local para receber o retorno do checkout e as notificações.
+
 ## Publicação no Cloudflare Workers
 
 O Worker serve o conteúdo de `dist`, encaminha rotas como `/auth` para a SPA e executa as funções de `api/` no mesmo endereço. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no ambiente de build ou no `.env.local` ao compilar pela máquina local. Essas duas variáveis são incorporadas ao JavaScript do navegador. Cadastre chaves privadas como secrets do Worker.
 
-Autentique o Wrangler com `npx --yes wrangler@4.147.0 login` usando a conta Cloudflare correta e publique com `npm run deploy:cloudflare`. O Wrangler informa o endereço `workers.dev` ao concluir. As rotas de pagamento ficam desativadas na configuração padrão do Worker.
+Autentique o Wrangler com `npx --yes wrangler@4.147.0 login` usando a conta Cloudflare correta e publique com `npm run deploy:cloudflare`. O Wrangler informa o endereço `workers.dev` ao concluir. As rotas de pagamento ficam desativadas na configuração padrão do Worker. Para habilitá-las no Worker publicado, cadastre `MP_ACCESS_TOKEN` de produção e `SUPABASE_SERVICE_ROLE_KEY` como segredos. Defina `APP_URL` com o endereço HTTPS da publicação, `SUPABASE_URL` com a URL do projeto e `ENABLE_PRODUCTION_PAYMENTS` com o valor `true` nas variáveis do Worker.
 
 Antes de publicar, substitua e revogue as credenciais antigas do Mercado Pago, Gemini e Supabase que já foram expostas no código ou no histórico do repositório.

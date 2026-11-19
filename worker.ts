@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import vercelConfig from './vercel.json' with { type: 'json' };
+import type { PaymentEnvironment } from './api/_lib/payment';
 import adminData from './api/admin-data';
 import adminLogin from './api/admin-login';
 import createCheckout from './api/create-checkout';
@@ -7,12 +8,12 @@ import gemini from './api/gemini';
 import paymentConfirm from './api/payment-confirm';
 import paymentWebhook from './api/payment-webhook';
 
-interface WorkerEnv {
+interface WorkerEnv extends PaymentEnvironment {
   ASSETS: { fetch(request: Request): Promise<Response> };
   ENABLE_PRODUCTION_PAYMENTS?: string;
 }
 
-type ApiHandler = (request: VercelRequest, response: VercelResponse) => unknown;
+type ApiHandler = (request: VercelRequest, response: VercelResponse, env: WorkerEnv) => unknown;
 
 const routes = new Map<string, { handler: ApiHandler; payment?: boolean }>([
   ['/api/admin-data', { handler: adminData }],
@@ -39,7 +40,9 @@ export default {
 
     const route = routes.get(url.pathname);
     if (!route) return Response.json({ error: 'Not found' }, { status: 404, headers });
-    if (route.payment && env.ENABLE_PRODUCTION_PAYMENTS !== 'true') {
+    const paymentsConfigured = env.ENABLE_PRODUCTION_PAYMENTS === 'true'
+      && env.MP_ACCESS_TOKEN && env.APP_URL && env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY;
+    if (route.payment && !paymentsConfigured) {
       return Response.json({ error: 'Checkout service is not configured' }, { status: 503, headers });
     }
 
@@ -82,7 +85,7 @@ export default {
     };
 
     try {
-      await route.handler(apiRequest, apiResponse as VercelResponse);
+      await route.handler(apiRequest, apiResponse as VercelResponse, env);
       if (response) return response;
     } catch {
       // Preserve a JSON response when an upstream integration is unavailable.
