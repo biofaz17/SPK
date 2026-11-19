@@ -152,6 +152,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
         throw new Error('Confira os dados do titular do pagamento e tente novamente.');
       }
 
+      if (response.status === 422) {
+        throw new Error('O perfil desta compra não foi encontrado. Entre em uma conta cadastrada para continuar.');
+      }
+
       if (!response.ok) throw new Error('Não foi possível iniciar o checkout.');
 
       const data = await response.json().catch(() => null);
@@ -186,7 +190,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
             <AlertTriangle size={40} className="text-red-600" />
          </div>
-         <h2 className="text-xl font-bold mb-2 text-red-800">Erro na Conexão</h2>
+         <h2 className="text-xl font-bold mb-2 text-red-800">Não foi possível iniciar o checkout</h2>
          <p className="text-red-700 text-sm max-w-md text-center mb-6 bg-red-100 p-3 rounded-lg border border-red-200">{errorMessage}</p>
          <button onClick={() => setStatus('idle')} className="bg-white border border-red-200 text-red-600 px-6 py-2 rounded-lg font-bold hover:bg-red-100 transition">
              Tentar Novamente

@@ -11,11 +11,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface AuthScreenProps {
   onLogin: (user: UserProfile) => void;
   onAdminTrigger?: () => void;
+  onBackFromCheckout?: () => void;
 }
 
 type AuthMode = 'login' | 'register';
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger }) => {
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger, onBackFromCheckout }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -125,6 +126,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger 
            </div>
         </div>
 
+        {onBackFromCheckout && (
+          <p role="status" className="mb-5 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-center text-sm text-indigo-900">
+            Entre ou crie uma conta para continuar a compra do plano selecionado.
+          </p>
+        )}
         <div className="flex bg-slate-100 p-1.5 rounded-[1.5rem] mb-8 border border-slate-200 shadow-inner">
             <button 
                 onClick={() => { setAuthMode('login'); setErrorMsg(''); }}
@@ -212,10 +218,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onAdminTrigger 
 
             <button 
                 type="button"
-                onClick={handleGuestLogin}
+                onClick={onBackFromCheckout ?? handleGuestLogin}
+                disabled={Boolean(onBackFromCheckout) && isLoading}
                 className="w-full py-4 rounded-2xl border-2 border-slate-100 text-slate-500 font-bold text-sm hover:bg-slate-50 hover:border-indigo-200 transition-all flex items-center justify-center gap-2"
             >
-                <Sparkles size={18} className="text-yellow-400" /> JOGAR AGORA
+                {onBackFromCheckout ? 'Voltar sem comprar' : <><Sparkles size={18} className="text-yellow-400" /> JOGAR AGORA</>}
             </button>
           </div>
         </form>

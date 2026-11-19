@@ -31,6 +31,13 @@ export function isCheckoutAttemptId(value: unknown): value is string {
   return typeof value === 'string' && /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(value);
 }
 
+export async function checkoutProfileExists(userId: string, supabaseUrl: string, serviceRoleKey: string): Promise<boolean> {
+  const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  const { data, error } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
 function orderStore(url: string, serviceRoleKey: string) {
   return createClient(url, serviceRoleKey, { auth: { persistSession: false } }).from(orderTable);
 }

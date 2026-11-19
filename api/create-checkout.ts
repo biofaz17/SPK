@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { randomUUID } from 'node:crypto';
 import { Order, Preference } from 'mercadopago';
 import {
-  createMercadoPagoConfig, isCheckoutAttemptId, isMercadoPagoOrderId, linkProviderOrder,
+  checkoutProfileExists, createMercadoPagoConfig, isCheckoutAttemptId, isMercadoPagoOrderId, linkProviderOrder,
   logPaymentFailure, paymentPrices, reserveOrder, type PaidTier, type PaymentEnvironment,
 } from './_lib/payment';
 
@@ -35,7 +35,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
 
   const { MP_ACCESS_TOKEN: accessToken, MP_CHECKOUT_API, APP_URL, VERCEL_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = env ?? process.env;
   const appUrl = (APP_URL || (VERCEL_URL ? `https://${VERCEL_URL}` : '')).replace(/\/$/, '');
-  if (!accessToken || !appUrl) return res.status(503).json({ error: 'Checkout service is not configured' });
+  if (!accessToken || !appUrl || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(503).json({ error: 'Checkout service is not configured' });
+  }
+
+  try {
+    const profileExists = await checkoutProfileExists(userId, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    if (!profileExists) return res.status(422).json({ error: 'A registered profile is required to checkout' });
+  } catch (error) {
+    logPaymentFailure('verify_checkout_profile', error);
+    return res.status(503).json({ error: 'Unable to verify checkout profile' });
+  }
 
   const names = payer.name.trim().split(/\s+/);
   const hasSeparateSurname = typeof payer.surname === 'string';
@@ -63,9 +73,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   let initPoint: string | undefined;
   try {
     if (MP_CHECKOUT_API === 'orders') {
-      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-        return res.status(503).json({ error: 'Order storage is not configured' });
-      }
       const reservation = await reserveOrder(
         userId, plan, checkoutAttemptId ?? randomUUID(), SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
       );

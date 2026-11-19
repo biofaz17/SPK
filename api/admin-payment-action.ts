@@ -16,11 +16,47 @@ const pendingOrProcessedRefunds = new Set(['processed', 'approved', 'processing'
 
 type MercadoPagoOrder = Awaited<ReturnType<Order['get']>>;
 
+type OrderAction =
+  | { action: 'cancel'; orderId: string }
+  | { action: 'refund'; orderId: string; refundMode: 'full' }
+  | { action: 'refund'; orderId: string; refundMode: 'partial'; refundCents: number; transactionId?: string };
+
 function amountInCents(value: unknown): number | null {
   if (typeof value !== 'string' || !/^(0|[1-9]\d*)(?:\.\d{1,2})?$/.test(value)) return null;
   const [whole, fractional = ''] = value.split('.');
   const cents = Number(whole) * 100 + Number(fractional.padEnd(2, '0'));
   return Number.isSafeInteger(cents) ? cents : null;
+}
+
+function parseOrderAction(payload: unknown): OrderAction | { error: string } {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { error: 'Expected an order action object' };
+  }
+  const { action, orderId, refundMode, amount, transactionId } = payload as Record<string, unknown>;
+  if ((action !== 'cancel' && action !== 'refund') || !isMercadoPagoOrderId(orderId)) {
+    return { error: 'Invalid order action' };
+  }
+
+  const permittedFields = ['action', 'orderId'];
+  if (action === 'refund') {
+    if (refundMode !== 'full' && refundMode !== 'partial') return { error: 'Invalid refund mode' };
+    permittedFields.push('refundMode');
+    if (refundMode === 'partial') permittedFields.push('amount', 'transactionId');
+  }
+  if (Object.keys(payload).some(field => !permittedFields.includes(field))) {
+    return { error: 'Unexpected order action field' };
+  }
+
+  if (action === 'cancel') return { action, orderId };
+  if (refundMode === 'full') return { action, orderId, refundMode };
+
+  const refundCents = amountInCents(amount);
+  if (refundCents === null || refundCents === 0) return { error: 'Invalid refund amount' };
+  const selectedTransactionId = typeof transactionId === 'string' ? transactionId : undefined;
+  if (transactionId !== undefined && (!selectedTransactionId || !paymentIdPattern.test(selectedTransactionId))) {
+    return { error: 'Invalid payment transaction ID' };
+  }
+  return { action, orderId, refundMode: 'partial', refundCents, transactionId: selectedTransactionId };
 }
 
 function refundablePayment(order: MercadoPagoOrder, transactionId?: string) {
@@ -60,21 +96,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
     : undefined;
   if (!isAdminTokenValid(adminToken)) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { action, orderId, amount, transactionId } = req.body ?? {};
+  const orderAction = parseOrderAction(req.body);
+  if ('error' in orderAction) return res.status(400).json(orderAction);
+  const { action, orderId } = orderAction;
   const idempotencyKey = req.headers['x-idempotency-key'];
-  if ((action !== 'cancel' && action !== 'refund') || !isMercadoPagoOrderId(orderId)) {
-    return res.status(400).json({ error: 'Invalid order action' });
-  }
   if (typeof idempotencyKey !== 'string' || !idempotencyKeyPattern.test(idempotencyKey) || idempotencyKey.includes(',')) {
     return res.status(400).json({ error: 'A single X-Idempotency-Key of up to 128 characters is required' });
-  }
-  const partialRefund = action === 'refund' && amount !== undefined;
-  const refundCents = partialRefund ? amountInCents(amount) : null;
-  if ((action === 'cancel' && amount !== undefined) || (partialRefund && (refundCents === null || refundCents === 0))) {
-    return res.status(400).json({ error: 'Invalid refund amount' });
-  }
-  if (transactionId !== undefined && (!partialRefund || typeof transactionId !== 'string' || !paymentIdPattern.test(transactionId))) {
-    return res.status(400).json({ error: 'Invalid payment transaction ID' });
   }
 
   const { MP_ACCESS_TOKEN: accessToken, SUPABASE_URL: supabaseUrl, SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey } = env ?? process.env;
@@ -96,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
 
     const requestOptions = { idempotencyKey };
     let updatedOrder: MercadoPagoOrder;
-    if (action === 'cancel') {
+    if (orderAction.action === 'cancel') {
       if (order.status !== 'created' || (amountInCents(order.total_paid_amount) ?? 0) > 0) {
         return res.status(409).json({ error: 'Only unpaid created orders can be canceled', status: order.status });
       }
@@ -110,7 +137,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
       }
 
       let body: { transactions: { id: string; amount: string }[] } | undefined;
-      if (partialRefund && refundCents !== null) {
+      if (orderAction.refundMode === 'partial') {
+        const { refundCents, transactionId } = orderAction;
         const payment = refundablePayment(order, transactionId);
         if (!payment?.id) return res.status(409).json({ error: 'No matching refundable payment transaction' });
         if (refundCents > paidCents || refundCents > availableRefundInCents(order, payment)) {

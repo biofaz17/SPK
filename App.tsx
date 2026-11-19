@@ -42,6 +42,7 @@ const CURRENT_TERMS_VERSION = "v1.0";
 type PaymentReference = { orderId: string } | { paymentId: string };
 type PaymentCheck = { status: PaymentStatus; reference?: PaymentReference };
 type UnpaidStatus = 'pending' | 'rejected' | 'cancelled';
+type CheckoutIntent = { tier: SubscriptionTier; returnScreen: Screen };
 const ORDER_ID_PATTERN = /^ORD(?:TST)?[0-9A-HJKMNP-TV-Z]{26}$/;
 const PAYMENT_CALLBACK_PARAMETERS = [
   'order_id', 'payment_id', 'collection_id', 'collection_status', 'status', 'status_detail',
@@ -107,8 +108,9 @@ export default function App() {
   const [customLevel, setCustomLevel] = useState<LevelConfig | null>(null);
   const [showParentGate, setShowParentGate] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [gateAction, setGateAction] = useState(''); 
+  const [gateAction, setGateAction] = useState<'upgrade' | 'parents_area' | 'resume_checkout'>('parents_area');
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
+  const [checkoutIntent, setCheckoutIntent] = useState<CheckoutIntent | null>(null);
   const [adminToken, setAdminToken] = useState<string | null>(null);
   const [paymentCheck, setPaymentCheck] = useState<PaymentCheck | null>(null);
 
@@ -151,6 +153,10 @@ export default function App() {
 
   const continueWithProfile = useCallback((profile: UserProfile) => {
     setUser(profile);
+    if (profile.isGuest) {
+      setScreen(Screen.HUB);
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
     const callbackOrderId = params.get('order_id');
     const orderId = callbackOrderId && ORDER_ID_PATTERN.test(callbackOrderId)
@@ -228,6 +234,16 @@ export default function App() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (screen !== Screen.HUB || !user || user.isGuest || !checkoutIntent) return;
+    if (user.subscription === SubscriptionTier.PRO || user.subscription === checkoutIntent.tier) {
+      setCheckoutIntent(null);
+      return;
+    }
+    setGateAction('resume_checkout');
+    setShowParentGate(true);
+  }, [screen, user, checkoutIntent]);
+
   const handleLogin = (profile: UserProfile) => {
     continueWithProfile(profile);
     audioService.playSfx('start');
@@ -235,10 +251,40 @@ export default function App() {
 
   const handleLogout = () => {
     dataService.logout();
+    setCheckoutIntent(null);
     setUser(null);
     setScreen(Screen.AUTH);
     window.location.hash = ''; 
     audioService.playSfx('delete');
+  };
+
+  const startCheckout = (tier: SubscriptionTier) => {
+    if (!user || tier === SubscriptionTier.FREE) return;
+    setShowSubscriptionModal(false);
+    if (user.isGuest) {
+      setCheckoutIntent({ tier, returnScreen: screen });
+      setScreen(Screen.AUTH);
+      return;
+    }
+    setPendingSubscriptionTier(tier);
+    setScreen(Screen.CHECKOUT);
+  };
+
+  const handleParentGateSuccess = () => {
+    setShowParentGate(false);
+    if (gateAction === 'parents_area') {
+      setScreen(Screen.PARENTS);
+    } else if (gateAction === 'upgrade') {
+      setShowSubscriptionModal(true);
+    } else if (checkoutIntent && user && !user.isGuest) {
+      setCheckoutIntent(null);
+      startCheckout(checkoutIntent.tier);
+    }
+  };
+
+  const handleParentGateCancel = () => {
+    setShowParentGate(false);
+    if (gateAction === 'resume_checkout') setCheckoutIntent(null);
   };
 
   const canPlayLevel = (id: string | number) =>
@@ -315,7 +361,16 @@ export default function App() {
     return <AdminDashboard token={adminToken || ''} onExit={() => { setAdminToken(null); window.location.hash = ''; setScreen(Screen.AUTH); }} />;
   }
 
-  if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} onAdminTrigger={() => setScreen(Screen.ADMIN_LOGIN)} />;
+  if (screen === Screen.AUTH) {
+    return <AuthScreen
+      onLogin={handleLogin}
+      onAdminTrigger={() => setScreen(Screen.ADMIN_LOGIN)}
+      onBackFromCheckout={checkoutIntent && user?.isGuest ? () => {
+        setScreen(checkoutIntent.returnScreen);
+        setCheckoutIntent(null);
+      } : undefined}
+    />;
+  }
   if (!user) return null; 
   if (screen === Screen.PAYMENT_STATUS && paymentCheck) {
     const { status, reference } = paymentCheck;
@@ -407,7 +462,7 @@ export default function App() {
          <ParentPanel user={user} onUpdateUser={setUser} onLogout={handleLogout} onBack={() => setScreen(Screen.HUB)} onRequestUpgrade={() => { setScreen(Screen.DASHBOARD); setTimeout(() => setShowSubscriptionModal(true), 100); }} />
       )}
 
-      {screen === Screen.CHECKOUT && pendingSubscriptionTier && (
+      {screen === Screen.CHECKOUT && pendingSubscriptionTier && !user.isGuest && (
         <CheckoutScreen
           user={user}
           tier={pendingSubscriptionTier}
@@ -422,8 +477,14 @@ export default function App() {
          <TermsScreen userId={user.id} onAccept={(v, t) => { setUser({ ...user, termsAcceptedVersion: v, termsAcceptedAt: t }); setScreen(Screen.HUB); }} onReject={handleLogout} />
       )}
 
-      {showParentGate && <ParentGate action={gateAction === 'upgrade' ? 'fazer compras e liberar novos mundos' : 'acessar área dos pais'} onSuccess={() => { setShowParentGate(false); if (gateAction === 'upgrade') setShowSubscriptionModal(true); else setScreen(Screen.PARENTS); }} onCancel={() => setShowParentGate(false)} />}
-      {showSubscriptionModal && <SubscriptionModal onCheckoutStart={(tier) => { setPendingSubscriptionTier(tier); setShowSubscriptionModal(false); setScreen(Screen.CHECKOUT); }} onClose={() => setShowSubscriptionModal(false)} />}
+      {showParentGate && (
+        <ParentGate
+          action={gateAction === 'parents_area' ? 'acessar área dos pais' : 'fazer compras e liberar novos mundos'}
+          onSuccess={handleParentGateSuccess}
+          onCancel={handleParentGateCancel}
+        />
+      )}
+      {showSubscriptionModal && <SubscriptionModal onCheckoutStart={startCheckout} onClose={() => setShowSubscriptionModal(false)} />}
     </div>
   );
 }
