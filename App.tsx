@@ -139,6 +139,9 @@ export default function App() {
       }
 
       const status = response.status === 409 ? readUnpaidStatus(result?.status) : undefined;
+      if (status === 'pending' && 'orderId' in reference && readCheckoutOrder(profile.id) !== reference.orderId) {
+        rememberCheckoutOrder(profile.id, reference.orderId);
+      }
       if (status === 'rejected' || status === 'cancelled') {
         if ('orderId' in reference && readCheckoutOrder(profile.id) === reference.orderId) {
           rememberCheckoutOrder(profile.id);
@@ -378,7 +381,9 @@ export default function App() {
       status={status}
       onRetry={reference ? () => { void confirmPayment(user, reference); } : undefined}
       onContinue={() => {
-        clearPaymentReturn();
+        const keepOrderReturn = (status === 'pending' || status === 'unavailable')
+          && reference && 'orderId' in reference && readCheckoutOrder(user.id) !== reference.orderId;
+        if (!keepOrderReturn) clearPaymentReturn();
         setPaymentCheck(null);
         setScreen(getProfileScreen(user));
       }}
