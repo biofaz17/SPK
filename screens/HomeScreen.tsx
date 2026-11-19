@@ -88,7 +88,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onStart }) => {
 
            <div className="flex items-center gap-1 text-slate-300">
              <ShieldCheck size={12} />
-             <span>CNPJ 14.773.860/0001-72</span>
+             <span>CNPJ 69.748.125/0001-09</span>
            </div>
            
            <span className="hidden md:inline opacity-30 text-white">|</span>

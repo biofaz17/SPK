@@ -216,7 +216,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
                   <div>
                       <div className="flex items-center gap-2 text-xs text-slate-500 mb-1"><Building2 size={14} /> Vendido por</div>
                       <div className="font-bold text-sm text-slate-700">TekTok TI</div>
-                      <div className="text-[10px] text-slate-500">CNPJ: 14.773.860/0001-72</div>
+                      <div className="text-[10px] text-slate-500">CNPJ: 69.748.125/0001-09</div>
                       <a 
                         href="mailto:robotix28@gmail.com?subject=Dúvida%20Pagamento" 
                         className="text-[10px] text-blue-500 font-bold hover:underline mt-1 flex items-center gap-1"

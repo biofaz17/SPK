@@ -174,7 +174,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
              <span>@sparky.aventura</span>
            </a>
            <span className="hidden md:inline text-slate-700">|</span>
-           <div className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-blue-500" /><span>CNPJ 14.773.860/0001-72</span></div>
+           <div className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-blue-500" /><span>CNPJ 69.748.125/0001-09</span></div>
            <span className="hidden md:inline text-slate-700">|</span>
            <a href="mailto:robotix28@gmail.com?subject=Suporte%20Sparky" className="flex items-center gap-1.5 hover:text-white transition cursor-pointer">
              <Mail size={14} className="text-indigo-400" />
