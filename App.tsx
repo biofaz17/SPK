@@ -8,6 +8,7 @@ import { Dashboard } from './screens/Dashboard';
 import { ParentPanel } from './screens/ParentPanel';
 import { CheckoutScreen } from './screens/CheckoutScreen';
 import { PaymentSuccessScreen } from './screens/PaymentSuccessScreen';
+import { PaymentStatusScreen, type PaymentStatus } from './screens/PaymentStatusScreen';
 import { TermsScreen } from './screens/TermsScreen';
 import { MathGameScreen } from './screens/MathGameScreen';
 import { WordsGameScreen } from './screens/WordsGameScreen';
@@ -32,11 +33,70 @@ import { dataService } from './services/DataService';
 enum Screen {
   AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
   SCIENCE_GAME, MEMORY_GAME, RHYTHM_GAME, GEOMETRY_GAME, 
-  LOGIC_GAME, CODE_GAME, CREATIVE_WORKSHOP, PARENTS, CHECKOUT, PAYMENT_SUCCESS, TERMS,
+  LOGIC_GAME, CODE_GAME, CREATIVE_WORKSHOP, PARENTS, CHECKOUT, PAYMENT_STATUS, PAYMENT_SUCCESS, TERMS,
   ADMIN_LOGIN, ADMIN_DASHBOARD
 }
 
 const CURRENT_TERMS_VERSION = "v1.0";
+
+type PaymentReference = { orderId: string } | { paymentId: string };
+type PaymentCheck = { status: PaymentStatus; reference?: PaymentReference };
+type UnpaidStatus = 'pending' | 'rejected' | 'cancelled';
+const ORDER_ID_PATTERN = /^ORD(?:TST)?[0-9A-HJKMNP-TV-Z]{26}$/;
+const PAYMENT_CALLBACK_PARAMETERS = [
+  'order_id', 'payment_id', 'collection_id', 'collection_status', 'status', 'status_detail',
+  'external_reference', 'payment_type', 'merchant_order_id', 'preference_id', 'site_id',
+  'processing_mode', 'merchant_account_id',
+];
+const ORDER_STORAGE_DURATION = 7 * 24 * 60 * 60 * 1000;
+
+const orderStorageKey = (userId: string) => 'sparky_checkout_order:' + userId;
+
+function readCheckoutOrder(userId: string): string | null {
+  try {
+    const key = orderStorageKey(userId);
+    const saved = JSON.parse(sessionStorage.getItem(key) ?? 'null');
+    if (saved && typeof saved.orderId === 'string' && ORDER_ID_PATTERN.test(saved.orderId)
+      && typeof saved.expiresAt === 'number' && saved.expiresAt > Date.now()) {
+      return saved.orderId;
+    }
+    sessionStorage.removeItem(key);
+  } catch {
+    // Checkout can still use the information in the return URL.
+  }
+  return null;
+}
+
+function rememberCheckoutOrder(userId: string, orderId?: string) {
+  try {
+    const key = orderStorageKey(userId);
+    if (orderId && ORDER_ID_PATTERN.test(orderId)) {
+      sessionStorage.setItem(key, JSON.stringify({ orderId, expiresAt: Date.now() + ORDER_STORAGE_DURATION }));
+    } else {
+      sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Checkout can still use the information in the return URL.
+  }
+}
+
+function clearPaymentReturn() {
+  const url = new URL(window.location.href);
+  for (const key of PAYMENT_CALLBACK_PARAMETERS) url.searchParams.delete(key);
+  if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
+}
+
+function readUnpaidStatus(value: unknown): UnpaidStatus | undefined {
+  if (value === 'pending' || value === 'in_process') return 'pending';
+  if (value === 'rejected' || value === 'failure') return 'rejected';
+  if (value === 'cancelled' || value === 'canceled') return 'cancelled';
+}
+
+function getProfileScreen(profile: UserProfile) {
+  return profile.subscription !== SubscriptionTier.FREE && profile.termsAcceptedVersion !== CURRENT_TERMS_VERSION
+    ? Screen.TERMS
+    : Screen.HUB;
+}
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>(Screen.AUTH);
@@ -50,6 +110,68 @@ export default function App() {
   const [gateAction, setGateAction] = useState(''); 
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
   const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [paymentCheck, setPaymentCheck] = useState<PaymentCheck | null>(null);
+
+  const confirmPayment = useCallback(async (profile: UserProfile, reference: PaymentReference) => {
+    setPaymentCheck({ status: 'checking', reference });
+    setScreen(Screen.PAYMENT_STATUS);
+    try {
+      const response = await fetch('/api/payment-confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...reference, userId: profile.id }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const result = await response.json().catch(() => null);
+      const subscription = result?.subscription;
+      if (response.ok && (subscription === SubscriptionTier.STARTER || subscription === SubscriptionTier.PRO)
+        && (!('orderId' in reference) || result?.status === 'approved')) {
+        if ('orderId' in reference && readCheckoutOrder(profile.id) === reference.orderId) {
+          rememberCheckoutOrder(profile.id);
+        }
+        clearPaymentReturn();
+        setUser(current => current?.id === profile.id ? { ...current, subscription } : current);
+        setPaymentCheck(null);
+        setScreen(current => current === Screen.PAYMENT_STATUS ? Screen.PAYMENT_SUCCESS : current);
+        return;
+      }
+
+      const status = response.status === 409 ? readUnpaidStatus(result?.status) : undefined;
+      if (status === 'rejected' || status === 'cancelled') {
+        if ('orderId' in reference && readCheckoutOrder(profile.id) === reference.orderId) {
+          rememberCheckoutOrder(profile.id);
+        }
+        clearPaymentReturn();
+      }
+      setPaymentCheck({ status: status ?? 'unavailable', reference });
+    } catch {
+      setPaymentCheck({ status: 'unavailable', reference });
+    }
+  }, []);
+
+  const continueWithProfile = useCallback((profile: UserProfile) => {
+    setUser(profile);
+    const params = new URLSearchParams(window.location.search);
+    const callbackOrderId = params.get('order_id');
+    const orderId = callbackOrderId && ORDER_ID_PATTERN.test(callbackOrderId)
+      ? callbackOrderId
+      : readCheckoutOrder(profile.id);
+    const paymentId = [params.get('payment_id'), params.get('collection_id')]
+      .find(value => value !== null && /^\d+$/.test(value));
+    const reference = orderId ? { orderId } : paymentId ? { paymentId } : undefined;
+    if (reference) {
+      void confirmPayment(profile, reference);
+      return;
+    }
+
+    const status = readUnpaidStatus(params.get('collection_status')) ?? readUnpaidStatus(params.get('status'));
+    if (status) {
+      setPaymentCheck({ status });
+      setScreen(Screen.PAYMENT_STATUS);
+      return;
+    }
+    setScreen(getProfileScreen(profile));
+  }, [confirmPayment]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -69,6 +191,7 @@ export default function App() {
   }, [screen]);
 
   useEffect(() => {
+    let cancelled = false;
     const init = async () => {
       try {
         if (window.location.hash === '#/admin') {
@@ -78,39 +201,16 @@ export default function App() {
         }
 
         const sessionUser = await dataService.checkSession();
-        if (sessionUser) {
-          const params = new URLSearchParams(window.location.search);
-          const paymentId = params.get('payment_id') || params.get('collection_id');
-          const paymentStatus = params.get('collection_status') || params.get('status');
-          if (paymentId && paymentStatus === 'approved') {
-            const response = await fetch('/api/payment-confirm', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, userId: sessionUser.id }),
-            });
-            if (response.ok) {
-              const { subscription } = await response.json();
-              window.history.replaceState({}, document.title, window.location.pathname);
-              setUser({ ...sessionUser, subscription });
-              setScreen(Screen.PAYMENT_SUCCESS);
-              return;
-            }
-          }
-          setUser(sessionUser);
-          if (sessionUser.subscription !== SubscriptionTier.FREE && sessionUser.termsAcceptedVersion !== CURRENT_TERMS_VERSION) {
-              setScreen(Screen.TERMS);
-          } else {
-              setScreen(Screen.HUB);
-          }
-        }
+        if (sessionUser && !cancelled) continueWithProfile(sessionUser);
       } catch (e) {
         console.error("Falha na inicialização", e);
       } finally {
-        setIsInitializing(false);
+        if (!cancelled) setIsInitializing(false);
       }
     };
-    init();
-  }, []);
+    void init();
+    return () => { cancelled = true; };
+  }, [continueWithProfile]);
 
   useEffect(() => {
     if (user && !user.isGuest) {
@@ -129,12 +229,7 @@ export default function App() {
   }, [user]);
 
   const handleLogin = (profile: UserProfile) => {
-    setUser(profile);
-    if (profile.subscription !== SubscriptionTier.FREE && profile.termsAcceptedVersion !== CURRENT_TERMS_VERSION) {
-        setScreen(Screen.TERMS);
-    } else {
-        setScreen(Screen.HUB);
-    }
+    continueWithProfile(profile);
     audioService.playSfx('start');
   };
 
@@ -222,6 +317,18 @@ export default function App() {
 
   if (screen === Screen.AUTH) return <AuthScreen onLogin={handleLogin} onAdminTrigger={() => setScreen(Screen.ADMIN_LOGIN)} />;
   if (!user) return null; 
+  if (screen === Screen.PAYMENT_STATUS && paymentCheck) {
+    const { status, reference } = paymentCheck;
+    return <PaymentStatusScreen
+      status={status}
+      onRetry={reference ? () => { void confirmPayment(user, reference); } : undefined}
+      onContinue={() => {
+        clearPaymentReturn();
+        setPaymentCheck(null);
+        setScreen(getProfileScreen(user));
+      }}
+    />;
+  }
 
   const canPlayCurrentLevel = canPlayLevel(currentLevelId);
 
@@ -301,7 +408,12 @@ export default function App() {
       )}
 
       {screen === Screen.CHECKOUT && pendingSubscriptionTier && (
-        <CheckoutScreen user={user} tier={pendingSubscriptionTier} onCancel={() => setScreen(Screen.DASHBOARD)} />
+        <CheckoutScreen
+          user={user}
+          tier={pendingSubscriptionTier}
+          onCancel={() => setScreen(Screen.DASHBOARD)}
+          onCheckoutCreated={orderId => rememberCheckoutOrder(user.id, orderId)}
+        />
       )}
 
       {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.TERMS)} />}

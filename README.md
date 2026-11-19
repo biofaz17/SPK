@@ -18,6 +18,8 @@ O token do painel fica apenas na memória da página. O plano pago é alterado n
 
 Para verificar o checkout pelo Cloudflare Workers local, use credenciais de teste do Mercado Pago no `.env.local` e rode `npm run dev:payments`. Configure `APP_URL` com o endereço HTTPS público que encaminha para o Worker local para receber o retorno do checkout e as notificações.
 
+Para testar o Checkout Pro via Orders API, aplique a migração [supabase-mercado-pago-orders.sql](supabase-mercado-pago-orders.sql) no banco do ambiente e defina `MP_CHECKOUT_API=orders` no servidor. Configure o evento **Order (Mercado Pago)** para `<APP_URL>/api/payment-webhook`. A opção padrão é `preferences`. Consulte o [manual de implementação e testes](docs/mercado-pago.md).
+
 ## Publicação no Cloudflare Workers
 
 O Worker serve o conteúdo de `dist`, encaminha rotas como `/auth` para a SPA e executa as funções de `api/` no mesmo endereço. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no ambiente de build ou no `.env.local` ao compilar pela máquina local. Essas duas variáveis são incorporadas ao JavaScript do navegador. Cadastre chaves privadas como secrets do Worker.

@@ -17,6 +17,7 @@
     "canvas-confetti": "1.6.0",
     "framer-motion": "10.16.4",
     "lucide-react": "0.292.0",
+    "mercadopago": "3.6.2",
     "react": "^18.2.3",
     "react-dom": "^18.2.3",
     "react-hot-toast": "2.4.1"

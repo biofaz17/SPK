@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SubscriptionTier, UserProfile } from '../types';
 import { PLANS } from '../constants';
 import { ArrowLeft, Loader2, Lock, CheckCircle, Store, AlertTriangle, User, Mail, FileText, ArrowRight, ShieldCheck, Building2 } from 'lucide-react';
@@ -8,6 +8,7 @@ interface CheckoutScreenProps {
   user: UserProfile;
   tier: SubscriptionTier;
   onCancel: () => void;
+  onCheckoutCreated?: (orderId?: string) => void;
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'error';
@@ -38,13 +39,15 @@ const isValidCPF = (cpf: string) => {
     return true;
 };
 
-export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCancel }) => {
+export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCancel, onCheckoutCreated }) => {
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   
   // Data Collection State
-  const [payerName, setPayerName] = useState(''); 
+  const [payerName, setPayerName] = useState('');
+  const [payerSurname, setPayerSurname] = useState('');
   const [payerEmail, setPayerEmail] = useState(user.parentEmail || '');
+  const [payerPhone, setPayerPhone] = useState('');
   const [payerDoc, setPayerDoc] = useState('');
   const [docError, setDocError] = useState('');
 
@@ -52,7 +55,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
   const [needsDataCollection, setNeedsDataCollection] = useState(true);
 
   // Rate Limiting State
-  const [lastRequestTime, setLastRequestTime] = useState(0);
+  const lastRequestTime = useRef(0);
+  const checkoutAttemptId = useRef<string | null>(null);
 
   // Get plan details
   const plan = PLANS[tier] || PLANS[SubscriptionTier.STARTER];
@@ -67,6 +71,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
         setPayerEmail(user.parentEmail);
     }
   }, [user]);
+
+  useEffect(() => {
+    checkoutAttemptId.current = null;
+  }, [user.id, tier, payerName, payerSurname, payerEmail, payerPhone, payerDoc]);
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
@@ -98,18 +106,18 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
   const handleGoToPayment = async () => {
     // SECURITY: Client-side Rate Limiting (Simple Cooldown)
     const now = Date.now();
-    if (now - lastRequestTime < 2000) {
+    if (now - lastRequestTime.current < 2000) {
         // Prevent clicking faster than 2 seconds
         return; 
     }
-    setLastRequestTime(now);
+    lastRequestTime.current = now;
 
     setStatus('loading');
     setErrorMessage('');
     
     try {
+      checkoutAttemptId.current ??= crypto.randomUUID();
       // SECURITY: Input Sanitization before sending payload
-      const safeName = sanitizeInput(payerName);
       const safeEmail = sanitizeInput(payerEmail);
       const safeDoc = payerDoc.replace(/\D/g, ''); // Numeric only for CPF
 
@@ -121,9 +129,12 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
         body: JSON.stringify({
           userId: user.id,
           tier,
+          checkoutAttemptId: checkoutAttemptId.current,
           payer: {
-            name: safeName,
+            name: payerName.trim(),
+            surname: payerSurname.trim(),
             email: safeEmail,
+            ...(payerPhone ? { phone: payerPhone } : {}),
             identification: { type: "CPF", number: safeDoc }
           }
         })
@@ -147,6 +158,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
       if (typeof data?.initPoint !== 'string' || !data.initPoint) {
         throw new Error('Link de pagamento não gerado.');
       }
+      onCheckoutCreated?.(typeof data.orderId === 'string' ? data.orderId : undefined);
       window.location.href = data.initPoint;
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Falha na conexão.');
@@ -163,18 +175,12 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
             <Loader2 size={48} className="text-[#009EE3]" />
          </div>
          <h2 className="text-xl font-bold mb-2">Conectando ao Mercado Pago...</h2>
-         <p className="text-slate-500 text-sm max-w-xs text-center">Você será redirecionado para um ambiente seguro.</p>
-         
-         {errorMessage && (
-             <p className="mt-4 text-xs text-green-600 font-bold bg-green-50 p-2 rounded">
-                 {errorMessage} <br/> Ativando plano automaticamente...
-             </p>
-         )}
+         <p className="text-slate-500 text-sm max-w-xs text-center">Você será redirecionado para o Mercado Pago.</p>
       </div>
     );
   }
 
-  if (status === 'error' && !errorMessage.includes('Modo Simulação')) {
+  if (status === 'error') {
      return (
       <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center p-4 font-sans text-slate-800">
          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
@@ -216,7 +222,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
               <div className="flex flex-col gap-3">
                   <div>
                       <div className="flex items-center gap-2 text-xs text-slate-500 mb-1"><Store size={14} /> Processado por</div>
-                      <div className="font-bold text-sm text-slate-700">Mercado Pago</div>
+                      <img src="/assets/mercado-pago.svg" alt="Mercado Pago" className="mt-1 h-7 w-auto max-w-full" />
                   </div>
                   <div>
                       <div className="flex items-center gap-2 text-xs text-slate-500 mb-1"><Building2 size={14} /> Vendido por</div>
@@ -247,18 +253,32 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
                 
                 <form onSubmit={validateAndProceed} className="space-y-4 flex-1">
                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo (Adulto)</label>
+                      <label htmlFor="checkout-payer-name" className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do titular</label>
                       <div className="relative">
                          <User className="absolute left-3 top-3 text-slate-400" size={18} />
-                         <input 
-                            type="text" 
-                            required 
-                            value={payerName} 
-                            onChange={e => setPayerName(sanitizeInput(e.target.value))} 
-                            className="w-full border-2 border-slate-200 rounded-xl p-2.5 pl-10 outline-none focus:border-[#009EE3]" 
-                            placeholder="Nome do titular do cartão/conta" 
+                         <input
+                            id="checkout-payer-name"
+                            type="text"
+                            autoComplete="given-name"
+                            required
+                            pattern=".*\S.*"
+                            value={payerName}
+                            onChange={e => setPayerName(e.target.value)}
+                            className="w-full border-2 border-slate-200 rounded-xl p-2.5 pl-10 outline-none focus:border-[#009EE3]"
                          />
                       </div>
+                   </div>
+
+                   <div>
+                      <label htmlFor="checkout-payer-surname" className="block text-xs font-bold text-slate-500 uppercase mb-1">Sobrenome do titular (opcional)</label>
+                      <input
+                         id="checkout-payer-surname"
+                         type="text"
+                         autoComplete="family-name"
+                         value={payerSurname}
+                         onChange={e => setPayerSurname(e.target.value)}
+                         className="w-full border-2 border-slate-200 rounded-xl p-2.5 outline-none focus:border-[#009EE3]"
+                      />
                    </div>
                    
                    <div>
@@ -276,6 +296,21 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
                       </div>
                    </div>
                    
+                   <div>
+                      <label htmlFor="payer-phone" className="block text-xs font-bold text-slate-500 uppercase mb-1">Telefone com DDD (opcional)</label>
+                      <input
+                         id="payer-phone"
+                         type="tel"
+                         autoComplete="tel-national"
+                         pattern="[1-9][0-9]{9,10}"
+                         title="Digite 10 ou 11 dígitos, incluindo o DDD."
+                         value={payerPhone}
+                         onChange={e => setPayerPhone(e.target.value.replace(/\D/g, ''))}
+                         className="w-full border-2 border-slate-200 rounded-xl p-2.5 outline-none focus:border-[#009EE3]"
+                         placeholder="11999999999"
+                      />
+                   </div>
+
                    <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1">CPF</label>
                       <div className="relative">
@@ -308,18 +343,23 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3 mb-6">
                        <div>
                            <div className="text-xs text-slate-400 uppercase font-bold">Pagador</div>
-                           <div className="font-bold text-slate-700">{payerName}</div>
+                           <div className="font-bold text-slate-700">{[payerName.trim(), payerSurname.trim()].filter(Boolean).join(' ')}</div>
                            <div className="text-xs text-slate-500">CPF: {payerDoc}</div>
                        </div>
                        <div>
                            <div className="text-xs text-slate-400 uppercase font-bold">Email</div>
                            <div className="font-bold text-slate-700">{payerEmail}</div>
                        </div>
+                       {payerPhone && (
+                           <div>
+                               <div className="text-xs text-slate-400 uppercase font-bold">Telefone</div>
+                               <div className="font-bold text-slate-700">{payerPhone}</div>
+                           </div>
+                       )}
                    </div>
                    
                    <p className="text-sm text-slate-500 mb-4">
-                       Ao clicar abaixo, você será redirecionado para o Mercado Pago onde poderá escolher entre 
-                       <strong> Pix, Cartão de Crédito ou Boleto</strong> com total segurança.
+                       Você será redirecionado ao Mercado Pago para escolher um dos meios de pagamento disponíveis.
                    </p>
                 </div>
 
@@ -332,7 +372,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
                        <Lock size={18} /> Pagar R$ {price} (Único)
                    </button>
                    
-                   <button onClick={() => setNeedsDataCollection(true)} className="w-full text-slate-400 hover:text-slate-600 text-sm font-bold underline">
+                   <button onClick={() => {
+                     checkoutAttemptId.current = null;
+                     setNeedsDataCollection(true);
+                   }} className="w-full text-slate-400 hover:text-slate-600 text-sm font-bold underline">
                        Alterar dados do responsável
                    </button>
                 </div>

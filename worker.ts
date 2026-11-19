@@ -3,6 +3,7 @@ import vercelConfig from './vercel.json' with { type: 'json' };
 import type { PaymentEnvironment } from './api/_lib/payment';
 import adminData from './api/admin-data';
 import adminLogin from './api/admin-login';
+import adminPaymentAction from './api/admin-payment-action';
 import createCheckout from './api/create-checkout';
 import gemini from './api/gemini';
 import paymentConfirm from './api/payment-confirm';
@@ -18,6 +19,7 @@ type ApiHandler = (request: VercelRequest, response: VercelResponse, env: Worker
 const routes = new Map<string, { handler: ApiHandler; payment?: boolean }>([
   ['/api/admin-data', { handler: adminData }],
   ['/api/admin-login', { handler: adminLogin }],
+  ['/api/admin-payment-action', { handler: adminPaymentAction, payment: true }],
   ['/api/create-checkout', { handler: createCheckout, payment: true }],
   ['/api/gemini', { handler: gemini }],
   ['/api/payment-confirm', { handler: paymentConfirm, payment: true }],
