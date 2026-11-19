@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       external_reference: externalReference,
       notification_url: `${appUrl}/api/payment-webhook`,
       back_urls: {
-        success: `${appUrl}/?payment_id={payment_id}&status=approved`,
+        success: `${appUrl}/`,
         failure: `${appUrl}/?status=failure`,
         pending: `${appUrl}/?status=pending`,
       },

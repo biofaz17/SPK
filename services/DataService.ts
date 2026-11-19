@@ -18,7 +18,7 @@ const normalizeName = (value: string, maxLength = 32): string | null => {
 class DataService {
   private SESSION_KEY = 'sparky_session_token';
 
-  private readonly TEST_USER: UserProfile = {
+  private readonly TEST_USER: UserProfile | null = import.meta.env.DEV ? {
     id: 'testador_total',
     name: 'Testador Sparky',
     password: 'teste123',
@@ -41,7 +41,7 @@ class DataService {
     lastActive: Date.now(),
     termsAcceptedVersion: 'v1.0',
     termsAcceptedAt: new Date().toISOString(),
-  };
+  } : null;
 
   async login(name: string, password?: string): Promise<UserProfile | null> {
     const normalizedName = normalizeName(name, 32);
@@ -52,7 +52,7 @@ class DataService {
       throw new Error('Digite sua senha');
     }
 
-    if (normalizedName === 'teste' && password === this.TEST_USER.password) {
+    if (this.TEST_USER && normalizedName === 'teste' && password === this.TEST_USER.password) {
       const profile = { ...this.TEST_USER };
       sessionStorage.setItem(this.SESSION_KEY, profile.id);
       return profile;
