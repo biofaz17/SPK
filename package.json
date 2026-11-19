@@ -7,6 +7,7 @@
     "dev": "vite",
     "extract-images": "node scripts/extract-images.js",
     "build": "vite build",
+    "deploy:cloudflare": "npm run build && npx --yes wrangler@4.147.0 deploy",
     "preview": "vite preview"
   },
   "dependencies": {
