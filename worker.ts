@@ -12,7 +12,7 @@ interface WorkerEnv {
   ENABLE_PRODUCTION_PAYMENTS?: string;
 }
 
-type ApiHandler = (request: VercelRequest, response: VercelResponse) => void | Promise<void>;
+type ApiHandler = (request: VercelRequest, response: VercelResponse) => unknown;
 
 const routes = new Map<string, { handler: ApiHandler; payment?: boolean }>([
   ['/api/admin-data', { handler: adminData }],
