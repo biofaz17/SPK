@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, ArrowLeft, Crown, Zap, Check, Star, Play, FlaskConical, Orbit } from 'lucide-react';
+import { Lock, ArrowLeft, Crown, Zap, Check, Star, Play, FlaskConical, Orbit, Lightbulb } from 'lucide-react';
 import { FIRST_PRO_EXPANSION_LEVEL_ID, LEGACY_LEVELS } from '../constants';
 import { ALGORITHM_WORKSHOP_LEVELS } from '../algorithmWorkshopLevels';
+import { FINAL_PROJECT_LEVELS } from '../finalProjectLevels';
 import { SPARKY_OBSERVATORY_LEVELS } from '../sparkyObservatoryLevels';
 import { SubscriptionTier, LevelConfig } from '../types';
 import { SparkyLogo } from '../components/SparkyLogo';
@@ -30,8 +31,10 @@ export const LevelMap: React.FC<LevelMapProps> = ({
   const currentLevelRef = useRef<HTMLButtonElement>(null);
   const currentProLevelRef = useRef<HTMLButtonElement>(null);
   const proWorldsRef = useRef<HTMLDivElement>(null);
+  const finalProjectRef = useRef<HTMLElement>(null);
   const proProgress = unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID;
-  const lastProLevel = Number(SPARKY_OBSERVATORY_LEVELS.at(-1)?.id);
+  const firstFinalProjectLevel = FINAL_PROJECT_LEVELS[0].id;
+  const lastProLevel = FINAL_PROJECT_LEVELS[FINAL_PROJECT_LEVELS.length - 1].id;
   const proExpansionComplete = proProgress > lastProLevel;
 
   // Auto-scroll to current level on mount
@@ -61,9 +64,9 @@ export const LevelMap: React.FC<LevelMapProps> = ({
     onSelectLevel(level.id as number);
   };
 
-  const showProWorlds = () => {
-    proWorldsRef.current?.focus({ preventScroll: true });
-    proWorldsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const scrollToWorld = (world: HTMLElement | null) => {
+    world?.focus({ preventScroll: true });
+    world?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const freeLevels = LEGACY_LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.FREE);
@@ -186,12 +189,19 @@ export const LevelMap: React.FC<LevelMapProps> = ({
         <h2 className="text-4xl md:text-5xl text-white font-heading text-center mb-4 drop-shadow-md">
            Mapa da Aventura
         </h2>
-        <p className="text-green-100 font-bold mb-10 text-center max-w-md bg-green-800/30 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+        <p className="text-green-100 font-bold mb-4 text-center max-w-md bg-green-800/30 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
             Escolha um nível para começar! Complete os desafios para liberar novos mundos.
         </p>
         <button
           type="button"
-          onClick={showProWorlds}
+          onClick={() => scrollToWorld(finalProjectRef.current)}
+          className="mb-10 inline-flex items-center gap-2 rounded-xl bg-amber-100 px-4 py-2.5 text-sm font-black text-amber-950 shadow-sm hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        >
+          <Lightbulb size={18} aria-hidden="true" /> Ir ao projeto final
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollToWorld(proWorldsRef.current)}
           className="fixed left-1/2 top-4 z-40 -translate-x-1/2 rounded-xl border-2 border-purple-700 bg-white px-3 py-2 text-sm font-bold text-purple-800 shadow-md hover:bg-purple-50"
         >
           Novos mundos Pro
@@ -207,9 +217,17 @@ export const LevelMap: React.FC<LevelMapProps> = ({
           {renderLevelGrid(SPARKY_OBSERVATORY_LEVELS, 'Observatório do Sparky (Pro)', 'bg-indigo-700', <Orbit />, proLocked,
             proProgress < Number(SPARKY_OBSERVATORY_LEVELS[0].id)
               ? 'Conclua a Oficina de Algoritmos para testar seus programas em mapas diferentes.'
-              : proExpansionComplete && !proLocked
+              : proProgress >= firstFinalProjectLevel && !proLocked
                 ? 'Você concluiu todas as missões do Observatório! Volte a uma fase quando quiser.'
                 : 'Teste o mesmo programa em mapas diferentes e confira como ele se adapta.')}
+          <section ref={finalProjectRef} tabIndex={-1} aria-label="Projeto Final · Farol do Sparky" className="w-full scroll-mt-24">
+            {renderLevelGrid(FINAL_PROJECT_LEVELS, 'Projeto Final · Farol do Sparky (Pro)', 'bg-amber-700', <Lightbulb />, proLocked,
+              !proLocked && proProgress < firstFinalProjectLevel
+                ? 'Conclua o Observatório para montar e testar seu próprio programa em Python.'
+                : !proLocked && proExpansionComplete
+                  ? 'Seu projeto está pronto e o Farol está aceso! Você pode revisitar as etapas.'
+                  : 'Complete o código e teste o programa que acende o Farol do Sparky.')}
+          </section>
         </div>
 
       </div>

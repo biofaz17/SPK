@@ -10,6 +10,7 @@ import { StatusIndicator } from '../components/StatusIndicator';
 import { SparkyLogo } from '../components/SparkyLogo';
 import { CREATIVE_LEVEL, LEVELS, PRO_EXPANSION_LEVELS } from '../constants';
 import { LEGACY_LEVEL_HINTS } from '../legacyLevelHints';
+import { SPARKY_OBSERVATORY_LEVELS } from '../sparkyObservatoryLevels';
 import { audioService } from '../services/AudioService';
 import { simulateProProgram } from '../services/ProLevelProgram';
 import { BlockCategory, BlockType, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier, LevelConfig } from '../types';
@@ -56,9 +57,9 @@ const EndLevelModal: React.FC<{
   explanation?: string | null;
   isAnalyzing?: boolean;
   isProChallenge?: boolean;
-  isFinalChallenge?: boolean;
+  isObservatoryFinal?: boolean;
   hint?: SparkyHintProps;
-}> = ({ status, level, blocksUsed, onRetry, onNext, explanation, isAnalyzing, isProChallenge, isFinalChallenge, hint }) => {
+}> = ({ status, level, blocksUsed, onRetry, onNext, explanation, isAnalyzing, isProChallenge, isObservatoryFinal, hint }) => {
   const isWon = status === 'won';
   const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => { dialogRef.current?.focus({ preventScroll: true }); }, []);
@@ -94,7 +95,7 @@ const EndLevelModal: React.FC<{
           
           <p className="text-slate-500 font-bold text-lg mb-8 text-center">
             {isProChallenge
-              ? isWon && (isFinalChallenge ? 'Você concluiu os dois novos mundos!' : `Nível ${level.id} concluído!`)
+              ? isWon && (isObservatoryFinal ? 'Você concluiu o Observatório do Sparky!' : `Nível ${level.id} concluído!`)
               : isWon ? (level.id === 'creative' || String(level.id).startsWith('custom') ? 'Você venceu sua própria fase!' : `Nível ${String(level.id)} Desbloqueado!`) : 'Vamos revisar seu código?'}
           </p>
 
@@ -140,7 +141,7 @@ const EndLevelModal: React.FC<{
             </button>
             {isWon && (
               <button onClick={onNext} className="flex-1 py-4 text-xl font-heading bg-green-500 text-white rounded-3xl border-b-4 border-green-700 active:border-b-0 flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all">
-                 {isFinalChallenge ? 'Concluir trilha' : 'Próxima Missão'} <ArrowRight size={24} />
+                 Próxima Missão <ArrowRight size={24} />
               </button>
             )}
           </div>
@@ -691,7 +692,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                 explanation={gameStatus === 'won' || isProChallenge ? logicExplanation : null}
                 isAnalyzing={isAnalyzingLogic}
                 isProChallenge={isProChallenge}
-                isFinalChallenge={level.id === PRO_EXPANSION_LEVELS[PRO_EXPANSION_LEVELS.length - 1]?.id}
+                isObservatoryFinal={level.id === SPARKY_OBSERVATORY_LEVELS.at(-1)?.id}
                 hint={gameStatus === 'lost' ? hint : undefined}
               />
             )}

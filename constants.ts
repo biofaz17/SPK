@@ -1,6 +1,7 @@
 
 import { BlockType, LevelConfig, SubscriptionTier, BlockCategory } from './types';
 import { ALGORITHM_WORKSHOP_LEVELS } from './algorithmWorkshopLevels';
+import { FINAL_PROJECT_LEVELS } from './finalProjectLevels';
 import { SPARKY_OBSERVATORY_LEVELS } from './sparkyObservatoryLevels';
 
 export const PLANS = {
@@ -17,7 +18,7 @@ export const PLANS = {
     title: "Pro",
     price: 49.99,
     priceLabel: "49,99",
-    features: ["Mundo Hacker (+30 Níveis Totais)", "Oficina de Algoritmos (15 novas fases)", "Observatório do Sparky (15 novas fases)", "Modo Criativo Ilimitado", "Certificado de Mestre em Lógica", "Lógica Condicional (IA)"],
+    features: ["Mundo Hacker (+30 Níveis Totais)", "Oficina de Algoritmos (15 novas fases)", "Observatório do Sparky (15 novas fases)", "Projeto Final · Farol do Sparky (6 fases em Python)", "Modo Criativo Ilimitado", "Certificado de Mestre em Lógica", "Lógica Condicional (IA)"],
     recommended: true
   }
 };
@@ -102,7 +103,7 @@ const MASTER_LEVEL: LevelConfig = {
 };
 
 export const LEGACY_LEVELS: LevelConfig[] = [...WORLD_1, ...WORLD_2, ...WORLD_3, MASTER_LEVEL];
-export const PRO_EXPANSION_LEVELS: LevelConfig[] = [...ALGORITHM_WORKSHOP_LEVELS, ...SPARKY_OBSERVATORY_LEVELS];
+export const PRO_EXPANSION_LEVELS: LevelConfig[] = [...ALGORITHM_WORKSHOP_LEVELS, ...SPARKY_OBSERVATORY_LEVELS, ...FINAL_PROJECT_LEVELS];
 export const FIRST_PRO_EXPANSION_LEVEL_ID = PRO_EXPANSION_LEVELS[0].id as number;
 export const LEVELS: LevelConfig[] = [...LEGACY_LEVELS, ...PRO_EXPANSION_LEVELS];
 

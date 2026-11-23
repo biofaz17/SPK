@@ -4,6 +4,7 @@ import { AuthScreen } from './screens/AuthScreen';
 import { PlatformHub } from './screens/PlatformHub';
 import { LevelMap } from './screens/LevelMap';
 import { GameScreen } from './screens/GameScreen';
+import { FinalProjectScreen } from './screens/FinalProjectScreen';
 import { Dashboard } from './screens/Dashboard';
 import { ParentPanel } from './screens/ParentPanel';
 import { CheckoutScreen } from './screens/CheckoutScreen';
@@ -22,6 +23,7 @@ import { CreativeWorkshopScreen } from './screens/CreativeWorkshopScreen';
 import { AdminDashboard } from './screens/AdminDashboard';
 import { UserProfile, SubscriptionTier, LevelConfig } from './types';
 import { FIRST_PRO_EXPANSION_LEVEL_ID, LEGACY_LEVELS, PRO_EXPANSION_LEVELS } from './constants';
+import { FINAL_PROJECT_LEVELS } from './finalProjectLevels';
 import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { SparkyAssistant } from './components/SparkyAssistant';
@@ -391,6 +393,7 @@ export default function App() {
   }
 
   const canPlayCurrentLevel = canPlayLevel(currentLevelId);
+  const finalProjectLevel = FINAL_PROJECT_LEVELS.find(level => level.id === currentLevelId);
 
   return (
     <div className="antialiased text-slate-800 font-sans selection:bg-indigo-100">
@@ -443,15 +446,25 @@ export default function App() {
       )}
 
       {screen === Screen.GAME && canPlayCurrentLevel && (
-        <GameScreen 
-          levelId={currentLevelId} 
-          customConfig={currentLevelId === 'creative' ? customLevel : undefined}
-          onBack={() => currentLevelId === 'creative' ? setScreen(Screen.CREATIVE_WORKSHOP) : setScreen(Screen.MAP)} 
-          onHome={() => setScreen(Screen.HUB)} 
-          onNextLevel={handleLevelComplete} 
-          user={user} 
-          onUpdateSkin={(skinId) => setUser({ ...user, activeSkin: skinId })} 
-        />
+        finalProjectLevel ? (
+          <FinalProjectScreen
+            level={finalProjectLevel}
+            onBack={() => setScreen(Screen.MAP)}
+            onComplete={() => handleLevelComplete(0)}
+            soundEnabled={user.settings?.soundEnabled}
+            profileId={user.id}
+          />
+        ) : (
+          <GameScreen
+            levelId={currentLevelId}
+            customConfig={currentLevelId === 'creative' ? customLevel : undefined}
+            onBack={() => currentLevelId === 'creative' ? setScreen(Screen.CREATIVE_WORKSHOP) : setScreen(Screen.MAP)}
+            onHome={() => setScreen(Screen.HUB)}
+            onNextLevel={handleLevelComplete}
+            user={user}
+            onUpdateSkin={(skinId) => setUser({ ...user, activeSkin: skinId })}
+          />
+        )
       )}
 
       {screen === Screen.MATH_GAME && <MathGameScreen onBack={() => setScreen(Screen.HUB)} />}
