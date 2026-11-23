@@ -77,7 +77,7 @@ function legacyOrderReference(userId: string, tier: PaidTier): string | null {
   return reference.length <= 64 ? reference : null;
 }
 
-function parseLegacyOrderReference(value: unknown): OrderReference | null {
+export function parseLegacyOrderReference(value: unknown): OrderReference | null {
   if (typeof value !== 'string' || value.length > 64) return null;
   const match = /^sparky_([SP])_([A-Za-z0-9_-]+)$/.exec(value);
   if (!match) return null;
@@ -106,7 +106,7 @@ export function logPaymentFailure(operation: string, error: unknown): void {
   }));
 }
 
-function parseExternalReference(value: unknown): { userId: string; tier: PaidTier } | null {
+export function parseExternalReference(value: unknown): OrderReference | null {
   if (typeof value !== 'string') return null;
   try {
     const parsed = JSON.parse(value);

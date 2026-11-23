@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import vercelConfig from './vercel.json' with { type: 'json' };
+import type { AdminAuthEnvironment } from './api/_lib/adminAuth';
 import type { PaymentEnvironment } from './api/_lib/payment';
 import adminData from './api/admin-data';
 import adminLogin from './api/admin-login';
@@ -10,7 +11,7 @@ import gemini from './api/gemini';
 import paymentConfirm from './api/payment-confirm';
 import paymentWebhook from './api/payment-webhook';
 
-interface WorkerEnv extends PaymentEnvironment, ExplorerAuthEnvironment {
+interface WorkerEnv extends AdminAuthEnvironment, PaymentEnvironment, ExplorerAuthEnvironment {
   ASSETS: { fetch(request: Request): Promise<Response> };
   ENABLE_PRODUCTION_PAYMENTS?: string;
 }

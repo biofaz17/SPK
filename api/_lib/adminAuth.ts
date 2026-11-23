@@ -2,6 +2,11 @@ import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
 
 const TOKEN_TTL_SECONDS = 60 * 60;
 
+export interface AdminAuthEnvironment {
+  ADMIN_PASSWORD?: string;
+  ADMIN_TOKEN_SECRET?: string;
+}
+
 export function sanitizeText(value: unknown, maxLength = 128): string | null {
   if (typeof value !== 'string') return null;
   const clean = value.trim().replace(/\s+/g, ' ');
@@ -64,9 +69,9 @@ export function sanitizeAdminProfile<T extends Record<string, any>>(profile: T):
   return sanitized as T;
 }
 
-export function createAdminToken(password: unknown): string | null {
-  const configuredPassword = process.env.ADMIN_PASSWORD?.trim();
-  const secret = process.env.ADMIN_TOKEN_SECRET;
+export function createAdminToken(password: unknown, env: AdminAuthEnvironment | NodeJS.ProcessEnv = process.env): string | null {
+  const configuredPassword = env.ADMIN_PASSWORD?.trim();
+  const secret = env.ADMIN_TOKEN_SECRET;
   if (!configuredPassword || !secret || secret.length < 32 || typeof password !== 'string') return null;
 
   const cleanPassword = password.trim();
@@ -89,8 +94,8 @@ export function createAdminToken(password: unknown): string | null {
   return `${payload}.${signature}`;
 }
 
-export function isAdminTokenValid(token: string | undefined): boolean {
-  const secret = process.env.ADMIN_TOKEN_SECRET;
+export function isAdminTokenValid(token: string | undefined, env: AdminAuthEnvironment | NodeJS.ProcessEnv = process.env): boolean {
+  const secret = env.ADMIN_TOKEN_SECRET;
   if (!secret || secret.length < 32 || !token) return false;
 
   const [payload, signature, extra] = token.split('.');

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AuthScreen } from './screens/AuthScreen';
 import { PlatformHub } from './screens/PlatformHub';
 import { LevelMap } from './screens/LevelMap';
@@ -28,7 +28,7 @@ import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { SparkyAssistant } from './components/SparkyAssistant';
 import { StatusIndicator } from './components/StatusIndicator';
-import { Cloud, Loader2, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Cloud, Loader2, ShieldCheck } from 'lucide-react';
 import { audioService } from './services/AudioService';
 import { dataService } from './services/DataService';
 
@@ -114,6 +114,7 @@ export default function App() {
   const [pendingSubscriptionTier, setPendingSubscriptionTier] = useState<SubscriptionTier | null>(null);
   const [checkoutIntent, setCheckoutIntent] = useState<CheckoutIntent | null>(null);
   const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [adminSessionExpired, setAdminSessionExpired] = useState(false);
   const [paymentCheck, setPaymentCheck] = useState<PaymentCheck | null>(null);
 
   const confirmPayment = useCallback(async (profile: UserProfile, reference: PaymentReference) => {
@@ -187,7 +188,9 @@ export default function App() {
   useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash === '#/admin') {
-        setScreen(Screen.ADMIN_LOGIN);
+        setScreen(current => current === Screen.ADMIN_DASHBOARD ? current : Screen.ADMIN_LOGIN);
+      } else {
+        setScreen(current => current === Screen.ADMIN_LOGIN || current === Screen.ADMIN_DASHBOARD ? Screen.AUTH : current);
       }
     };
     handleHashChange();
@@ -198,6 +201,7 @@ export default function App() {
   useEffect(() => {
     if (screen !== Screen.ADMIN_LOGIN && screen !== Screen.ADMIN_DASHBOARD) {
       setAdminToken(null);
+      setAdminSessionExpired(false);
     }
   }, [screen]);
 
@@ -212,7 +216,7 @@ export default function App() {
         }
 
         const sessionUser = await dataService.checkSession();
-        if (sessionUser && !cancelled) continueWithProfile(sessionUser);
+        if (sessionUser && !cancelled && window.location.hash !== '#/admin') continueWithProfile(sessionUser);
       } catch (e) {
         console.error("Falha na inicialização", e);
       } finally {
@@ -222,6 +226,19 @@ export default function App() {
     void init();
     return () => { cancelled = true; };
   }, [continueWithProfile]);
+
+  const exitAdmin = useCallback(() => {
+    setAdminToken(null);
+    setAdminSessionExpired(false);
+    window.location.hash = '';
+    setScreen(Screen.AUTH);
+  }, []);
+
+  const expireAdminSession = useCallback(() => {
+    setAdminToken(null);
+    setAdminSessionExpired(true);
+    setScreen(Screen.ADMIN_LOGIN);
+  }, []);
 
   useEffect(() => {
     if (user && !user.isGuest) {
@@ -359,17 +376,17 @@ export default function App() {
   }
 
   if (screen === Screen.ADMIN_LOGIN) {
-    return <AdminLogin onAccess={(token) => { setAdminToken(token); setScreen(Screen.ADMIN_DASHBOARD); }} onCancel={() => { window.location.hash = ''; setScreen(Screen.AUTH); }} />;
+    return <AdminLogin sessionExpired={adminSessionExpired} onAccess={token => { setAdminToken(token); setAdminSessionExpired(false); setScreen(Screen.ADMIN_DASHBOARD); }} onCancel={exitAdmin} />;
   }
 
-  if (screen === Screen.ADMIN_DASHBOARD) {
-    return <AdminDashboard token={adminToken || ''} onExit={() => { setAdminToken(null); window.location.hash = ''; setScreen(Screen.AUTH); }} />;
+  if (screen === Screen.ADMIN_DASHBOARD && adminToken) {
+    return <AdminDashboard token={adminToken} onExit={exitAdmin} onSessionExpired={expireAdminSession} />;
   }
 
   if (screen === Screen.AUTH) {
     return <AuthScreen
       onLogin={handleLogin}
-      onAdminTrigger={() => setScreen(Screen.ADMIN_LOGIN)}
+      onAdminTrigger={() => { window.location.hash = '/admin'; }}
       onBackFromCheckout={checkoutIntent && user?.isGuest ? () => {
         setScreen(checkoutIntent.returnScreen);
         setCheckoutIntent(null);
@@ -507,47 +524,56 @@ export default function App() {
   );
 }
 
-const AdminLogin: React.FC<{ onAccess: (token: string) => void, onCancel: () => void }> = ({ onAccess, onCancel }) => {
+const AdminLogin: React.FC<{ onAccess: (token: string) => void; onCancel: () => void; sessionExpired: boolean }> = ({ onAccess, onCancel, sessionExpired }) => {
   const [pass, setPass] = useState('');
-  const [err, setErr] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const request = useRef<AbortController>();
+
+  useEffect(() => () => request.current?.abort(), []);
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    const controller = new AbortController();
+    request.current = controller;
     setLoading(true);
+    setError('');
     try {
       const response = await fetch('/api/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pass }),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]),
       });
-      if (!response.ok) throw new Error('Acesso negado');
+      if (controller.signal.aborted) return;
+      if (response.status === 400 || response.status === 401) return setError('Senha administrativa inválida.');
+      if (response.status === 429) return setError('Limite de tentativas atingido. Aguarde alguns minutos.');
+      if (response.status === 503) return setError('O acesso administrativo precisa ser configurado no servidor.');
+      if (!response.ok) throw new Error();
       const { token } = await response.json();
-      if (typeof token !== 'string') throw new Error('Resposta inválida');
-      onAccess(token);
+      if (typeof token !== 'string' || !token) throw new Error();
+      if (!controller.signal.aborted) onAccess(token);
     } catch {
-      setErr(true);
-      setTimeout(() => setErr(false), 2000);
+      if (!controller.signal.aborted) setError('Não foi possível entrar. Tente novamente.');
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-       <form onSubmit={handle} className="bg-slate-900 p-8 rounded-[2rem] border-2 border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.2)] max-w-sm w-full animate-popIn">
-          <div className="flex flex-col items-center mb-6">
-             <ShieldAlert size={48} className="text-emerald-500 mb-2" />
-             <h2 className="text-xl font-heading text-white">Acesso Restrito</h2>
-             <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Terminal de Controle Sparky</p>
-          </div>
-          <div className="space-y-4">
-             <input type="password" autoComplete="current-password" placeholder="Senha administrativa" value={pass} onChange={e=>setPass(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none font-mono" />
-             {err && <div className="text-red-500 text-[10px] font-black uppercase text-center animate-pulse">Acesso Negado</div>}
-             <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-3 rounded-xl transition-all shadow-lg disabled:opacity-60">{loading ? 'VALIDANDO...' : 'ENTRAR NO TERMINAL'}</button>
-             <button type="button" onClick={onCancel} className="w-full text-slate-600 text-[10px] font-black uppercase hover:text-white transition">Voltar</button>
-          </div>
-       </form>
-    </div>
+    <main className="sparky-admin admin-login">
+      <form onSubmit={handle} className="admin-panel admin-login-card">
+        <span className="admin-brand-icon"><ShieldCheck size={24} aria-hidden="true" /></span>
+        <div><h1>Administração do Sparky</h1><p>Acesso reservado ao dono do site.</p></div>
+        {sessionExpired && <p className="admin-feedback admin-feedback-warning" role="status">Sua sessão expirou. Entre novamente.</p>}
+        <label>Senha administrativa
+          <input type="password" autoComplete="current-password" value={pass} onChange={e => setPass(e.target.value)} maxLength={128} required />
+        </label>
+        {error && <p className="admin-login-error" role="alert">{error}</p>}
+        <button type="submit" disabled={loading} className="admin-button admin-button-primary">{loading ? 'Entrando…' : 'Entrar no painel'}</button>
+        <button type="button" className="admin-text-button" onClick={onCancel}><ArrowLeft size={16} aria-hidden="true" /> Voltar ao Sparky</button>
+      </form>
+    </main>
   );
 };

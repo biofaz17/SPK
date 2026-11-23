@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { MercadoPagoError, Order } from 'mercadopago';
-import { isAdminTokenValid, isAllowedAdminOrigin } from './_lib/adminAuth.ts';
+import { isAdminTokenValid, isAllowedAdminOrigin, type AdminAuthEnvironment } from './_lib/adminAuth.ts';
 import {
   createMercadoPagoConfig,
   isMercadoPagoOrderId,
@@ -79,7 +79,7 @@ function availableRefundInCents(order: MercadoPagoOrder, payment: NonNullable<Re
   return (amountInCents(payment.paid_amount) ?? 0) - alreadyRefunded;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse, env?: PaymentEnvironment) {
+export default async function handler(req: VercelRequest, res: VercelResponse, env?: PaymentEnvironment & AdminAuthEnvironment) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -94,7 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   const adminToken = typeof authorization === 'string' && authorization.startsWith('Bearer ')
     ? authorization.slice(7).trim()
     : undefined;
-  if (!isAdminTokenValid(adminToken)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isAdminTokenValid(adminToken, env)) return res.status(401).json({ error: 'Unauthorized' });
 
   const orderAction = parseOrderAction(req.body);
   if ('error' in orderAction) return res.status(400).json(orderAction);

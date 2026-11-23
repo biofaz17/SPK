@@ -3,9 +3,16 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import adminData from './api/admin-data';
+import adminLogin from './api/admin-login';
 import explorerAuth from './api/explorer-auth';
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+const localRoutes = new Map<string, (request: VercelRequest, response: VercelResponse, env: Record<string, string>) => unknown>([
+  ['/api/admin-data', adminData],
+  ['/api/admin-login', adminLogin],
+  ['/api/explorer-auth', explorerAuth],
+]);
 
 export default defineConfig(({ mode }) => {
     return {
@@ -16,11 +23,13 @@ export default defineConfig(({ mode }) => {
       plugins: [
         react(),
         {
-          name: 'sparky-explorer-auth',
+          name: 'sparky-local-apis',
           configureServer(server) {
             const env = loadEnv(mode, projectRoot, '');
             server.middlewares.use((req, res, next) => {
-              if (req.url?.split('?')[0] !== '/api/explorer-auth') return next();
+              const url = new URL(req.url ?? '/', 'http://localhost');
+              const handler = localRoutes.get(url.pathname);
+              if (!handler) return next();
 
               const apiResponse = {
                 status(code: number) {
@@ -57,7 +66,7 @@ export default defineConfig(({ mode }) => {
                     return apiResponse.status(400).json({ error: 'Dados de acesso inválidos.' });
                   }
                 }
-                await explorerAuth({ method: req.method, headers: req.headers, body } as VercelRequest,
+                await handler({ method: req.method, headers: req.headers, query: Object.fromEntries(url.searchParams), body } as VercelRequest,
                   apiResponse as VercelResponse, env);
               })().catch(() => apiResponse.status(500).json({ error: 'Não foi possível acessar o serviço de contas.' }));
             });

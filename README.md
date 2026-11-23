@@ -12,15 +12,25 @@ Aplicação React com APIs serverless para administração, checkout e geração
 2. Use [env-exemplo.txt](env-exemplo.txt) como guia para preencher `.env.local`. As chaves `ADMIN_PASSWORD`, `ADMIN_TOKEN_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `MP_ACCESS_TOKEN` e `GEMINI_API_KEY` são somente do servidor; não use prefixo `VITE_` nelas.
 3. Gere o segredo do token administrativo com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` e defina uma senha administrativa longa e única.
 4. No SQL Editor do projeto Supabase, execute [supabase-rls.sql](supabase-rls.sql) sobre a tabela `profiles` existente. A migração vincula novos cadastros ao Supabase Auth e libera a leitura do perfil apenas para sua conta.
-5. Rode `npm run dev` para usar o app com login e cadastro. Para executar também as demais funções, rode `npx vercel dev`.
+5. Rode `npm run dev` para usar o app com login, cadastro e administração. Para executar também as demais funções, rode `npx vercel dev`.
 
 Os exploradores entram com nome e senha. Perfis antigos ainda sem um usuário no Supabase Auth são vinculados no primeiro login com a senha já cadastrada. Cada explorador usa um endereço interno no Auth, então o mesmo e-mail de contato pode ser usado por vários perfis. O cadastro libera a entrada imediata e mantém o e-mail do responsável no perfil.
 
-O token do painel fica apenas na memória da página. O plano pago é alterado no servidor depois que o pagamento é consultado na API do Mercado Pago. Configure `APP_URL` para a URL pública da aplicação e cadastre `/api/payment-webhook` como endpoint de notificação.
+O plano pago é alterado no servidor depois que o pagamento é consultado na API do Mercado Pago. Configure `APP_URL` para a URL pública da aplicação e cadastre `/api/payment-webhook` como endpoint de notificação.
 
 Para verificar o checkout pelo Cloudflare Workers local, use credenciais de teste do Mercado Pago no `.env.local` e rode `npm run dev:payments`. Configure `APP_URL` com o endereço HTTPS público que encaminha para o Worker local para receber o retorno do checkout e as notificações.
 
 Para testar o Checkout Pro via Orders API, aplique a migração [supabase-mercado-pago-orders.sql](supabase-mercado-pago-orders.sql) no banco do ambiente e defina `MP_CHECKOUT_API=orders` no servidor. Configure o evento **Order (Mercado Pago)** para `<APP_URL>/api/payment-webhook`. A opção padrão é `preferences`. Consulte o [manual de implementação e testes](docs/mercado-pago.md).
+
+## Painel do dono
+
+Acesse `/#/admin` no endereço do Sparky (localmente, `http://localhost:3000/#/admin`). Use a senha `ADMIN_PASSWORD` do servidor. Configure `ADMIN_TOKEN_SECRET` com pelo menos 32 caracteres. O token do painel fica na memória da página e expira após uma hora.
+
+Execute [supabase-admin.sql](supabase-admin.sql) no SQL Editor do mesmo projeto Supabase, após `supabase-rls.sql`. A migração registra a data dos novos perfis e recupera datas antigas quando o Supabase Auth confirma a criação da conta. O filtro **Sem data registrada** encontra os demais perfis.
+
+A aba **Financeiro** consulta as cobranças do Sparky criadas nos últimos 30 dias com `MP_ACCESS_TOKEN`. Ela indica quando os resultados são parciais. Para conferir saldo liberado e movimentações da conta, abra o Mercado Pago pelo painel e acesse **Seu dinheiro**.
+
+No Worker publicado, configure `ADMIN_PASSWORD`, `ADMIN_TOKEN_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` como segredos e `SUPABASE_URL` como variável. Para consultar cobranças, configure também `MP_ACCESS_TOKEN` como segredo.
 
 ## Publicação no Cloudflare Workers
 
