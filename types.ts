@@ -57,6 +57,11 @@ export interface LevelConfig {
   timeLimit?: number;
   paintTargets?: GridPosition[];
   testScenarios?: { label: string; obstacles: GridPosition[] }[];
+  workshop?: {
+    starterProgram?: BlockType[];
+    checkpoints?: GridPosition[];
+    maxMoves?: number;
+  };
   introData?: {
     title: string;
     description: string;

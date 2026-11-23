@@ -1,6 +1,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Battery, Code, HelpCircle, MessageSquare, Pause, Play, RotateCcw, Shirt, Sparkles, Star, Target, Terminal, Trash2, Volume2, VolumeX, XCircle, CheckCircle, Lock, Crown } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Battery, Code, HelpCircle, MessageSquare, Pause, Play, RotateCcw, Shirt, Sparkles, Star, Target, Terminal, Trash2, Volume2, VolumeX, XCircle, CheckCircle, Lock, Crown } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { BlockIcon } from '../components/BlockIcon';
@@ -198,8 +198,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   const isProChallenge = PRO_EXPANSION_LEVELS.some(entry => entry.id === level.id);
   const scenarios = [{ label: 'Cenário inicial', obstacles: level.obstacles }, ...(level.testScenarios ?? [])];
   const isHackerMode = level.id === 45 || level.id === 'creative' || String(level.id).startsWith('custom'); 
+  const starterProgram = level.workshop?.starterProgram;
+  const checkpoints = level.workshop?.checkpoints;
+  const maxMoves = level.workshop?.maxMoves;
 
-  const [program, setProgram] = useState<BlockType[]>([]);
+  const [program, setProgram] = useState<BlockType[]>(() => [...(starterProgram ?? [])]);
+  const [movesTaken, setMovesTaken] = useState(0);
   const [robotState, setRobotState] = useState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' as 'left' | 'right' | 'up' | 'down' });
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBlockIndex, setCurrentBlockIndex] = useState<number | null>(null);
@@ -276,7 +280,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
   }, [isMuted]);
 
   useEffect(() => {
-    setProgram([]);
+    setProgram([...(starterProgram ?? [])]);
     setFailedAttempts(0);
     resetGame();
     setActiveObstacles(level.obstacles);
@@ -288,7 +292,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
       abortController.current?.abort();
       stopSpeech();
     };
-  }, [levelId, customConfig]);
+  }, [levelId, customConfig, starterProgram]);
 
   const handleExplainLogic = async () => {
     if (program.length === 0) return;
@@ -338,6 +342,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     if (abortController.current) abortController.current.abort();
     setRobotState({ x: level.startPos.x, y: level.startPos.y, dir: 'right' });
     setPaintedCells([]);
+    setMovesTaken(0);
     setGameStatus('idle');
     setIsPlaying(false);
     setCurrentBlockIndex(null);
@@ -350,6 +355,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     setProgram([]);
     resetGame();
     audioService.playSfx('delete');
+  };
+
+  const restoreStarterProgram = () => {
+    if (!starterProgram || isPlaying) return;
+    setProgram([...starterProgram]);
+    resetGame();
+    audioService.playSfx('click');
+  };
+
+  const moveBlock = (index: number, offset: -1 | 1) => {
+    const destination = index + offset;
+    if (isPlaying || destination < 0 || destination >= program.length) return;
+    const reordered = [...program];
+    [reordered[index], reordered[destination]] = [reordered[destination], reordered[index]];
+    setProgram(reordered);
+    audioService.playSfx('click');
   };
 
   const addBlock = (type: BlockType) => {
@@ -413,6 +434,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
         setActiveObstacles(scenario.obstacles);
         setRobotState({ ...level.startPos, dir: 'right' });
         setPaintedCells([]);
+        setMovesTaken(0);
         setCurrentBlockIndex(null);
         if (scenarios.length > 1) await wait(380);
 
@@ -422,6 +444,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
           setCurrentBlockIndex(step.index);
           if (step.kind === 'move') {
             setRobotState({ ...step.position, dir: step.direction });
+            if (maxMoves !== undefined) setMovesTaken(count => count + 1);
             audioService.playSfx('click');
           } else if (step.kind === 'paint') {
             setPaintedCells(cells => [...cells, step.position]);
@@ -432,7 +455,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
 
         if (controller.signal.aborted) return;
         if (failure) {
-          setLogicExplanation(scenarios.length > 1 ? `${scenario.label}. ${failure}` : failure);
+          const lastStep = steps.at(-1);
+          const explanation = starterProgram && lastStep?.kind === 'blocked'
+            ? `Bloco ${lastStep.index + 1}. ${failure}`
+            : failure;
+          setLogicExplanation(scenarios.length > 1 ? `${scenario.label}. ${explanation}` : explanation);
           reportFailure();
           return;
         }
@@ -624,6 +651,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                 </details>
               )}
               {level.paintTargets?.length > 0 && <p>Use Pintar Chão nas casas com contorno roxo.</p>}
+              {checkpoints?.length > 0 && <p>Passe pelos pontos azuis na ordem dos números.</p>}
+              {maxMoves !== undefined && (
+                <p className={movesTaken > maxMoves ? 'font-bold text-red-700' : 'font-bold text-indigo-800'}>
+                  Passos {movesTaken} de {maxMoves}. Movimentos repetidos também contam.
+                </p>
+              )}
               {scenarios.length > 1 && (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <label className="font-bold">
@@ -654,6 +687,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                   {paintedCells.map((cell, i) => <div key={i} className="absolute bg-purple-400/50" style={{ left: cell.x * 60, top: cell.y * 60, width: 60, height: 60 }} />)}
                   {isProChallenge && level.paintTargets?.map(cell => (
                     <div key={`${cell.x},${cell.y}`} className="absolute rounded-xl border-4 border-dashed border-purple-600" style={{ left: cell.x * 60 + 5, top: cell.y * 60 + 5, width: 50, height: 50 }} />
+                  ))}
+                  {checkpoints?.map((cell, index) => (
+                    <div
+                      key={index}
+                      className="pointer-events-none absolute z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-sky-800 bg-sky-200 text-sm font-black text-sky-950 shadow-sm"
+                      style={{ left: cell.x * GRID_CELL_SIZE + 6, top: cell.y * GRID_CELL_SIZE + 6 }}
+                    >
+                      <span className="sr-only">Ponto </span>{index + 1}
+                    </div>
                   ))}
                   
                   <AnimatePresence>
@@ -709,6 +751,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                  {String(program.length)}/{String(level.maxBlocks)}
               </span>
           </div>
+          {starterProgram && (
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-1 border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-950">
+              <span className="font-bold">Rascunho da missão</span>
+              <button
+                type="button"
+                onClick={restoreStarterProgram}
+                disabled={isPlaying}
+                className="flex items-center gap-1 rounded-lg px-2 py-1.5 font-bold text-indigo-700 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-700 disabled:opacity-50"
+              >
+                <RotateCcw size={13} aria-hidden="true" /> Restaurar rascunho
+              </button>
+            </div>
+          )}
           
           <div 
             ref={programListRef} 
@@ -747,6 +802,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                         <div className="flex-1 min-w-0">
                             <BlockIcon type={block} className="rounded-l-none border-b-2 text-[10px] py-2 shadow-sm" />
                         </div>
+                        {starterProgram && !isPlaying && (
+                          <div className="ml-1 flex shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => moveBlock(idx, -1)}
+                              disabled={idx === 0}
+                              aria-label={`Subir bloco ${idx + 1}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-700 disabled:opacity-25"
+                            >
+                              <ArrowUp size={16} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveBlock(idx, 1)}
+                              disabled={idx === program.length - 1}
+                              aria-label={`Descer bloco ${idx + 1}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-700 disabled:opacity-25"
+                            >
+                              <ArrowDown size={16} aria-hidden="true" />
+                            </button>
+                          </div>
+                        )}
                         {!isPlaying && (
                            <button 
                              onClick={() => removeBlock(idx)} 

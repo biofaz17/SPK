@@ -80,13 +80,25 @@ export function simulateProProgram(
   const steps: Step[] = [];
   const walls = new Set(obstacles.map(cellKey));
   const painted = new Set<string>();
+  const checkpoints = level.workshop?.checkpoints ?? [];
+  const maxMoves = level.workshop?.maxMoves;
   let position = level.startPos;
   let executedCommands = 0;
+  let moves = 0;
+  let nextCheckpoint = 0;
 
   const atGoal = () => !level.goalPos || sameCell(position, level.goalPos);
   const destination = (movement: Movement) => ({ x: position.x + movement.x, y: position.y + movement.y });
   const outsideBoard = ({ x, y }: GridPosition) => x < 0 || y < 0 || x >= level.gridSize || y >= level.gridSize;
   const isBlocked = (cell: GridPosition) => outsideBoard(cell) || walls.has(cellKey(cell));
+
+  const checkPosition = () => {
+    const checkpoint = checkpoints.findIndex(cell => sameCell(position, cell));
+    if (checkpoint > nextCheckpoint) {
+      throw new Error(`Sparky passou pelo ponto ${checkpoint + 1} antes do ponto ${nextCheckpoint + 1}. Confira a ordem no mapa.`);
+    }
+    if (checkpoint === nextCheckpoint) nextCheckpoint++;
+  };
 
   const execute = (command: Command): void => {
     executedCommands++;
@@ -101,6 +113,11 @@ export function simulateProProgram(
         }
         position = next;
         steps.push({ kind: 'move', index: command.index, position, direction: command.movement.direction });
+        moves++;
+        if (maxMoves !== undefined && moves > maxMoves) {
+          throw new Error(`Sparky passou do limite de ${maxMoves} passos. Compare os caminhos e procure um percurso mais curto.`);
+        }
+        checkPosition();
         break;
       }
       case 'paint':
@@ -132,8 +149,13 @@ export function simulateProProgram(
       return { steps, failure: 'Confira o limite de blocos e os comandos disponíveis nesta missão.' };
     }
 
-    readProgram(program).forEach(execute);
+    const commands = readProgram(program);
+    checkPosition();
+    commands.forEach(execute);
     if (!atGoal()) return { steps, failure: 'O programa terminou antes de o Sparky parar na bandeira.' };
+    if (nextCheckpoint < checkpoints.length) {
+      return { steps, failure: `Sparky chegou à bandeira. Ainda falta passar pelo ponto ${nextCheckpoint + 1}.` };
+    }
     if (level.paintTargets?.some(cell => !painted.has(cellKey(cell)))) {
       return { steps, failure: 'O Sparky chegou à bandeira. Ainda há casas marcadas que precisam de Pintar Chão.' };
     }

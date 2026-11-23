@@ -213,7 +213,7 @@ export const LevelMap: React.FC<LevelMapProps> = ({
 
         <div ref={proWorldsRef} tabIndex={-1} role="region" aria-label="Novos mundos Pro" className="w-full scroll-mt-24">
           {renderLevelGrid(ALGORITHM_WORKSHOP_LEVELS, 'Oficina de Algoritmos (Pro)', 'bg-teal-700', <FlaskConical />, proLocked,
-            'Aprenda a dividir missões em etapas, combinar padrões e corrigir suas soluções.')}
+            'Compare rotas, conserte rascunhos de código e descubra em que ordem cumprir cada tarefa.')}
           {renderLevelGrid(SPARKY_OBSERVATORY_LEVELS, 'Observatório do Sparky (Pro)', 'bg-indigo-700', <Orbit />, proLocked,
             proProgress < Number(SPARKY_OBSERVATORY_LEVELS[0].id)
               ? 'Conclua a Oficina de Algoritmos para testar seus programas em mapas diferentes.'
