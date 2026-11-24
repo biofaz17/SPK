@@ -66,10 +66,16 @@ export default {
     requestHeaders.host = url.host;
     // Use the address Cloudflare supplies for the existing API rate limits.
     requestHeaders['x-forwarded-for'] = request.headers.get('cf-connecting-ip') ?? 'unknown';
+    const query: VercelRequest['query'] = Object.create(null);
+    for (const [name, value] of url.searchParams) {
+      const previous = query[name];
+      if (Array.isArray(previous)) previous.push(value);
+      else query[name] = previous === undefined ? value : [previous, value];
+    }
     const apiRequest = {
       method: request.method,
       headers: requestHeaders,
-      query: Object.fromEntries(url.searchParams),
+      query,
       body,
     } as VercelRequest;
 

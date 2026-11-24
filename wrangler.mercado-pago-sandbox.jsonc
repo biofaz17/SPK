@@ -1,0 +1,13 @@
+{
+  "name": "aventura-do-sparky-webhook-teste",
+  "main": "workers/mercado-pago-sandbox.ts",
+  "workers_dev": true,
+  "preview_urls": false,
+  "compatibility_date": "2026-11-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true },
+    "traces": { "enabled": true }
+  }
+}

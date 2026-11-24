@@ -12,6 +12,13 @@ interface CheckoutScreenProps {
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'error';
+const mercadoPagoSecurityScriptId = 'mercado-pago-checkout-security';
+
+declare global {
+  interface Window {
+    MP_DEVICE_SESSION_ID?: string;
+  }
+}
 
 // Security: Basic Sanitization
 const sanitizeInput = (input: string) => {
@@ -65,6 +72,18 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
   // Mercado Pago Brand Colors
   const MP_BLUE = "bg-[#009EE3]";
   const MP_HOVER = "hover:bg-[#007EB5]";
+
+  useEffect(() => {
+    if (document.getElementById(mercadoPagoSecurityScriptId)) return;
+
+    const script = document.createElement('script');
+    script.id = mercadoPagoSecurityScriptId;
+    script.src = 'https://www.mercadopago.com/v2/security.js';
+    script.async = true;
+    script.setAttribute('view', 'checkout');
+    script.addEventListener('error', () => script.remove(), { once: true });
+    document.head.appendChild(script);
+  }, []);
 
   useEffect(() => {
     if (user.parentEmail) {
@@ -130,6 +149,7 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
           userId: user.id,
           tier,
           checkoutAttemptId: checkoutAttemptId.current,
+          deviceId: window.MP_DEVICE_SESSION_ID ?? null,
           payer: {
             name: payerName.trim(),
             surname: payerSurname.trim(),

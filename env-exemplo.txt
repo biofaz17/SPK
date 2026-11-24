@@ -6,6 +6,7 @@ ADMIN_TOKEN_SECRET=generate-a-random-32-byte-secret
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=server-only-service-role-key
 MP_ACCESS_TOKEN=server-only-mercado-pago-access-token
+MP_WEBHOOK_SECRET=server-only-mercado-pago-webhook-signature
 MP_CHECKOUT_API=preferences
 GEMINI_API_KEY=server-only-gemini-api-key
 APP_URL=https://seu-endereco-publico.example

@@ -16,7 +16,7 @@ Aplicação React com APIs serverless para administração, checkout e geração
 
 Os exploradores entram com nome e senha. Perfis antigos ainda sem um usuário no Supabase Auth são vinculados no primeiro login com a senha já cadastrada. Cada explorador usa um endereço interno no Auth, então o mesmo e-mail de contato pode ser usado por vários perfis. O cadastro libera a entrada imediata e mantém o e-mail do responsável no perfil.
 
-O plano pago é alterado no servidor depois que o pagamento é consultado na API do Mercado Pago. Configure `APP_URL` para a URL pública da aplicação e cadastre `/api/payment-webhook` como endpoint de notificação.
+O plano pago é alterado no servidor depois que o pagamento é consultado na API do Mercado Pago. Configure `APP_URL` para a origem HTTPS pública da aplicação, cadastre `/api/payment-webhook` como endpoint de notificação e salve a assinatura secreta do painel do Mercado Pago como `MP_WEBHOOK_SECRET` no servidor.
 
 Para verificar o checkout pelo Cloudflare Workers local, use credenciais de teste do Mercado Pago no `.env.local` e rode `npm run dev:payments`. Configure `APP_URL` com o endereço HTTPS público que encaminha para o Worker local para receber o retorno do checkout e as notificações.
 

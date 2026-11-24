@@ -1,10 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { randomUUID } from 'node:crypto';
+import { isIP } from 'node:net';
 import { Order, Preference } from 'mercadopago';
 import {
   checkoutProfileExists, createMercadoPagoConfig, isCheckoutAttemptId, isMercadoPagoOrderId, linkProviderOrder,
   logPaymentFailure, paymentPrices, reserveOrder, type PaidTier, type PaymentEnvironment,
-} from './_lib/payment';
+} from './_lib/payment.ts';
 
 const statementDescriptor = 'TEKTOK TI';
 const productCategory = 'services';
@@ -13,10 +14,24 @@ const productDescriptions: Record<PaidTier, string> = {
   PRO: 'Acesso vitalício ao Mundo Hacker, à Oficina de Algoritmos, ao Observatório do Sparky e ao modo criativo ilimitado.',
 };
 
+function checkoutWebOrigin(value: string): string | undefined {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.replace(/\.$/, '');
+    if (url.protocol !== 'https:' || url.username || url.password || url.pathname !== '/' || url.search || url.hash
+      || !hostname.includes('.') || isIP(hostname) || hostname.endsWith('.localhost') || hostname.endsWith('.local')) {
+      return undefined;
+    }
+    return url.origin;
+  } catch {
+    return undefined;
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse, env?: PaymentEnvironment) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { userId, tier, payer, checkoutAttemptId } = req.body || {};
+  const { userId, tier, payer, checkoutAttemptId, deviceId } = req.body || {};
   if (typeof userId !== 'string' || userId.length < 1 || userId.length > 100 || typeof tier !== 'string' || !Object.hasOwn(paymentPrices, tier)) {
     return res.status(400).json({ error: 'Invalid checkout request' });
   }
@@ -32,9 +47,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   if (checkoutAttemptId !== undefined && !isCheckoutAttemptId(checkoutAttemptId)) {
     return res.status(400).json({ error: 'Invalid checkout attempt' });
   }
+  const meliSessionId = typeof deviceId === 'string' && deviceId.length <= 4096 && /^[\x21-\x7E]+$/.test(deviceId)
+    ? deviceId : undefined;
 
   const { MP_ACCESS_TOKEN: accessToken, MP_CHECKOUT_API, APP_URL, VERCEL_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = env ?? process.env;
-  const appUrl = (APP_URL || (VERCEL_URL ? `https://${VERCEL_URL}` : '')).replace(/\/$/, '');
+  const useOrders = MP_CHECKOUT_API === 'orders';
+  const configuredUrl = APP_URL || (VERCEL_URL ? `https://${VERCEL_URL}` : '');
+  const appUrl = useOrders ? checkoutWebOrigin(configuredUrl) : configuredUrl.replace(/\/$/, '');
   if (!accessToken || !appUrl || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return res.status(503).json({ error: 'Checkout service is not configured' });
   }
@@ -72,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   const config = createMercadoPagoConfig(accessToken);
   let initPoint: string | undefined;
   try {
-    if (MP_CHECKOUT_API === 'orders') {
+    if (useOrders) {
       const reservation = await reserveOrder(
         userId, plan, checkoutAttemptId ?? randomUUID(), SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
       );
@@ -102,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
             payment_method: { not_allowed_types: ['ticket'], max_installments: 12 },
           },
         },
-        requestOptions: { idempotencyKey: reservation.reference },
+        requestOptions: { idempotencyKey: reservation.reference, meliSessionId },
       });
       if (!isMercadoPagoOrderId(order.id) || !order.checkout_url) {
         throw new Error('Provider order is missing checkout details');
@@ -121,7 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
           statement_descriptor: statementDescriptor,
           payment_methods: { excluded_payment_types: [{ id: 'ticket' }], installments: 12 },
         },
-        requestOptions: checkoutAttemptId ? { idempotencyKey: checkoutAttemptId } : undefined,
+        requestOptions: { idempotencyKey: checkoutAttemptId, meliSessionId },
       });
       initPoint = preference.init_point;
     }

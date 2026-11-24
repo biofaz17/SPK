@@ -9,6 +9,7 @@ type PaymentVerification = { status: 'approved'; subscription: PaidTier } | { st
 
 export interface PaymentEnvironment {
   MP_ACCESS_TOKEN?: string;
+  MP_WEBHOOK_SECRET?: string;
   MP_CHECKOUT_API?: string;
   APP_URL?: string;
   VERCEL_URL?: string;
