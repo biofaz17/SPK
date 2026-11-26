@@ -2,6 +2,7 @@
 logs
 *.log
 /build-debug.txt
+/build-out.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -13,6 +14,32 @@ dist
 dist-ssr
 *.local
 
+# Local deployment state and generated exports
+/.vercel/
+/.wrangler/
+/changes.patch
+/changes_export/
+/changes_snapshot/
+
+# Credentials and private course materials
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
+*.p12
+*.pfx
+/private-course-assets/
+/algorithmWorkshopLevels.ts
+/finalProjectLevels.ts
+/sparkyObservatoryLevels.ts
+/public/assets/pdfs/
+/public/assets/images/guia_completo_aulas_tecnologia_2025/*
+!/public/assets/images/guia_completo_aulas_tecnologia_2025/guia_page-1.png
+/public/assets/images/trilha_tecnologia_computacao_2025/*
+!/public/assets/images/trilha_tecnologia_computacao_2025/trilha_page-01.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -23,12 +50,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-.vercel
-.env*.local
-.env.local
-.env
-.env.*
-.env.local
-.env
-.env.*

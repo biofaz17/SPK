@@ -36,7 +36,9 @@ No Worker publicado, configure `ADMIN_PASSWORD`, `ADMIN_TOKEN_SECRET` e `SUPABAS
 
 ## Publicação no Cloudflare Workers
 
-O leitor de cursos busca o material completo no bucket R2 privado `aventura-do-sparky-premium-content`, configurado pelo binding `PREMIUM_CONTENT`. As duas capas de amostra são públicas. Os PDFs e as demais páginas ficam em `private-course-assets`, fora do build público.
+O leitor de cursos busca o material completo no bucket R2 privado `aventura-do-sparky-premium-content`, configurado pelo binding `PREMIUM_CONTENT`. As duas capas de amostra são públicas. Guarde os PDFs e as demais páginas em armazenamento privado e restaure uma cópia local em `private-course-assets` quando precisar abastecer o bucket ou usar o leitor no Vite. Essa pasta fica fora do Git e do build público.
+
+Uma implantação Vercel por Git recebe somente as capas. Para disponibilizar o material completo no Vercel, restaure a pasta privada antes do `vercel build` e publique com `vercel deploy --prebuilt`. Verifique que os materiais aparecem somente no bundle da função `premium-course` e que `.vercel/output/static` contém apenas as amostras públicas.
 
 Antes da primeira publicação, crie o bucket na mesma conta do Worker com `npx --yes wrangler@4.147.0 r2 bucket create aventura-do-sparky-premium-content`. Mantenha o acesso público por domínio personalizado e por `r2.dev` desativado. No painel do bucket ou via Wrangler, envie os arquivos preservando os caminhos relativos a `private-course-assets`. Por exemplo, `private-course-assets/pdfs/guia_completo_aulas_tecnologia_2025.pdf` usa a chave `pdfs/guia_completo_aulas_tecnologia_2025.pdf`.
 
