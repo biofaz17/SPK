@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background-color: #f0f9ff;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  overscroll-behavior: none;
+}
+/* Proteção adicional: impede arrastar conteúdo */
+img, p, span, h1, h2, h3, h4, h5, h6, pre, code {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+/* Classe utilitária para áreas protegidas de curso */
+.course-protected {
+  pointer-events: auto;
+  -webkit-touch-callout: none;
+}
+h1, h2, h3, .font-heading {
+  font-family: 'Fredoka One', cursive;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}

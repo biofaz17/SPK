@@ -2,23 +2,35 @@ import path from 'path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './api/_lib/http';
 import adminData from './api/admin-data';
 import adminLogin from './api/admin-login';
+import adminLogout from './api/admin-logout';
 import explorerAuth from './api/explorer-auth';
+import gemini from './api/gemini';
+import premiumCourse from './api/premium-course';
+import premiumLevels from './api/premium-levels';
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const localRoutes = new Map<string, (request: VercelRequest, response: VercelResponse, env: Record<string, string>) => unknown>([
+const localRoutes = new Map<string, (request: ApiRequest, response: ApiResponse, env: Record<string, string>) => unknown>([
   ['/api/admin-data', adminData],
   ['/api/admin-login', adminLogin],
+  ['/api/admin-logout', adminLogout],
   ['/api/explorer-auth', explorerAuth],
+  ['/api/gemini', gemini],
+  ['/api/premium-course', premiumCourse],
+  ['/api/premium-levels', premiumLevels],
 ]);
 
 export default defineConfig(({ mode }) => {
     return {
       server: {
         port: 3000,
-        host: '0.0.0.0',
+        host: '127.0.0.1',
+        fs: {
+          deny: ['.env', '.env.*', '.dev.vars', '.dev.vars.*', '*.{crt,pem}', '**/.git/**', '**/.wrangler/**',
+            '**/api/**', '**/private-course-assets/**', '**/dist/**', '**/changes_export/**', '**/changes_snapshot/**'],
+        },
       },
       plugins: [
         react(),
@@ -31,12 +43,15 @@ export default defineConfig(({ mode }) => {
               const handler = localRoutes.get(url.pathname);
               if (!handler) return next();
 
-              const apiResponse = {
+              const apiResponse: ApiResponse = {
                 status(code: number) {
                   res.statusCode = code;
                   return apiResponse;
                 },
                 setHeader: res.setHeader.bind(res),
+                end(data?: Uint8Array) {
+                  res.end(data);
+                },
                 json(data: unknown) {
                   res.setHeader('Content-Type', 'application/json; charset=utf-8');
                   res.end(JSON.stringify(data));
@@ -47,7 +62,7 @@ export default defineConfig(({ mode }) => {
               void (async () => {
                 let body: unknown;
                 if (req.method === 'POST') {
-                  if (req.headers['content-type']?.split(';')[0].trim() !== 'application/json') {
+                  if (req.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') {
                     return apiResponse.status(415).json({ error: 'Envie os dados em formato JSON.' });
                   }
                   const chunks: Buffer[] = [];
@@ -66,8 +81,8 @@ export default defineConfig(({ mode }) => {
                     return apiResponse.status(400).json({ error: 'Dados de acesso inválidos.' });
                   }
                 }
-                await handler({ method: req.method, headers: req.headers, query: Object.fromEntries(url.searchParams), body } as VercelRequest,
-                  apiResponse as VercelResponse, env);
+                const headers = { ...req.headers, 'x-forwarded-for': req.socket.remoteAddress };
+                await handler({ method: req.method, url: req.url, headers, query: Object.fromEntries(url.searchParams), body }, apiResponse, env);
               })().catch(() => apiResponse.status(500).json({ error: 'Não foi possível acessar o serviço de contas.' }));
             });
           },

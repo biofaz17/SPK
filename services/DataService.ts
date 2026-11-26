@@ -154,35 +154,12 @@ class DataService {
     if (error) throw error;
   }
 
-  async acceptTerms(userId: string, version: string): Promise<{ success: boolean; timestamp: string }> {
-    const timestamp = new Date().toISOString();
-    let userIp = '0.0.0.0';
-    try {
-      const ipRes = await fetch('https://api.ipify.org?format=json');
-      const ipData = await ipRes.json();
-      userIp = ipData.ip;
-    } catch {
-      console.warn('Não foi possível capturar o IP para o log legal.');
-    }
-
+  async acceptTerms(version: string): Promise<{ timestamp: string }> {
     if (!supabase) throw new Error('Supabase não configurado.');
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        terms_accepted_version: version,
-        terms_accepted_at: timestamp,
-        terms_log: {
-          ip: userIp,
-          ua: navigator.userAgent,
-          version,
-        },
-      })
-      .eq('id', userId)
-      .select('id')
-      .single();
-
+    const { data: timestamp, error } = await supabase.rpc('sparky_accept_terms', { p_version: version });
     if (error) throw error;
-    return { success: true, timestamp };
+    if (typeof timestamp !== 'string') throw new Error('Aceite dos termos não registrado.');
+    return { timestamp };
   }
 
   async checkSession(): Promise<UserProfile | null> {
@@ -194,6 +171,12 @@ class DataService {
 
     const { data: { session } } = await supabase.auth.getSession();
     return session ? this.loadProfile(session.user.id) : null;
+  }
+
+  async getAccessToken(): Promise<string | null> {
+    if (!supabase) return null;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
   }
 
   async logout(): Promise<void> {

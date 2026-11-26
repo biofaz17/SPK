@@ -6,10 +6,12 @@ import { COURSE_DECKS, CourseSlidesDeck } from '../courseSlidesData';
 import { CourseSlideViewer } from '../components/CourseSlideViewer';
 import { 
   BookOpen, Lock, CheckCircle2, ArrowLeft, Crown, Zap, 
-  ChevronRight, Sparkles, HelpCircle, X, Check, Star, Layers, GraduationCap, ShieldCheck
+  ChevronRight, Sparkles, HelpCircle, X, Check, Star, Layers, GraduationCap, ShieldCheck, Play
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { audioService } from '../services/AudioService';
+import { downloadCoursePdf } from '../services/premiumContent';
+import toast from 'react-hot-toast';
 
 interface CoursesScreenProps {
   user: UserProfile;
@@ -106,7 +108,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ user, onBack, onOp
 
           {user.subscription === SubscriptionTier.FREE && (
             <Button 
-              variant="warning" 
+                variant="primary"
               size="sm" 
               onClick={() => onOpenCheckout(SubscriptionTier.PRO)}
               className="animate-pulse shadow-lg"
@@ -117,7 +119,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ user, onBack, onOp
 
           {user.subscription === SubscriptionTier.STARTER && (
             <Button 
-              variant="warning" 
+                variant="primary"
               size="sm" 
               onClick={() => onOpenCheckout(SubscriptionTier.PRO)}
             >
@@ -191,7 +193,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ user, onBack, onOp
               </p>
             </div>
             <Button 
-              variant="warning" 
+              variant="primary"
               size="md" 
               onClick={() => onOpenCheckout(SubscriptionTier.PRO)}
               className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-none shrink-0"
@@ -313,15 +315,14 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ user, onBack, onOp
                           >
                             <GraduationCap size={18} className="mr-2" /> Abrir Leitor Interativo ({(COURSE_DECKS[course.id]?.slides.length) ?? course.totalLessons} Slides + XP)
                           </Button>
-                          {COURSE_DECKS[course.id]?.pdfUrl && (
-                            <a
-                              href={COURSE_DECKS[course.id].pdfUrl}
-                              target="_blank"
-                              rel="noreferrer"
+                          {COURSE_DECKS[course.id]?.hasPdf && (
+                            <button
+                              type="button"
+                              onClick={() => { void downloadCoursePdf(course.id).catch(error => toast.error(error.message)); }}
                               className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold transition"
                             >
-                              <BookOpen size={16} className="mr-1" /> Abrir PDF oficial
-                            </a>
+                              <BookOpen size={16} className="mr-1" /> Baixar PDF oficial
+                            </button>
                           )}
                           <p className="text-amber-300 text-[11px] leading-relaxed mt-1">
                             Acesse o conteúdo real do curso: slides extraídos do PDF oficial, página a página, para estudar na ordem certa.
@@ -342,7 +343,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ user, onBack, onOp
                       ) : (
                         <div className="space-y-2">
                           <Button 
-                            variant="warning" 
+                            variant="primary"
                             size="md" 
                             className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:brightness-110 text-white font-bold border-none shadow-lg"
                             onClick={() => onOpenCheckout(course.requiredSubscription)}

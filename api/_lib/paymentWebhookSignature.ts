@@ -1,8 +1,9 @@
 import { InvalidWebhookSignatureError, WebhookSignatureValidator } from 'mercadopago';
 
 export function readSignedPaymentId(resourceId: unknown, signature: unknown, requestId: unknown, secret: string) {
-  if (typeof resourceId !== 'string' || !/^[a-z\d]+$/i.test(resourceId)
-    || typeof signature !== 'string' || typeof requestId !== 'string' || !/^[^\s,;]+$/.test(requestId)) {
+  if (typeof resourceId !== 'string' || !/^[a-z\d]{1,32}$/i.test(resourceId)
+    || typeof signature !== 'string' || signature.length > 1024
+    || typeof requestId !== 'string' || !/^[^\s,;]{1,128}$/.test(requestId)) {
     return null;
   }
 

@@ -22,8 +22,8 @@ import { CodeGameScreen } from './screens/CodeGameScreen';
 import { CreativeWorkshopScreen } from './screens/CreativeWorkshopScreen';
 import { AdminDashboard } from './screens/AdminDashboard';
 import { UserProfile, SubscriptionTier, LevelConfig } from './types';
-import { FIRST_PRO_EXPANSION_LEVEL_ID, LEGACY_LEVELS, PRO_EXPANSION_LEVELS } from './constants';
-import { FINAL_PROJECT_LEVELS } from './finalProjectLevels';
+import { LEGACY_LEVELS } from './constants';
+import { FIRST_PRO_EXPANSION_LEVEL_ID, isPremiumLevel, PRO_EXPANSION_CATALOG, PRO_LEGACY_CATALOG } from './levelCatalog';
 import { ParentGate } from './components/ParentGate';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { SparkyAssistant } from './components/SparkyAssistant';
@@ -31,6 +31,7 @@ import { StatusIndicator } from './components/StatusIndicator';
 import { ArrowLeft, Cloud, Loader2, ShieldCheck } from 'lucide-react';
 import { audioService } from './services/AudioService';
 import { dataService } from './services/DataService';
+import { fetchPremiumLevel, type PremiumLevel } from './services/premiumContent';
 
 enum Screen {
   AUTH, HUB, DASHBOARD, MAP, GAME, MATH_GAME, WORDS_GAME, 
@@ -108,6 +109,30 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState<number | string>(1);
   const [customLevel, setCustomLevel] = useState<LevelConfig | null>(null);
+  const [loadedPremiumLevel, setLoadedPremiumLevel] = useState<{
+    id: number;
+    profileId: string;
+    content?: PremiumLevel;
+    error?: string;
+  } | null>(null);
+  const profileId = user?.id;
+  const premiumLevelId = screen === Screen.GAME && isPremiumLevel(currentLevelId)
+    && user?.subscription === SubscriptionTier.PRO ? currentLevelId : null;
+
+  useEffect(() => {
+    if (premiumLevelId === null || !profileId) return;
+    const controller = new AbortController();
+    setLoadedPremiumLevel(null);
+    void fetchPremiumLevel(premiumLevelId, controller.signal).then(content => {
+      if (!controller.signal.aborted) setLoadedPremiumLevel({ id: premiumLevelId, profileId, content });
+    }).catch(error => {
+      if (!controller.signal.aborted) {
+        const message = error instanceof Error ? error.message : 'Não foi possível carregar esta fase.';
+        setLoadedPremiumLevel({ id: premiumLevelId, profileId, error: message });
+      }
+    });
+    return () => controller.abort();
+  }, [premiumLevelId, profileId]);
   const [showParentGate, setShowParentGate] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [gateAction, setGateAction] = useState<'upgrade' | 'parents_area' | 'resume_checkout'>('parents_area');
@@ -115,16 +140,23 @@ export default function App() {
   const [checkoutIntent, setCheckoutIntent] = useState<CheckoutIntent | null>(null);
   const [adminToken, setAdminToken] = useState<string | null>(null);
   const [adminSessionExpired, setAdminSessionExpired] = useState(false);
+  const [adminLogoutFailed, setAdminLogoutFailed] = useState(false);
+  const [adminLoggingOut, setAdminLoggingOut] = useState(false);
   const [paymentCheck, setPaymentCheck] = useState<PaymentCheck | null>(null);
 
   const confirmPayment = useCallback(async (profile: UserProfile, reference: PaymentReference) => {
     setPaymentCheck({ status: 'checking', reference });
     setScreen(Screen.PAYMENT_STATUS);
     try {
+      const accessToken = await dataService.getAccessToken();
+      if (!accessToken) {
+        setPaymentCheck({ status: 'unavailable', reference });
+        return;
+      }
       const response = await fetch('/api/payment-confirm', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...reference, userId: profile.id }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify(reference),
         signal: AbortSignal.timeout(15000),
       });
       const result = await response.json().catch(() => null);
@@ -202,6 +234,7 @@ export default function App() {
     if (screen !== Screen.ADMIN_LOGIN && screen !== Screen.ADMIN_DASHBOARD) {
       setAdminToken(null);
       setAdminSessionExpired(false);
+      setAdminLogoutFailed(false);
     }
   }, [screen]);
 
@@ -227,16 +260,36 @@ export default function App() {
     return () => { cancelled = true; };
   }, [continueWithProfile]);
 
-  const exitAdmin = useCallback(() => {
+  const exitAdmin = useCallback(async () => {
+    setAdminLogoutFailed(false);
+    if (adminToken) {
+      setAdminLoggingOut(true);
+      try {
+        const response = await fetch('/api/admin-logout', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${adminToken}` },
+          keepalive: true,
+        });
+        if (!response.ok || (await response.json())?.ok !== true) {
+          throw new Error('Admin session could not be revoked');
+        }
+      } catch {
+        setAdminLogoutFailed(true);
+        return;
+      } finally {
+        setAdminLoggingOut(false);
+      }
+    }
     setAdminToken(null);
     setAdminSessionExpired(false);
     window.location.hash = '';
     setScreen(Screen.AUTH);
-  }, []);
+  }, [adminToken]);
 
   const expireAdminSession = useCallback(() => {
     setAdminToken(null);
     setAdminSessionExpired(true);
+    setAdminLogoutFailed(false);
     setScreen(Screen.ADMIN_LOGIN);
   }, []);
 
@@ -310,19 +363,21 @@ export default function App() {
   };
 
   const canPlayLevel = (id: string | number) =>
-    typeof id !== 'number' || !PRO_EXPANSION_LEVELS.some(level => level.id === id) || (
+    !isPremiumLevel(id) || (
       user?.subscription === SubscriptionTier.PRO &&
-      id <= (user.progress.unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID)
+      id <= (id < FIRST_PRO_EXPANSION_LEVEL_ID
+        ? user.progress.unlockedLevels
+        : user.progress.unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID)
     );
 
   const handleLevelComplete = (blocksUsed: number) => {
     if (!user || !canPlayLevel(currentLevelId)) return;
     if (typeof currentLevelId === 'number') {
-        const expansionIndex = PRO_EXPANSION_LEVELS.findIndex(level => level.id === currentLevelId);
+        const expansionIndex = PRO_EXPANSION_CATALOG.findIndex(level => level.id === currentLevelId);
         if (expansionIndex !== -1) {
             const unlockedProLevel = user.progress.unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID;
 
-            const nextLevel = PRO_EXPANSION_LEVELS[expansionIndex + 1];
+            const nextLevel = PRO_EXPANSION_CATALOG[expansionIndex + 1];
             const progress = {
                 ...user.progress,
                 unlockedProLevel: Math.max(unlockedProLevel, nextLevel ? Number(nextLevel.id) : currentLevelId + 1),
@@ -335,7 +390,7 @@ export default function App() {
             return;
         }
 
-        const sortedLevels = [...LEGACY_LEVELS].sort((a,b) => (a.id as number) - (b.id as number));
+        const sortedLevels = [...LEGACY_LEVELS, ...PRO_LEGACY_CATALOG];
         const currentIndex = sortedLevels.findIndex(l => l.id === currentLevelId);
         let nextLevelId = currentLevelId; 
         let hasNext = false;
@@ -380,7 +435,7 @@ export default function App() {
   }
 
   if (screen === Screen.ADMIN_DASHBOARD && adminToken) {
-    return <AdminDashboard token={adminToken} onExit={exitAdmin} onSessionExpired={expireAdminSession} />;
+    return <AdminDashboard token={adminToken} onExit={exitAdmin} onSessionExpired={expireAdminSession} loggingOut={adminLoggingOut} logoutFailed={adminLogoutFailed} />;
   }
 
   if (screen === Screen.AUTH) {
@@ -410,7 +465,9 @@ export default function App() {
   }
 
   const canPlayCurrentLevel = canPlayLevel(currentLevelId);
-  const finalProjectLevel = FINAL_PROJECT_LEVELS.find(level => level.id === currentLevelId);
+  const premiumResult = loadedPremiumLevel?.id === premiumLevelId && loadedPremiumLevel.profileId === profileId
+    ? loadedPremiumLevel : null;
+  const premiumContent = premiumResult?.content;
 
   return (
     <div className="antialiased text-slate-800 font-sans selection:bg-indigo-100">
@@ -463,9 +520,16 @@ export default function App() {
       )}
 
       {screen === Screen.GAME && canPlayCurrentLevel && (
-        finalProjectLevel ? (
+        premiumLevelId !== null && !premiumContent ? (
+          <main className="min-h-screen grid place-content-center gap-6 p-8 text-center">
+            <p role="status">{premiumResult?.error ?? 'Carregando fase…'}</p>
+            <button type="button" className="rounded-xl bg-indigo-700 px-4 py-2 text-white" onClick={() => setScreen(Screen.MAP)}>
+              Voltar ao mapa
+            </button>
+          </main>
+        ) : premiumContent?.kind === 'final-project' ? (
           <FinalProjectScreen
-            level={finalProjectLevel}
+            level={premiumContent.level}
             onBack={() => setScreen(Screen.MAP)}
             onComplete={() => handleLevelComplete(0)}
             soundEnabled={user.settings?.soundEnabled}
@@ -474,7 +538,7 @@ export default function App() {
         ) : (
           <GameScreen
             levelId={currentLevelId}
-            customConfig={currentLevelId === 'creative' ? customLevel : undefined}
+            customConfig={currentLevelId === 'creative' ? customLevel : premiumContent?.level}
             onBack={() => currentLevelId === 'creative' ? setScreen(Screen.CREATIVE_WORKSHOP) : setScreen(Screen.MAP)}
             onHome={() => setScreen(Screen.HUB)}
             onNextLevel={handleLevelComplete}
@@ -509,7 +573,7 @@ export default function App() {
       {screen === Screen.PAYMENT_SUCCESS && <PaymentSuccessScreen onContinue={() => setScreen(Screen.TERMS)} />}
 
       {screen === Screen.TERMS && (
-         <TermsScreen userId={user.id} onAccept={(v, t) => { setUser({ ...user, termsAcceptedVersion: v, termsAcceptedAt: t }); setScreen(Screen.HUB); }} onReject={handleLogout} />
+         <TermsScreen onAccept={(v, t) => { setUser({ ...user, termsAcceptedVersion: v, termsAcceptedAt: t }); setScreen(Screen.HUB); }} onReject={handleLogout} />
       )}
 
       {showParentGate && (

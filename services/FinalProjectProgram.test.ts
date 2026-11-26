@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { FINAL_PROJECT_LEVELS } from '../finalProjectLevels';
+import { FINAL_PROJECT_LEVELS } from '../api/_lib/levels/finalProjectLevels';
 import { buildPythonProject, runFinalProject } from './FinalProjectProgram';
 
 const answersFor = (level: (typeof FINAL_PROJECT_LEVELS)[number]) =>

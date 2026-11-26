@@ -10,6 +10,8 @@ interface AdminDashboardProps {
   token: string;
   onExit: () => void;
   onSessionExpired: () => void;
+  loggingOut: boolean;
+  logoutFailed: boolean;
 }
 
 const sections = [
@@ -70,7 +72,7 @@ function useAdminResource<T>(url: string | null, token: string, refresh: number,
   return { data: current?.data, error: current?.error, updatedAt: current?.updatedAt, loading: Boolean(url && !current) };
 }
 
-export function AdminDashboard({ token, onExit, onSessionExpired }: AdminDashboardProps) {
+export function AdminDashboard({ token, onExit, onSessionExpired, loggingOut, logoutFailed }: AdminDashboardProps) {
   const [section, setSection] = useState<Section>('overview');
   const [view, setView] = useState<AccountView>('all');
   const [plan, setPlan] = useState<AdminPlan | ''>('');
@@ -123,8 +125,8 @@ export function AdminDashboard({ token, onExit, onSessionExpired }: AdminDashboa
             </button>
           ))}
         </nav>
-        <button type="button" className="admin-logout" onClick={onExit}>
-          <LogOut size={18} aria-hidden="true" /> Sair do painel
+        <button type="button" className="admin-logout" onClick={onExit} disabled={loggingOut}>
+          <LogOut size={18} aria-hidden="true" /> {loggingOut ? 'Encerrando sessão…' : 'Sair do painel'}
         </button>
       </aside>
 
@@ -142,6 +144,7 @@ export function AdminDashboard({ token, onExit, onSessionExpired }: AdminDashboa
         {section === 'payments' && <BalancePanel />}
         {resource.loading && <p className="admin-feedback" role="status"><RefreshCw size={18} className="admin-spin" aria-hidden="true" /> Carregando dados…</p>}
         {resource.error && <p className="admin-feedback admin-feedback-warning" role="alert">{resource.error}</p>}
+        {logoutFailed && <p className="admin-feedback admin-feedback-warning" role="alert">Não foi possível encerrar a sessão. Tente novamente.</p>}
 
         {section === 'overview' && accounts.data && <Overview data={accounts.data} onShowNew={showNewAccounts} />}
         {section === 'accounts' && (

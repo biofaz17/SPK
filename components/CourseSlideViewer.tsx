@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { audioService } from '../services/AudioService';
 import confetti from 'canvas-confetti';
+import toast from 'react-hot-toast';
+import { downloadCoursePdf, fetchCoursePage } from '../services/premiumContent';
 
 interface CourseSlideViewerProps {
   deck: CourseSlidesDeck;
@@ -27,6 +29,33 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
   const [lastCoverId, setLastCoverId] = useState<number | null>(null);
 
   const currentSlide: CourseSlide = deck.slides[currentSlideIndex] || deck.slides[0];
+  const [protectedPage, setProtectedPage] = useState<{ page: number; url?: string; error?: string } | null>(null);
+  const requestedPage = deck.hasPdf && !currentSlide.imageUrl ? currentSlide.slideNumber : null;
+  const pageResult = protectedPage?.page === requestedPage ? protectedPage : null;
+  const imageUrl = currentSlide.imageUrl ?? pageResult?.url;
+
+  useEffect(() => {
+    if (requestedPage === null) return;
+    const controller = new AbortController();
+    let objectUrl: string | undefined;
+    setProtectedPage(null);
+    void fetchCoursePage(deck.courseId, requestedPage, controller.signal).then(blob => {
+      if (controller.signal.aborted) return;
+      objectUrl = URL.createObjectURL(blob);
+      setProtectedPage({ page: requestedPage, url: objectUrl });
+    }).catch(error => {
+      if (!controller.signal.aborted) {
+        setProtectedPage({
+          page: requestedPage,
+          error: error instanceof Error ? error.message : 'Não foi possível abrir esta página.',
+        });
+      }
+    });
+    return () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [deck.courseId, requestedPage]);
   const slideHeading = currentSlide.title || `PDF Oficial do Curso`;
   const slideTagline = currentSlide.subtitle || `Página ${currentSlide.slideNumber} de ${deck.slides.length} — 100% fiel ao material original.`;
 
@@ -151,15 +180,14 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
               {currentSlide.slideNumber} / {deck.slides.length}
             </div>
 
-            {deck.pdfUrl && (
-              <a
-                href={deck.pdfUrl}
-                target="_blank"
-                rel="noreferrer"
+            {deck.hasPdf && (
+              <button
+                type="button"
+                onClick={() => { void downloadCoursePdf(deck.courseId).catch(error => toast.error(error.message)); }}
                 className="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold border border-cyan-400 shadow-lg transition"
               >
-                Ver PDF oficial
-              </a>
+                Baixar PDF oficial
+              </button>
             )}
 
             <button
@@ -202,9 +230,9 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
               {/* Se for Capa de Módulo */}
               {currentSlide.isModuleCover && (
                 <div className="text-center space-y-6 py-8">
-                  {currentSlide.imageUrl && (
+                  {imageUrl && (
                     <div className="mx-auto max-w-md">
-                      <img src={currentSlide.imageUrl} alt={currentSlide.title} className="w-full rounded-2xl shadow-2xl border border-white/10 object-cover" />
+                      <img src={imageUrl} alt={currentSlide.title} className="w-full rounded-2xl shadow-2xl border border-white/10 object-cover" />
                     </div>
                   )}
                   {currentSlide.moduleTitle && (
@@ -248,10 +276,13 @@ export const CourseSlideViewer: React.FC<CourseSlideViewerProps> = ({
                     )}
                   </div>
 
-                  {currentSlide.imageUrl && (
+                  {requestedPage !== null && !imageUrl && (
+                    <p role="status" className="text-sm text-slate-300">{pageResult?.error ?? 'Carregando página…'}</p>
+                  )}
+                  {imageUrl && (
                     <div className="my-4 mx-auto max-w-2xl">
                       <img
-                        src={currentSlide.imageUrl}
+                        src={imageUrl}
                         alt={currentSlide.title || `Página ${currentSlide.slideNumber}`}
                         className="w-full rounded-2xl shadow-xl border border-white/10 object-cover"
                       />

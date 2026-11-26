@@ -1,6 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_lib/http';
 import { MercadoPagoError, Order } from 'mercadopago';
-import { isAdminTokenValid, isAllowedAdminOrigin, type AdminAuthEnvironment } from './_lib/adminAuth.ts';
+import { hasActiveAdminSession, isAllowedAdminOrigin, readAdminBearer, type AdminAuthEnvironment } from './_lib/adminAuth.ts';
 import {
   createMercadoPagoConfig,
   isMercadoPagoOrderId,
@@ -79,7 +79,7 @@ function availableRefundInCents(order: MercadoPagoOrder, payment: NonNullable<Re
   return (amountInCents(payment.paid_amount) ?? 0) - alreadyRefunded;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse, env?: PaymentEnvironment & AdminAuthEnvironment) {
+export default async function handler(req: ApiRequest, res: ApiResponse, env?: PaymentEnvironment & AdminAuthEnvironment) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -90,11 +90,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   const host = typeof req.headers.host === 'string' ? req.headers.host : undefined;
   if (!isAllowedAdminOrigin(origin, host)) return res.status(403).json({ error: 'Forbidden origin' });
 
-  const authorization = req.headers.authorization;
-  const adminToken = typeof authorization === 'string' && authorization.startsWith('Bearer ')
-    ? authorization.slice(7).trim()
-    : undefined;
-  if (!isAdminTokenValid(adminToken, env)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    if (!await hasActiveAdminSession(readAdminBearer(req.headers.authorization), env)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  } catch {
+    return res.status(503).json({ error: 'Admin session service is unavailable' });
+  }
 
   const orderAction = parseOrderAction(req.body);
   if ('error' in orderAction) return res.status(400).json(orderAction);

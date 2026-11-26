@@ -33,22 +33,4 @@ export const LEGACY_LEVEL_HINTS: Readonly<Partial<Record<number, string>>> = {
   28: 'Pense numa dança de quatro passos. Direita, cima, direita e baixo. Veja onde o Sparky vai parar se dançar a mesma sequência de novo.',
   29: 'Repetir duas vezes, por dentro de outro Repetir duas vezes, faz quatro passos. Use esse truque nas duas retas do caminho.',
   30: 'Divida a trilha da floresta em dois grupos de três passos. Assim cabe uma pincelada no programa para marcar uma casa do caminho.',
-
-  // Mundo Hacker e Mestre Codificador
-  31: 'A pedra bloqueia a fileira da bandeira. Passe pela fileira de cima e volte para baixo quando chegar à coluna da bandeira.',
-  32: 'A segunda fileira é uma passagem livre. Desça uma casa, atravesse para a direita e suba só quando estiver debaixo da bandeira.',
-  33: 'Conte as casas do corredor até a bandeira. Um laço com meta representa a ideia de repetir um passo até alcançar o destino. Um laço com número conta quantas vezes agir.',
-  34: 'Trace um desvio pela fileira de baixo. A rota inteira pede cinco passos à direita e dois verticais. Compare esses sete passos com o limite de seis blocos.',
-  35: 'Observe a fileira do meio. As pedras estão acima e abaixo dela. Conte os passos livres para a direita até a bandeira.',
-  36: 'O primeiro degrau começa para baixo. Depois procure uma casa livre à direita. Repita esse par de passos com o dedo para conferir a escada inteira.',
-  37: 'Em uma travessia com pintura, o Sparky pode pintar a casa onde está e então andar para a próxima. Planeje também a pincelada da casa da bandeira.',
-  38: 'O bloco de pedras ocupa três fileiras. Suba duas casas, passe acima das pedras e desça na coluna da bandeira.',
-  39: 'Trace um caminho livre até a bandeira. Depois imagine uma pedra no primeiro passo. Qual direção seria sua segunda escolha?',
-  40: 'Pense em um desvio para contornar todas as pedras de uma vez. Desça para a fileira livre, atravesse e suba de volta na última coluna.',
-  41: 'As pedras ficam na fileira de cima. Ande para a direita e use Pintar Chão nas duas casas que ficam logo abaixo delas.',
-  42: 'Um desvio pela fileira de cima pede nove passos para a direita, uma subida e uma descida. Confira como esses onze movimentos se comparam ao limite de dez blocos.',
-  43: 'As pedras ficam no centro. Procure uma rota pelas bordas e divida o percurso em duas retas, uma para a direita e outra para baixo.',
-  44: 'São cinco passos em cada direção. Cinco é três mais dois. Cada grupo gasta um bloco para repetir e outro para andar. Conte quantos blocos as duas direções pediriam.',
-  45: 'Trace duas retas de nove passos pela borda. Quando o Sparky estiver em uma casa que quer marcar, use Pintar Chão antes de continuar.',
-  46: 'Trace a escada com um passo para baixo e outro para a direita. Esse par aparece oito vezes. Perceber o padrão ajuda a planejar a rota.',
 };

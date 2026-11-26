@@ -30,7 +30,6 @@ export const COURSES_DATA: Course[] = [
             description: 'Entenda como dar instruções 100% exatas para computadores e robôs sem desandar o bolo!',
             isPreview: true,
             videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-            pdfMaterialUrl: '/assets/pdfs/guia_completo_aulas_tecnologia_2025.pdf',
             quizQuestions: [
               {
                 question: 'O que é um Algoritmo em programação?',
@@ -395,7 +394,7 @@ export const COURSES_DATA: Course[] = [
     colorGradient: 'from-blue-600 via-emerald-600 to-cyan-500',
     badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/30',
     pdfGuideAvailable: true,
-    thumbnailUrl: '/assets/images/trilha_tecnologia_computacao_2025/trilha_page-1.png',
+    thumbnailUrl: '/assets/images/trilha_tecnologia_computacao_2025/trilha_page-01.png',
     modules: [
       {
         id: 'mod2-1-pro',
@@ -409,7 +408,6 @@ export const COURSES_DATA: Course[] = [
             description: 'Entenda como a mesma lógica de loops e decisões do Scratch é usada no TikTok, YouTube e OpenAI.',
             isPreview: true,
             videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-            pdfMaterialUrl: '/assets/pdfs/trilha_tecnologia_computacao_2025.pdf',
             quizQuestions: [
               {
                 question: 'Por que o Python é considerado a linguagem #1 mundial?',

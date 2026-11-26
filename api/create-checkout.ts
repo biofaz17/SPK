@@ -1,11 +1,13 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_lib/http';
 import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { Order, Preference } from 'mercadopago';
 import {
-  checkoutProfileExists, createMercadoPagoConfig, isCheckoutAttemptId, isMercadoPagoOrderId, linkProviderOrder,
+  createMercadoPagoConfig, isCheckoutAttemptId, isMercadoPagoOrderForMode, linkProviderOrder,
   logPaymentFailure, paymentPrices, reserveOrder, type PaidTier, type PaymentEnvironment,
 } from './_lib/payment.ts';
+import { getAuthenticatedProfile } from './_lib/profileSession.ts';
+import { consumeRateLimit } from './_lib/serverSecurity.ts';
 
 const statementDescriptor = 'TEKTOK TI';
 const productCategory = 'services';
@@ -28,11 +30,11 @@ function checkoutWebOrigin(value: string): string | undefined {
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse, env?: PaymentEnvironment) {
+export default async function handler(req: ApiRequest, res: ApiResponse, env?: PaymentEnvironment) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { userId, tier, payer, checkoutAttemptId, deviceId } = req.body || {};
-  if (typeof userId !== 'string' || userId.length < 1 || userId.length > 100 || typeof tier !== 'string' || !Object.hasOwn(paymentPrices, tier)) {
+  const { tier, payer, checkoutAttemptId, deviceId } = req.body || {};
+  if (typeof tier !== 'string' || !Object.hasOwn(paymentPrices, tier)) {
     return res.status(400).json({ error: 'Invalid checkout request' });
   }
   if (typeof payer?.name !== 'string' || !payer.name.trim() || typeof payer?.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payer.email) || (payer.surname !== undefined && typeof payer.surname !== 'string')) {
@@ -50,7 +52,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   const meliSessionId = typeof deviceId === 'string' && deviceId.length <= 4096 && /^[\x21-\x7E]+$/.test(deviceId)
     ? deviceId : undefined;
 
-  const { MP_ACCESS_TOKEN: accessToken, MP_CHECKOUT_API, APP_URL, VERCEL_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = env ?? process.env;
+  const paymentEnv = env ?? process.env;
+  const { MP_ACCESS_TOKEN: accessToken, MP_CHECKOUT_API, MP_PAYMENT_MODE, APP_URL, VERCEL_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = paymentEnv;
   const useOrders = MP_CHECKOUT_API === 'orders';
   const configuredUrl = APP_URL || (VERCEL_URL ? `https://${VERCEL_URL}` : '');
   const appUrl = useOrders ? checkoutWebOrigin(configuredUrl) : configuredUrl.replace(/\/$/, '');
@@ -58,13 +61,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
     return res.status(503).json({ error: 'Checkout service is not configured' });
   }
 
-  try {
-    const profileExists = await checkoutProfileExists(userId, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    if (!profileExists) return res.status(422).json({ error: 'A registered profile is required to checkout' });
-  } catch (error) {
-    logPaymentFailure('verify_checkout_profile', error);
-    return res.status(503).json({ error: 'Unable to verify checkout profile' });
-  }
+  const profile = await getAuthenticatedProfile(req.headers.authorization, paymentEnv);
+  if ('status' in profile) return res.status(profile.status).json({ error: profile.error });
+  const userId = profile.id;
 
   const names = payer.name.trim().split(/\s+/);
   const hasSeparateSurname = typeof payer.surname === 'string';
@@ -91,12 +90,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   const config = createMercadoPagoConfig(accessToken);
   let initPoint: string | undefined;
   try {
+    const quota = await consumeRateLimit(paymentEnv, 'checkout-profile', userId, 10, 60);
+    if (!quota.allowed) {
+      res.setHeader('Retry-After', String(quota.retryAfter));
+      return res.status(429).json({ error: 'Too many checkout requests' });
+    }
     if (useOrders) {
       const reservation = await reserveOrder(
         userId, plan, checkoutAttemptId ?? randomUUID(), SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
       );
       if (!reservation) return res.status(409).json({ error: 'Checkout attempt conflicts with selected plan' });
       if (reservation.provider_order_id && reservation.checkout_url) {
+        if (!isMercadoPagoOrderForMode(reservation.provider_order_id, MP_PAYMENT_MODE)) {
+          return res.status(409).json({ error: 'Checkout attempt belongs to a different payment environment' });
+        }
         return res.status(200).json({ initPoint: reservation.checkout_url, orderId: reservation.provider_order_id });
       }
 
@@ -123,8 +130,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
         },
         requestOptions: { idempotencyKey: reservation.reference, meliSessionId },
       });
-      if (!isMercadoPagoOrderId(order.id) || !order.checkout_url) {
-        throw new Error('Provider order is missing checkout details');
+      if (!isMercadoPagoOrderForMode(order.id, MP_PAYMENT_MODE) || !order.checkout_url) {
+        throw new Error('Provider order has invalid checkout details for this payment environment');
       }
       await linkProviderOrder(reservation.reference, order.id, order.checkout_url, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       return res.status(200).json({ initPoint: order.checkout_url, orderId: order.id });

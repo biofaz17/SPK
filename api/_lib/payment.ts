@@ -11,6 +11,7 @@ export interface PaymentEnvironment {
   MP_ACCESS_TOKEN?: string;
   MP_WEBHOOK_SECRET?: string;
   MP_CHECKOUT_API?: string;
+  MP_PAYMENT_MODE?: string;
   APP_URL?: string;
   VERCEL_URL?: string;
   SUPABASE_URL?: string;
@@ -28,15 +29,16 @@ export function isMercadoPagoOrderId(value: unknown): value is string {
   return typeof value === 'string' && /^ORD(?:TST)?[0-9A-HJKMNP-TV-Z]{26}$/.test(value);
 }
 
-export function isCheckoutAttemptId(value: unknown): value is string {
-  return typeof value === 'string' && /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(value);
+export function isMercadoPagoOrderForMode(value: unknown, mode?: string): value is string {
+  return isMercadoPagoOrderId(value) && value.startsWith('ORDTST') === (mode === 'test');
 }
 
-export async function checkoutProfileExists(userId: string, supabaseUrl: string, serviceRoleKey: string): Promise<boolean> {
-  const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-  const { data, error } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
-  if (error) throw error;
-  return data !== null;
+export function isMercadoPagoPaymentId(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{1,32}$/.test(value);
+}
+
+export function isCheckoutAttemptId(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(value);
 }
 
 function orderStore(url: string, serviceRoleKey: string) {
@@ -147,7 +149,7 @@ export async function confirmApprovedPayment(
   if (!accessToken || !supabaseUrl || !serviceRoleKey) throw new Error('Payment service is not configured');
 
   const payment = await new Payment(createMercadoPagoConfig(accessToken)).get({ id: paymentId });
-  if (payment.currency_id !== 'BRL') return null;
+  if (payment.currency_id !== 'BRL' || payment.live_mode !== (env.MP_PAYMENT_MODE !== 'test')) return null;
 
   const reference = parseExternalReference(payment.external_reference);
   if (!reference || (expectedUserId && reference.userId !== expectedUserId)) return null;
@@ -166,7 +168,7 @@ export async function confirmApprovedOrder(
   expectedUserId?: string,
   env: PaymentEnvironmentWithProcess = process.env,
 ): Promise<PaymentVerification | null> {
-  if (!isMercadoPagoOrderId(orderId)) return null;
+  if (!isMercadoPagoOrderForMode(orderId, env.MP_PAYMENT_MODE)) return null;
   const { MP_ACCESS_TOKEN: accessToken, SUPABASE_URL: supabaseUrl, SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey } = env;
   if (!accessToken || !supabaseUrl || !serviceRoleKey) throw new Error('Payment service is not configured');
 

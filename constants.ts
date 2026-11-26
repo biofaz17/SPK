@@ -1,8 +1,5 @@
 
 import { BlockType, LevelConfig, SubscriptionTier, BlockCategory } from './types';
-import { ALGORITHM_WORKSHOP_LEVELS } from './algorithmWorkshopLevels';
-import { FINAL_PROJECT_LEVELS } from './finalProjectLevels';
-import { SPARKY_OBSERVATORY_LEVELS } from './sparkyObservatoryLevels';
 
 export const PLANS = {
   [SubscriptionTier.STARTER]: {
@@ -65,47 +62,8 @@ const WORLD_2: LevelConfig[] = [
   { id: 30, title: "Mestre da Floresta", mission: "Pinte o caminho final.", gridSize: 7, startPos: { x: 0, y: 3 }, goalPos: { x: 6, y: 3 }, obstacles: [], maxBlocks: 5, availableBlocks: [BlockType.REPEAT_3, BlockType.MOVE_RIGHT, BlockType.PAINT], ageGroup: '8-10', requiredSubscription: SubscriptionTier.STARTER }
 ];
 
-// ========================================================================
-// MUNDO 3: HACKER (31-45) - PRO
-// ========================================================================
-const WORLD_3: LevelConfig[] = [
-  { id: 31, title: "Sensores Ativados", mission: "Se houver obstáculo, desvie.", gridSize: 5, startPos: { x: 0, y: 2 }, goalPos: { x: 4, y: 2 }, obstacles: [{x:2, y:2}], maxBlocks: 6, availableBlocks: [BlockType.MOVE_RIGHT, BlockType.IF_OBSTACLE, BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.ELSE], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 32, title: "O Labirinto Lógico", mission: "Use 'Se Obstáculo' dentro de um loop.", gridSize: 5, startPos: { x: 0, y: 0 }, goalPos: { x: 4, y: 0 }, obstacles: [{x:2, y:0}], maxBlocks: 8, availableBlocks: [BlockType.REPEAT_3, BlockType.IF_OBSTACLE, BlockType.MOVE_DOWN, BlockType.MOVE_RIGHT, BlockType.MOVE_UP], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 33, title: "Até a Bandeira", mission: "Use 'Até Chegar' para andar infinitamente.", gridSize: 10, startPos: { x: 0, y: 5 }, goalPos: { x: 9, y: 5 }, obstacles: [], maxBlocks: 2, availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.MOVE_RIGHT], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 34, title: "Desvio Automático", mission: "Crie um robô que desvia de tudo sozinho.", gridSize: 6, startPos: { x: 0, y: 0 }, goalPos: { x: 5, y: 0 }, obstacles: [{x:2, y:0}, {x:4, y:0}], maxBlocks: 6, availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.IF_OBSTACLE, BlockType.MOVE_DOWN, BlockType.MOVE_RIGHT, BlockType.MOVE_UP], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 35, title: "Se Caminho Livre", mission: "Só ande se o caminho estiver livre.", gridSize: 5, startPos: { x: 0, y: 2 }, goalPos: { x: 4, y: 2 }, obstacles: [{x:2,y:1}, {x:2,y:3}], maxBlocks: 6, availableBlocks: [BlockType.IF_PATH, BlockType.MOVE_RIGHT, BlockType.MOVE_UP], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 36, title: "Lógica Binária", mission: "Direita ou Baixo?", gridSize: 5, startPos: { x: 0, y: 0 }, goalPos: { x: 4, y: 4 }, obstacles: [{x:1,y:0}, {x:2,y:1}, {x:3,y:2}], maxBlocks: 10, availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 37, title: "Loop Infinito de Pintura", mission: "Pinte tudo até chegar no fim.", gridSize: 8, startPos: { x: 0, y: 4 }, goalPos: { x: 7, y: 4 }, obstacles: [], maxBlocks: 3, availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.PAINT, BlockType.MOVE_RIGHT], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 38, title: "O Grande Algoritmo", mission: "Contorne um grande bloco.", gridSize: 7, startPos: { x: 0, y: 3 }, goalPos: { x: 6, y: 3 }, obstacles: [{x:2,y:2}, {x:2,y:3}, {x:2,y:4}, {x:3,y:2}, {x:3,y:3}, {x:3,y:4}], maxBlocks: 15, availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 39, title: "Sensores Complexos", mission: "Use 'Senão Se' para múltiplas escolhas.", gridSize: 6, startPos: { x: 0, y: 0 }, goalPos: { x: 5, y: 5 }, obstacles: [], maxBlocks: 12, availableBlocks: [BlockType.IF_OBSTACLE, BlockType.ELSE_IF, BlockType.ELSE, BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 40, title: "Zig-Zag Inteligente", mission: "Desvie de obstáculos alternados.", gridSize: 7, startPos: { x: 0, y: 0 }, goalPos: { x: 6, y: 0 }, obstacles: [{x:1,y:0}, {x:3,y:0}, {x:5,y:0}], maxBlocks: 10, availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.IF_OBSTACLE, BlockType.MOVE_DOWN, BlockType.MOVE_UP, BlockType.MOVE_RIGHT], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 41, title: "Pintura Condicional", mission: "Só pinte onde houver um obstáculo ao lado.", gridSize: 5, startPos: { x: 0, y: 2 }, goalPos: { x: 4, y: 2 }, obstacles: [{x:1,y:1}, {x:3,y:1}], maxBlocks: 10, availableBlocks: [BlockType.IF_OBSTACLE, BlockType.PAINT, BlockType.MOVE_RIGHT], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 42, title: "O Corredor Crítico", mission: "Atravesse o corredor de obstáculos móveis (simulados).", gridSize: 10, startPos: { x: 0, y: 5 }, goalPos: { x: 9, y: 5 }, obstacles: [{x:2,y:5}, {x:5,y:5}, {x:8,y:5}], maxBlocks: 10, availableBlocks: [BlockType.REPEAT_UNTIL, BlockType.IF_OBSTACLE, BlockType.MOVE_UP, BlockType.MOVE_DOWN, BlockType.MOVE_RIGHT], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 43, title: "Busca e Resgate", mission: "Vá até o objetivo em um mapa desconhecido.", gridSize: 8, startPos: { x: 0, y: 0 }, goalPos: { x: 7, y: 7 }, obstacles: [{x:3,y:3}, {x:4,y:4}], maxBlocks: 15, availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.REPEAT_UNTIL], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 44, title: "Recursividade Simples", mission: "Repita um padrão dentro de outro padrão.", gridSize: 6, startPos: { x: 0, y: 0 }, goalPos: { x: 5, y: 5 }, obstacles: [], maxBlocks: 6, availableBlocks: [BlockType.REPEAT_3, BlockType.REPEAT_2, BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO },
-  { id: 45, title: "Invasão Hacker", mission: "Limpe o sistema pintando as falhas.", gridSize: 10, startPos: { x: 0, y: 0 }, goalPos: { x: 9, y: 9 }, obstacles: [], maxBlocks: 20, availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.PAINT, BlockType.REPEAT_UNTIL], ageGroup: '11-14', requiredSubscription: SubscriptionTier.PRO }
-];
-
-// Nível Final Especial
-const MASTER_LEVEL: LevelConfig = {
-  id: 46,
-  title: "Mestre Codificador",
-  mission: "Navegue pela escada traiçoeira usando lógica pura.",
-  gridSize: 9,
-  startPos: { x: 0, y: 0 },
-  goalPos: { x: 8, y: 8 },
-  obstacles: [{x:1,y:0}, {x:2,y:1}, {x:3,y:2}, {x:4,y:3}, {x:5,y:4}, {x:6,y:5}, {x:7,y:6}, {x:8,y:7}],
-  maxBlocks: 8,
-  availableBlocks: [BlockType.MOVE_RIGHT, BlockType.MOVE_DOWN, BlockType.IF_OBSTACLE, BlockType.ELSE, BlockType.REPEAT_UNTIL],
-  ageGroup: '11-14',
-  requiredSubscription: SubscriptionTier.PRO,
-  explanation: "VOCÊ É O MESTRE SUPREMO!"
-};
-
-export const LEGACY_LEVELS: LevelConfig[] = [...WORLD_1, ...WORLD_2, ...WORLD_3, MASTER_LEVEL];
-export const PRO_EXPANSION_LEVELS: LevelConfig[] = [...ALGORITHM_WORKSHOP_LEVELS, ...SPARKY_OBSERVATORY_LEVELS, ...FINAL_PROJECT_LEVELS];
-export const FIRST_PRO_EXPANSION_LEVEL_ID = PRO_EXPANSION_LEVELS[0].id as number;
-export const LEVELS: LevelConfig[] = [...LEGACY_LEVELS, ...PRO_EXPANSION_LEVELS];
+export const LEGACY_LEVELS: LevelConfig[] = [...WORLD_1, ...WORLD_2];
+export const LEVELS = LEGACY_LEVELS;
 
 export const CREATIVE_LEVEL: LevelConfig = {
   id: 'creative',

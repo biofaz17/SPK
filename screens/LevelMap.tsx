@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Lock, ArrowLeft, Crown, Zap, Check, Star, Play, FlaskConical, Orbit, Lightbulb } from 'lucide-react';
-import { FIRST_PRO_EXPANSION_LEVEL_ID, LEGACY_LEVELS } from '../constants';
-import { ALGORITHM_WORKSHOP_LEVELS } from '../algorithmWorkshopLevels';
-import { FINAL_PROJECT_LEVELS } from '../finalProjectLevels';
-import { SPARKY_OBSERVATORY_LEVELS } from '../sparkyObservatoryLevels';
+import { LEGACY_LEVELS } from '../constants';
+import {
+  ALGORITHM_WORKSHOP_CATALOG, FINAL_PROJECT_CATALOG, FIRST_PRO_EXPANSION_LEVEL_ID,
+  PRO_LEGACY_CATALOG, SPARKY_OBSERVATORY_CATALOG,
+} from '../levelCatalog';
 import { SubscriptionTier, LevelConfig } from '../types';
 import { SparkyLogo } from '../components/SparkyLogo';
 
@@ -17,6 +18,8 @@ interface LevelMapProps {
   onHome?: () => void; // NOVO: Voltar ao Hub
   onRequestUpgrade: () => void;
 }
+
+type MapLevel = Pick<LevelConfig, 'id' | 'title' | 'requiredSubscription'>;
 
 export const LevelMap: React.FC<LevelMapProps> = ({ 
   unlockedLevels, 
@@ -33,8 +36,8 @@ export const LevelMap: React.FC<LevelMapProps> = ({
   const proWorldsRef = useRef<HTMLDivElement>(null);
   const finalProjectRef = useRef<HTMLElement>(null);
   const proProgress = unlockedProLevel ?? FIRST_PRO_EXPANSION_LEVEL_ID;
-  const firstFinalProjectLevel = FINAL_PROJECT_LEVELS[0].id;
-  const lastProLevel = FINAL_PROJECT_LEVELS[FINAL_PROJECT_LEVELS.length - 1].id;
+  const firstFinalProjectLevel = FINAL_PROJECT_CATALOG[0].id;
+  const lastProLevel = FINAL_PROJECT_CATALOG[FINAL_PROJECT_CATALOG.length - 1].id;
   const proExpansionComplete = proProgress > lastProLevel;
 
   // Auto-scroll to current level on mount
@@ -56,7 +59,7 @@ export const LevelMap: React.FC<LevelMapProps> = ({
     return false;
   };
 
-  const handleLevelClick = (level: LevelConfig) => {
+  const handleLevelClick = (level: MapLevel) => {
     if (!hasSubscriptionAccess(level.requiredSubscription)) {
       onRequestUpgrade();
       return;
@@ -71,10 +74,9 @@ export const LevelMap: React.FC<LevelMapProps> = ({
 
   const freeLevels = LEGACY_LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.FREE);
   const starterLevels = LEGACY_LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.STARTER);
-  const proLevels = LEGACY_LEVELS.filter(l => l.requiredSubscription === SubscriptionTier.PRO);
   const proLocked = !hasSubscriptionAccess(SubscriptionTier.PRO);
 
-  const renderLevelGrid = (levels: LevelConfig[], title: string, tierColor: string, icon: React.ReactNode, locked: boolean, expansionDescription?: string) => (
+  const renderLevelGrid = (levels: MapLevel[], title: string, tierColor: string, icon: React.ReactNode, locked: boolean, expansionDescription?: string) => (
       <div className={`mb-12 w-full max-w-5xl ${locked ? 'opacity-80 grayscale-[0.5]' : ''}`}>
           <div className={`flex items-center gap-3 mb-6 p-4 rounded-xl shadow-sm ${locked ? 'bg-slate-200' : 'bg-white/90 backdrop-blur-sm'}`}>
               <div className={`p-2 rounded-full text-white ${tierColor}`}>
@@ -209,19 +211,19 @@ export const LevelMap: React.FC<LevelMapProps> = ({
 
         {renderLevelGrid(freeLevels, "Mundo Inicial (Grátis)", "bg-green-500", <Star fill="currentColor" />, false)}
         {renderLevelGrid(starterLevels, "Mundo da Floresta (Starter)", "bg-blue-500", <Zap fill="currentColor" />, !hasSubscriptionAccess(SubscriptionTier.STARTER))}
-        {renderLevelGrid(proLevels, "Mundo Hacker (Pro)", "bg-purple-600", <Crown fill="currentColor" />, !hasSubscriptionAccess(SubscriptionTier.PRO))}
+        {renderLevelGrid(PRO_LEGACY_CATALOG, "Mundo Hacker (Pro)", "bg-purple-600", <Crown fill="currentColor" />, proLocked)}
 
         <div ref={proWorldsRef} tabIndex={-1} role="region" aria-label="Novos mundos Pro" className="w-full scroll-mt-24">
-          {renderLevelGrid(ALGORITHM_WORKSHOP_LEVELS, 'Oficina de Algoritmos (Pro)', 'bg-teal-700', <FlaskConical />, proLocked,
+          {renderLevelGrid(ALGORITHM_WORKSHOP_CATALOG, 'Oficina de Algoritmos (Pro)', 'bg-teal-700', <FlaskConical />, proLocked,
             'Compare rotas, conserte rascunhos de código e descubra em que ordem cumprir cada tarefa.')}
-          {renderLevelGrid(SPARKY_OBSERVATORY_LEVELS, 'Observatório do Sparky (Pro)', 'bg-indigo-700', <Orbit />, proLocked,
-            proProgress < Number(SPARKY_OBSERVATORY_LEVELS[0].id)
+          {renderLevelGrid(SPARKY_OBSERVATORY_CATALOG, 'Observatório do Sparky (Pro)', 'bg-indigo-700', <Orbit />, proLocked,
+            proProgress < SPARKY_OBSERVATORY_CATALOG[0].id
               ? 'Conclua a Oficina de Algoritmos para testar seus programas em mapas diferentes.'
               : proProgress >= firstFinalProjectLevel && !proLocked
                 ? 'Você concluiu todas as missões do Observatório! Volte a uma fase quando quiser.'
                 : 'Teste o mesmo programa em mapas diferentes e confira como ele se adapta.')}
           <section ref={finalProjectRef} tabIndex={-1} aria-label="Projeto Final · Farol do Sparky" className="w-full scroll-mt-24">
-            {renderLevelGrid(FINAL_PROJECT_LEVELS, 'Projeto Final · Farol do Sparky (Pro)', 'bg-amber-700', <Lightbulb />, proLocked,
+            {renderLevelGrid(FINAL_PROJECT_CATALOG, 'Projeto Final · Farol do Sparky (Pro)', 'bg-amber-700', <Lightbulb />, proLocked,
               !proLocked && proProgress < firstFinalProjectLevel
                 ? 'Conclua o Observatório para montar e testar seu próprio programa em Python.'
                 : !proLocked && proExpansionComplete

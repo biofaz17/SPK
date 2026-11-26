@@ -1,11 +1,11 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createAdminToken, isAllowedAdminOrigin, type AdminAuthEnvironment } from './_lib/adminAuth.ts';
+import type { ApiRequest, ApiResponse } from './_lib/http';
+import { createAdminToken, isAllowedAdminOrigin, registerAdminSession, type AdminAuthEnvironment } from './_lib/adminAuth.ts';
+import { consumeRateLimit } from './_lib/serverSecurity.ts';
 
-const attempts = new Map<string, { count: number; resetAt: number }>();
-const WINDOW_MS = 15 * 60 * 1000;
+const WINDOW_SECONDS = 15 * 60;
 const MAX_ATTEMPTS = 5;
 
-export default function handler(req: VercelRequest, res: VercelResponse, env?: AdminAuthEnvironment) {
+export default async function handler(req: ApiRequest, res: ApiResponse, env?: AdminAuthEnvironment) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -26,31 +26,23 @@ export default function handler(req: VercelRequest, res: VercelResponse, env?: A
   }
 
   const address = req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || 'unknown';
-  const now = Date.now();
+  try {
+    const rate = await consumeRateLimit(config, 'admin-login', address, MAX_ATTEMPTS, WINDOW_SECONDS);
+    if (!rate.allowed) {
+      res.setHeader('Retry-After', String(rate.retryAfter));
+      return res.status(429).json({ error: 'Too many attempts' });
+    }
 
-  const current = attempts.get(address);
-  if (current && current.resetAt > now && current.count >= MAX_ATTEMPTS) {
-    return res.status(429).json({ error: 'Too many attempts' });
+    const password = req.body && typeof req.body === 'object' ? req.body.password : undefined;
+    if (typeof password !== 'string' || !password.trim() || password.length > 128) {
+      return res.status(400).json({ error: 'Invalid password payload' });
+    }
+    const token = createAdminToken(password, config);
+    if (!token) return res.status(401).json({ error: 'Invalid credentials' });
+
+    await registerAdminSession(token, config);
+    return res.status(200).json({ token });
+  } catch {
+    return res.status(503).json({ error: 'Admin login service is unavailable' });
   }
-
-  const password = req.body && typeof req.body === 'object' ? req.body.password : undefined;
-  if (typeof password !== 'string' || !password.trim() || password.length > 128) {
-    const next = current && current.resetAt > now
-      ? { count: current.count + 1, resetAt: current.resetAt }
-      : { count: 1, resetAt: now + WINDOW_MS };
-    attempts.set(address, next);
-    return res.status(400).json({ error: 'Invalid password payload' });
-  }
-
-  const token = createAdminToken(password, config);
-  if (!token) {
-    const next = current && current.resetAt > now
-      ? { count: current.count + 1, resetAt: current.resetAt }
-      : { count: 1, resetAt: now + WINDOW_MS };
-    attempts.set(address, next);
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  attempts.delete(address);
-  return res.status(200).json({ token });
 }

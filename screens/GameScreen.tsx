@@ -1,5 +1,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { dataService } from '../services/DataService';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Battery, Code, HelpCircle, MessageSquare, Pause, Play, RotateCcw, Shirt, Sparkles, Star, Target, Terminal, Trash2, Volume2, VolumeX, XCircle, CheckCircle, Lock, Crown } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
@@ -8,9 +9,9 @@ import { Button } from '../components/Button';
 import { Robot } from '../components/Robot';
 import { StatusIndicator } from '../components/StatusIndicator';
 import { SparkyLogo } from '../components/SparkyLogo';
-import { CREATIVE_LEVEL, LEVELS, PRO_EXPANSION_LEVELS } from '../constants';
+import { CREATIVE_LEVEL, LEVELS } from '../constants';
 import { LEGACY_LEVEL_HINTS } from '../legacyLevelHints';
-import { SPARKY_OBSERVATORY_LEVELS } from '../sparkyObservatoryLevels';
+import { FIRST_PRO_EXPANSION_LEVEL_ID, LAST_OBSERVATORY_LEVEL_ID, isPremiumLevel } from '../levelCatalog';
 import { audioService } from '../services/AudioService';
 import { simulateProProgram } from '../services/ProLevelProgram';
 import { BlockCategory, BlockType, GridPosition, BLOCK_DEFINITIONS, UserProfile, SubscriptionTier, LevelConfig } from '../types';
@@ -195,7 +196,7 @@ const SkinSelector: React.FC<{ currentSkin: string, onSelect: (id: string) => vo
 
 export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, onBack, onHome, onNextLevel, user, onUpdateSkin }) => {
   const level = customConfig || (levelId === 'creative' ? CREATIVE_LEVEL : (LEVELS.find(l => l.id === levelId) || LEVELS[0]));
-  const isProChallenge = PRO_EXPANSION_LEVELS.some(entry => entry.id === level.id);
+  const isProChallenge = isPremiumLevel(level.id) && level.id >= FIRST_PRO_EXPANSION_LEVEL_ID;
   const scenarios = [{ label: 'Cenário inicial', obstacles: level.obstacles }, ...(level.testScenarios ?? [])];
   const isHackerMode = level.id === 45 || level.id === 'creative' || String(level.id).startsWith('custom'); 
   const starterProgram = level.workshop?.starterProgram;
@@ -298,11 +299,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
     if (program.length === 0) return;
     setIsAnalyzingLogic(true);
     try {
-      const blocksLabels = program.map(b => BLOCK_DEFINITIONS[b].label).join(', ');
+      const accessToken = await dataService.getAccessToken();
+      if (!accessToken) {
+        setLogicExplanation('Entre na sua conta para pedir uma explicação ao Sparky.');
+        return;
+      }
       const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: `Você é o Sparky, robô tutor. O aluno usou: [${blocksLabels}] para vencer o nível ${String(level.id)}. Explique por que essa lógica é boa para uma criança de 7 anos. Seja muito lúdico e encorajador. Use emojis. Curto (max 2 parágrafos).` }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ task: 'explain-logic', blocks: program }),
       });
       if (!response.ok) throw new Error('Falha ao gerar explicação');
       const { text } = await response.json();
@@ -734,7 +739,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ levelId, customConfig, o
                 explanation={gameStatus === 'won' || isProChallenge ? logicExplanation : null}
                 isAnalyzing={isAnalyzingLogic}
                 isProChallenge={isProChallenge}
-                isObservatoryFinal={level.id === SPARKY_OBSERVATORY_LEVELS.at(-1)?.id}
+                isObservatoryFinal={level.id === LAST_OBSERVATORY_LEVEL_ID}
                 hint={gameStatus === 'lost' ? hint : undefined}
               />
             )}

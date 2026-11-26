@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ALGORITHM_WORKSHOP_LEVELS } from '../algorithmWorkshopLevels';
+import { ALGORITHM_WORKSHOP_LEVELS } from '../api/_lib/levels/algorithmWorkshopLevels';
 import { BlockType, LevelConfig, SubscriptionTier } from '../types';
 import { simulateProProgram } from './ProLevelProgram';
 

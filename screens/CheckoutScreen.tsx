@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SubscriptionTier, UserProfile } from '../types';
 import { PLANS } from '../constants';
+import { dataService } from '../services/DataService';
 import { ArrowLeft, Loader2, Lock, CheckCircle, Store, AlertTriangle, User, Mail, FileText, ArrowRight, ShieldCheck, Building2 } from 'lucide-react';
 
 interface CheckoutScreenProps {
@@ -135,6 +136,9 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
     setErrorMessage('');
     
     try {
+      const accessToken = await dataService.getAccessToken();
+      const sessionError = 'Entre novamente na sua conta para iniciar o pagamento.';
+      if (!accessToken) throw new Error(sessionError);
       checkoutAttemptId.current ??= crypto.randomUUID();
       // SECURITY: Input Sanitization before sending payload
       const safeEmail = sanitizeInput(payerEmail);
@@ -143,10 +147,10 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
       const response = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          userId: user.id,
           tier,
           checkoutAttemptId: checkoutAttemptId.current,
           deviceId: window.MP_DEVICE_SESSION_ID ?? null,
@@ -163,6 +167,8 @@ export const CheckoutScreen: React.FC<CheckoutScreenProps> = ({ user, tier, onCa
       if (!response || response.status === 502) {
         throw new Error('Não foi possível conectar ao Mercado Pago. Tente novamente em instantes.');
       }
+
+      if (response.status === 401) throw new Error(sessionError);
 
       if (response.status === 503) {
         throw new Error('O checkout está indisponível no momento. Tente novamente mais tarde.');

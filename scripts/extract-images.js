@@ -61,7 +61,7 @@ async function main() {
   for (const f of files) {
     const pdfPath = path.join(projectRoot, f);
     const name = path.basename(f, path.extname(f));
-    const outDir = path.join(projectRoot, 'public', 'assets', 'images', name);
+    const outDir = path.join(projectRoot, 'private-course-assets', 'images', name);
     try {
       await renderPdfToImages(pdfPath, outDir, 2.0);
     } catch (err) {

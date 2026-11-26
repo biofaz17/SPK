@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Box, Flag, Play, RotateCcw, Sparkles, Wand2, Hammer, Trash2, CheckCircle, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { dataService } from '../services/DataService';
 import { Button } from '../components/Button';
 import { SparkyLogo } from '../components/SparkyLogo';
 import { LevelConfig, GridPosition, BlockType, SubscriptionTier } from '../types';
@@ -66,15 +67,19 @@ export const CreativeWorkshopScreen: React.FC<CreativeWorkshopScreenProps> = ({ 
   const generateMission = async () => {
     setIsGeneratingMission(true);
     try {
-      const prompt = `Crie uma missão lúdica e curta para uma criança de 7 anos em um jogo de robô. 
-      O robô começa em (${startPos.x}, ${startPos.y}) e deve chegar em (${goalPos.x}, ${goalPos.y}). 
-      Há ${obstacles.length} obstáculos no caminho. Invente um contexto divertido (espaço, floresta, oceano). 
-      Máximo 2 frases. Use emojis.`;
-      
+      const accessToken = await dataService.getAccessToken();
+      if (!accessToken) throw new Error('Entre na sua conta para gerar uma missão.');
       const response = await fetch('/api/gemini', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({
+          task: 'create-mission',
+          startX: startPos.x,
+          startY: startPos.y,
+          goalX: goalPos.x,
+          goalY: goalPos.y,
+          obstacleCount: obstacles.length,
+        }),
       });
       if (!response.ok) throw new Error('Falha ao gerar missão');
       const { text } = await response.json();

@@ -1,11 +1,16 @@
-import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createSecurityClient, type ServerSecurityEnvironment } from './serverSecurity.ts';
 
 const TOKEN_TTL_SECONDS = 60 * 60;
 
-export interface AdminAuthEnvironment {
+export interface AdminAuthEnvironment extends ServerSecurityEnvironment {
   ADMIN_PASSWORD?: string;
   ADMIN_TOKEN_SECRET?: string;
 }
+
+type AdminSession = { sid: string; exp: number };
+type AdminAuthConfig = AdminAuthEnvironment | NodeJS.ProcessEnv;
+const sessionIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export function sanitizeText(value: unknown, maxLength = 128): string | null {
   if (typeof value !== 'string') return null;
@@ -56,7 +61,7 @@ export function maskIpAddress(ip: unknown): string {
 export function sanitizeAdminProfile<T extends Record<string, any>>(profile: T): T {
   if (!profile || typeof profile !== 'object') return profile;
 
-  const { password, pass, email, parent_email, cpf, ...rest } = profile as Record<string, any>;
+  const { password, legacy_password_verifier, pass, email, parent_email, cpf, ...rest } = profile as Record<string, any>;
   const sanitized: Record<string, any> = { ...rest };
 
   if (profile.terms_log && typeof profile.terms_log === 'object') {
@@ -69,7 +74,7 @@ export function sanitizeAdminProfile<T extends Record<string, any>>(profile: T):
   return sanitized as T;
 }
 
-export function createAdminToken(password: unknown, env: AdminAuthEnvironment | NodeJS.ProcessEnv = process.env): string | null {
+export function createAdminToken(password: unknown, env: AdminAuthConfig = process.env): string | null {
   const configuredPassword = env.ADMIN_PASSWORD?.trim();
   const secret = env.ADMIN_TOKEN_SECRET;
   if (!configuredPassword || !secret || secret.length < 32 || typeof password !== 'string') return null;
@@ -82,7 +87,7 @@ export function createAdminToken(password: unknown, env: AdminAuthEnvironment | 
   if (!timingSafeEqual(submittedHash, configuredHash)) return null;
 
   const issuedAt = Math.floor(Date.now() / 1000);
-  const sessionId = randomBytes(16).toString('hex');
+  const sessionId = randomUUID();
   const payload = Buffer.from(JSON.stringify({
     type: 'admin',
     iat: issuedAt,
@@ -94,24 +99,59 @@ export function createAdminToken(password: unknown, env: AdminAuthEnvironment | 
   return `${payload}.${signature}`;
 }
 
-export function isAdminTokenValid(token: string | undefined, env: AdminAuthEnvironment | NodeJS.ProcessEnv = process.env): boolean {
+function readSignedSession(token: string | undefined, env: AdminAuthConfig): AdminSession | null {
   const secret = env.ADMIN_TOKEN_SECRET;
-  if (!secret || secret.length < 32 || !token) return false;
+  if (!secret || secret.length < 32 || !token || token.length > 512) return null;
 
-  const [payload, signature, extra] = token.split('.');
-  if (!payload || !signature || extra) return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [payload, signature] = parts;
+  if (!payload || !signature) return null;
 
   const expected = createHmac('sha256', secret).update(payload).digest();
   const actual = Buffer.from(signature, 'base64url');
-  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return false;
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return null;
 
   try {
     const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    const validType = decoded.type === 'admin';
-    const validExp = typeof decoded.exp === 'number' && decoded.exp > Math.floor(Date.now() / 1000);
-    const validIat = typeof decoded.iat === 'number' && decoded.iat <= Math.floor(Date.now() / 1000);
-    return validType && validExp && validIat;
+    const now = Math.floor(Date.now() / 1000);
+    if (decoded?.type !== 'admin' || typeof decoded.sid !== 'string' || !sessionIdPattern.test(decoded.sid)
+      || !Number.isInteger(decoded.exp) || !Number.isInteger(decoded.iat)
+      || decoded.exp <= now || decoded.iat > now || decoded.exp - decoded.iat !== TOKEN_TTL_SECONDS) {
+      return null;
+    }
+    return { sid: decoded.sid, exp: decoded.exp };
   } catch {
-    return false;
+    return null;
   }
+}
+
+export function readAdminBearer(authorization: string | string[] | undefined): string | undefined {
+  return typeof authorization === 'string' && authorization.startsWith('Bearer ')
+    ? authorization.slice(7).trim() : undefined;
+}
+
+export async function registerAdminSession(token: string, env: AdminAuthConfig) {
+  const session = readSignedSession(token, env);
+  if (!session) throw new Error('Invalid administrative session');
+  const { data, error } = await createSecurityClient(env).rpc('sparky_create_admin_session', {
+    session_id: session.sid,
+    expires_epoch: session.exp,
+  });
+  if (error || data !== true) throw new Error('Unable to register administrative session');
+}
+
+export async function hasActiveAdminSession(token: string | undefined, env: AdminAuthConfig = process.env) {
+  const session = readSignedSession(token, env);
+  if (!session) return false;
+  const { data, error } = await createSecurityClient(env).rpc('sparky_admin_session_active', { session_id: session.sid });
+  if (error || typeof data !== 'boolean') throw new Error('Unable to check administrative session');
+  return data;
+}
+
+export async function revokeAdminSession(token: string, env: AdminAuthConfig = process.env) {
+  const session = readSignedSession(token, env);
+  if (!session) return;
+  const { data, error } = await createSecurityClient(env).rpc('sparky_revoke_admin_session', { session_id: session.sid });
+  if (error || data !== true) throw new Error('Unable to revoke administrative session');
 }

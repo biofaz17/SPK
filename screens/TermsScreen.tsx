@@ -6,14 +6,13 @@ import { dataService } from '../services/DataService';
 import { audioService } from '../services/AudioService';
 
 interface TermsScreenProps {
-  userId: string;
   onAccept: (version: string, timestamp: string) => void;
   onReject: () => void;
 }
 
 const TERMS_VERSION = "v1.0";
 
-export const TermsScreen: React.FC<TermsScreenProps> = ({ userId, onAccept, onReject }) => {
+export const TermsScreen: React.FC<TermsScreenProps> = ({ onAccept, onReject }) => {
   const [hasReadToBottom, setHasReadToBottom] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +31,7 @@ export const TermsScreen: React.FC<TermsScreenProps> = ({ userId, onAccept, onRe
     if (!isChecked || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const { timestamp } = await dataService.acceptTerms(userId, TERMS_VERSION);
+      const { timestamp } = await dataService.acceptTerms(TERMS_VERSION);
       audioService.playSfx('success');
       onAccept(TERMS_VERSION, timestamp);
     } catch (e) {

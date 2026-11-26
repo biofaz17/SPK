@@ -1,4 +1,4 @@
-import { BlockType, LevelConfig, SubscriptionTier } from './types';
+import { BlockType, LevelConfig, SubscriptionTier } from '../../../types';
 
 type WorkshopLevel = Pick<LevelConfig,
   'id' | 'title' | 'mission' | 'tutorialMessage' | 'explanation' | 'maxBlocks' | 'availableBlocks' | 'workshop'

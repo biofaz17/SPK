@@ -2,6 +2,7 @@ begin;
 
 alter table public.profiles
   add column if not exists auth_user_id uuid references auth.users (id) on delete set null,
+  add column if not exists legacy_password_verifier text,
   add column if not exists terms_accepted_version text,
   add column if not exists terms_accepted_at timestamptz,
   add column if not exists terms_log jsonb,
@@ -15,6 +16,7 @@ create unique index if not exists sparky_profiles_auth_user_id_key
 alter table public.profiles enable row level security;
 
 revoke all privileges on table public.profiles from public, anon, authenticated;
+revoke all privileges (legacy_password_verifier) on table public.profiles from public, anon, authenticated;
 revoke all privileges (
   id, auth_user_id, name, password, parent_email, age, subscription, active_skin,
   progress, settings, last_active, terms_accepted_version, terms_accepted_at, terms_log
@@ -25,7 +27,7 @@ grant select (
   progress, settings, last_active, terms_accepted_version, terms_accepted_at
 ) on table public.profiles to authenticated;
 grant update (
-  progress, settings, active_skin, last_active, terms_accepted_version, terms_accepted_at, terms_log
+  progress, settings, active_skin, last_active
 ) on table public.profiles to authenticated;
 
 grant select on table public.profiles to service_role;
@@ -69,8 +71,9 @@ begin
 
   if profile ->> 'action' = 'migrate' then
     update public.profiles
-    set auth_user_id = new.id, password = null
-    where id = profile ->> 'id' and auth_user_id is null and password is not null;
+    set auth_user_id = new.id, password = null, legacy_password_verifier = null
+    where id = profile ->> 'id' and auth_user_id is null
+      and (password is not null or legacy_password_verifier is not null);
     if not found then
       raise exception 'Sparky profile is unavailable for migration';
     end if;

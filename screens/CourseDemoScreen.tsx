@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { COURSE_DECKS, CourseSlidesDeck } from '../courseSlidesData';
+import { COURSE_DECKS, previewDeck, type CourseSlidesDeck } from '../courseSlidesData';
 import { CourseSlideViewer } from '../components/CourseSlideViewer';
-import { BookOpen, ArrowLeft, Play, Sparkles, CheckCircle2, Crown, Zap, Eye, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Play, Sparkles, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/Button';
 import { audioService } from '../services/AudioService';
 
@@ -50,24 +50,14 @@ export const CourseDemoScreen: React.FC<CourseDemoScreenProps> = ({ onBack }) =>
         {/* Banner de Apresentação da Funcionalidade */}
         <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 p-6 md:p-8 rounded-3xl border-2 border-indigo-500/40 shadow-2xl space-y-4">
           <h2 className="text-2xl md:text-3xl font-heading text-white flex items-center gap-3">
-            <Sparkles className="text-yellow-400" /> Sistema de Cursos Pago 100% Disponível
+            <Sparkles className="text-yellow-400" /> Experimente o leitor de cursos
           </h2>
           <p className="text-slate-300 text-sm md:text-base leading-relaxed max-w-3xl">
-            Implementamos o leitor completo contendo os <strong>{currentDeck.slides.length} slides originais baseados nas páginas do PDF</strong>. O aluno pode navegar slide a slide, ganhar XP a cada lição, visualizar os conteúdos e acompanhar o progresso!
+            Abra a primeira página de cada curso como amostra. O curso selecionado tem <strong>{currentDeck.slides.length} páginas</strong> no leitor completo.
           </p>
           <p className="text-amber-300 text-sm md:text-base leading-relaxed max-w-3xl">
-            Aqui o foco é o conteúdo: cada slide corresponde fielmente a uma página do PDF original, com a informação preservada e pronta para aprendizado.
+            Para acessar todas as páginas e baixar o PDF, entre com uma conta que tenha o plano do curso.
           </p>
-          {currentDeck.pdfUrl && (
-            <a
-              href={currentDeck.pdfUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition"
-            >
-              <BookOpen size={18} /> Abrir PDF oficial
-            </a>
-          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -99,12 +89,12 @@ export const CourseDemoScreen: React.FC<CourseDemoScreenProps> = ({ onBack }) =>
               variant="primary" 
               size="md" 
               onClick={() => {
-                setActiveViewerDeck(COURSE_DECKS['curso-1-scratch-ninja']);
+                setActiveViewerDeck(previewDeck(COURSE_DECKS['curso-1-scratch-ninja']));
                 audioService.playSfx('pop');
               }}
               className="bg-amber-600 hover:bg-amber-500 text-white font-bold border-none w-full"
             >
-              <Play size={18} className="mr-2" /> Abrir Leitor ({COURSE_DECKS['curso-1-scratch-ninja'].slides.length} Slides)
+              <Play size={18} className="mr-2" /> Abrir amostra
             </Button>
           </div>
 
@@ -135,12 +125,12 @@ export const CourseDemoScreen: React.FC<CourseDemoScreenProps> = ({ onBack }) =>
                 variant="primary" 
                 size="md" 
                 onClick={() => {
-                  setActiveViewerDeck(COURSE_DECKS['curso-2-python-pro-mode']);
+                  setActiveViewerDeck(previewDeck(COURSE_DECKS['curso-2-python-pro-mode']));
                   audioService.playSfx('pop');
                 }}
                 className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold border-none w-full"
               >
-                <Play size={18} className="mr-2" /> Abrir Leitor ({COURSE_DECKS['curso-2-python-pro-mode'].slides.length} Slides)
+                <Play size={18} className="mr-2" /> Abrir amostra
               </Button>
             </div>
         </div>
@@ -159,7 +149,7 @@ export const CourseDemoScreen: React.FC<CourseDemoScreenProps> = ({ onBack }) =>
               <div 
                 key={mSlide.id}
                 onClick={() => {
-                  setActiveViewerDeck(currentDeck);
+                  setActiveViewerDeck(previewDeck(currentDeck));
                 }}
                 className="bg-slate-800/60 p-3 rounded-2xl border border-white/5 hover:border-indigo-400 cursor-pointer transition space-y-1"
               >

@@ -1,4 +1,4 @@
-import { BlockType, LevelConfig, SubscriptionTier } from './types';
+import { BlockType, LevelConfig, SubscriptionTier } from '../../../types';
 
 const {
   MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT,

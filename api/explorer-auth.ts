@@ -1,15 +1,14 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import type { ApiRequest, ApiResponse } from './_lib/http';
+import { createHash, randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { isAllowedAdminOrigin } from './_lib/adminAuth.ts';
+import { consumeRateLimit, createSecurityClient, type ServerSecurityConfig, type ServerSecurityEnvironment } from './_lib/serverSecurity.ts';
 
-export interface ExplorerAuthEnvironment {
-  SUPABASE_URL?: string;
-  SUPABASE_SERVICE_ROLE_KEY?: string;
+export interface ExplorerAuthEnvironment extends ServerSecurityEnvironment {
   VITE_SUPABASE_ANON_KEY?: string;
 }
 
-type Profile = { auth_user_id: string | null; password: string | null };
+type Profile = { auth_user_id: string | null };
 type AuthFailure = { code?: string; status?: number };
 type ProfileMetadata =
   | { action: 'migrate'; id: string }
@@ -20,9 +19,7 @@ const duplicateMessage = 'Este nome de explorador já existe!';
 const unavailableMessage = 'O serviço de contas está indisponível. Tente novamente em instantes.';
 const rateLimitMessage = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
 const serverAuth = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false };
-const attempts = new Map<string, { count: number; resetAt: number }>();
-const attemptWindowMs = 10 * 60 * 1000;
-const maxAttemptBuckets = 5000;
+const attemptWindowSeconds = 10 * 60;
 
 class RequestError extends Error {
   readonly status: number;
@@ -35,26 +32,11 @@ class RequestError extends Error {
   }
 }
 
-function countAttempt(key: string, limit: number) {
-  const now = Date.now();
-  const previous = attempts.get(key);
-  if (previous && previous.resetAt > now) {
-    if (previous.count >= limit) {
-      throw new RequestError(429, rateLimitMessage, Math.ceil((previous.resetAt - now) / 1000));
-    }
-    previous.count += 1;
-    return;
+async function countAttempt(env: ServerSecurityConfig, scope: string, key: string, limit: number) {
+  const decision = await consumeRateLimit(env, scope, key, limit, attemptWindowSeconds);
+  if (!decision.allowed) {
+    throw new RequestError(429, rateLimitMessage, decision.retryAfter);
   }
-  if (attempts.size >= maxAttemptBuckets) {
-    for (const [bucket, entry] of attempts) {
-      if (entry.resetAt <= now) attempts.delete(bucket);
-    }
-    if (attempts.size >= maxAttemptBuckets) {
-      const oldest = attempts.keys().next().value;
-      if (oldest !== undefined) attempts.delete(oldest);
-    }
-  }
-  attempts.set(key, { count: 1, resetAt: now + attemptWindowMs });
 }
 
 function upstreamError(operation: string, error?: AuthFailure | null) {
@@ -64,15 +46,9 @@ function upstreamError(operation: string, error?: AuthFailure | null) {
 }
 
 async function findProfile(admin: SupabaseClient, id: string): Promise<Profile | null> {
-  const { data, error } = await admin.from('profiles').select('auth_user_id,password').eq('id', id).maybeSingle();
+  const { data, error } = await admin.from('profiles').select('auth_user_id').eq('id', id).maybeSingle();
   if (error) throw upstreamError('find_profile', error);
   return data;
-}
-
-function legacyPasswordMatches(password: string, previous: string | null) {
-  if (!previous) return false;
-  const hash = (value: string) => createHash('sha256').update(value).digest();
-  return timingSafeEqual(hash(password), hash(previous));
 }
 
 function legacyAuthPassword(id: string, password: string) {
@@ -135,14 +111,24 @@ async function register(
   return signIn(auth, data.user.id, email, password);
 }
 
-async function login(admin: SupabaseClient, auth: SupabaseClient, id: string, password: string) {
+async function login(admin: SupabaseClient, auth: SupabaseClient, id: string, password: string, env: ServerSecurityConfig) {
   const profile = await findProfile(admin, id);
   if (profile?.auth_user_id) return signInLinked(admin, auth, id, profile.auth_user_id, password);
   if (!profile) throw new RequestError(401, credentialsMessage);
 
-  countAttempt(`legacy:${id}`, 10);
-  if (!legacyPasswordMatches(password, profile.password)) throw new RequestError(401, credentialsMessage);
+  await countAttempt(env, 'explorer-legacy', id, 10);
   const derivedPassword = legacyAuthPassword(id, password);
+  const { data: verified, error: verificationError } = await admin.rpc('sparky_verify_legacy_password', {
+    profile_id: id,
+    derived_password: derivedPassword,
+  });
+  if (verificationError) throw upstreamError('verify_legacy_password', verificationError);
+  if (verified !== true) {
+    // A concurrent login can finish the migration while verification waits for the profile lock.
+    const linked = await findProfile(admin, id);
+    if (linked?.auth_user_id) return signInLinked(admin, auth, id, linked.auth_user_id, password);
+    throw new RequestError(401, credentialsMessage);
+  }
   const { data, error, email } = await createAuthUser(admin, { action: 'migrate', id }, derivedPassword);
   if (error || !data.user) {
     const linked = await findProfile(admin, id);
@@ -152,7 +138,7 @@ async function login(admin: SupabaseClient, auth: SupabaseClient, id: string, pa
   return signIn(auth, data.user.id, email, derivedPassword);
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse, env?: ExplorerAuthEnvironment) {
+export default async function handler(req: ApiRequest, res: ApiResponse, env?: ExplorerAuthEnvironment) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -196,18 +182,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
       registration = { action, id, name, parent_email: parentEmail, age };
     }
 
-    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_ANON_KEY } = env ?? process.env;
+    const config = env ?? process.env;
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_ANON_KEY } = config;
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !VITE_SUPABASE_ANON_KEY) {
       throw new RequestError(503, 'O serviço de contas do Supabase ainda não está configurado.');
     }
 
     const address = req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || 'unknown';
-    countAttempt(`${action}:${address}`, action === 'register' ? 10 : 30);
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: serverAuth });
+    await countAttempt(config, `explorer-${action}`, address, action === 'register' ? 10 : 30);
+    const admin = createSecurityClient(config);
     const auth = createClient(SUPABASE_URL, VITE_SUPABASE_ANON_KEY, { auth: serverAuth });
     const tokens = registration
       ? await register(admin, auth, registration, password)
-      : await login(admin, auth, id, password);
+      : await login(admin, auth, id, password, config);
     return res.status(200).json(tokens);
   } catch (error) {
     if (error instanceof RequestError) {

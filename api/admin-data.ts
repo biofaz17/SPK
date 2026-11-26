@@ -1,12 +1,12 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApiRequest, ApiResponse } from './_lib/http';
 import { createClient } from '@supabase/supabase-js';
 import type { AdminPayments } from '../adminTypes';
 import { AdminAccountsSetupError, loadAdminAccounts } from './_lib/adminAccounts';
-import { isAdminTokenValid, isAllowedAdminOrigin, type AdminAuthEnvironment } from './_lib/adminAuth.ts';
+import { hasActiveAdminSession, isAllowedAdminOrigin, readAdminBearer, type AdminAuthEnvironment } from './_lib/adminAuth.ts';
 import { adminPaymentPeriodDays, loadAdminPayments } from './_lib/adminPayments';
 import type { PaymentEnvironment } from './_lib/payment';
 
-export default async function handler(req: VercelRequest, res: VercelResponse, env?: AdminAuthEnvironment & PaymentEnvironment) {
+export default async function handler(req: ApiRequest, res: ApiResponse, env?: AdminAuthEnvironment & PaymentEnvironment) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -21,10 +21,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse, e
   const host = typeof req.headers.host === 'string' ? req.headers.host : undefined;
   if (!isAllowedAdminOrigin(origin, host)) return res.status(403).json({ error: 'Forbidden origin' });
 
-  const authorization = req.headers.authorization;
-  const token = typeof authorization === 'string' && authorization.startsWith('Bearer ')
-    ? authorization.slice(7).trim() : undefined;
-  if (!isAdminTokenValid(token, env)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    if (!await hasActiveAdminSession(readAdminBearer(req.headers.authorization), env)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  } catch {
+    return res.status(503).json({ error: 'Admin session service is unavailable' });
+  }
 
   const query = req.query ?? {};
   if (query.section !== undefined && query.section !== 'accounts' && query.section !== 'payments') {

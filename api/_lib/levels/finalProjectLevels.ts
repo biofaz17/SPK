@@ -1,5 +1,5 @@
-import type { FinalProjectLevel } from './finalProjectTypes';
-import { SubscriptionTier } from './types';
+import type { FinalProjectLevel } from '../../../finalProjectTypes';
+import { SubscriptionTier } from '../../../types';
 
 const projectDefaults: Pick<FinalProjectLevel, 'ageGroup' | 'requiredSubscription' | 'availableBlocks' | 'maxBlocks'> = {
   ageGroup: '11-14',
